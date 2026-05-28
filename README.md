@@ -90,7 +90,7 @@ Both formats produce the same `.dspfd` JSON descriptor and `_dspf.h` header — 
 ## Usage
 
 ```
-dspfc <file.dspf|file.dds> [-o outdir] [-v]
+dspfc <file.dspf> [-o outdir] [-v]
 ```
 
 | Flag | Description |
@@ -196,7 +196,7 @@ See [docs/GUIDE.md](docs/GUIDE.md#integration-with-openrpg) for full details.
 make test
 ```
 
-Runs 5 golden-file tests covering free-format and DDS A-spec, subfiles, conditioning indicators, and EDTCDE. Each test compiles a source file and diffs the JSON output against a checked-in expected file.
+Runs 5 golden-file tests covering free-format and fixed-format, subfiles, conditioning indicators, and EDTCDE. Each test compiles a source file and diffs the JSON output against a checked-in expected file.
 
 ---
 

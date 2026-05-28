@@ -9,7 +9,7 @@ OpenDSPF compiles IBM i display file source into portable artifacts that run on 
 1. [Building from Source](#building-from-source)
 2. [CLI Reference](#cli-reference)
 3. [Free-Format Syntax](#free-format-syntax)
-4. [DDS A-Spec Input](#dds-a-spec-input)
+4. [Fixed-Format Syntax](#fixed-format-syntax)
 5. [Record Types](#record-types)
 6. [Fields](#fields)
 7. [Literals](#literals)
@@ -238,7 +238,7 @@ DDS source uses fixed columns (1-based):
 | 6 | Form type — must be `A` |
 | 7 | `*` = comment line |
 | 8–16 | Conditioning / option indicators (cols 7–9, 0-based) |
-| 17 | Name type: `R` = record format, `K` = key field, blank = field/literal |
+| 17 | Name type: `R` = record format, `K` = function key line, blank = field/literal |
 | 19–28 | Field or record name |
 | 30–34 | Field length |
 | 35 | Data type (`A`, `S`, `P`, `B`, `F`) |
@@ -252,7 +252,7 @@ DDS source uses fixed columns (1-based):
 
 ### Record Definition
 
-```dds
+```dspf
      A          R MAINMENU                  TEXT('Customer Menu')
 ```
 
@@ -260,7 +260,7 @@ A line with `R` in column 17 starts a new record format. The name appears in col
 
 ### Field Definition
 
-```dds
+```dspf
      A            OPTION         1A  I  9 16
      A            CUSTBAL        9S 2B  5 20  EDTCDE(1)
 ```
@@ -274,7 +274,7 @@ A line with `R` in column 17 starts a new record format. The name appears in col
 
 Lines with no field name but with row and column numbers produce literals. The text appears as a quoted string in the keyword area:
 
-```dds
+```dspf
      A                                  1 30'CUSTOMER INFORMATION SYSTEM'
      A                                  9  2'Option . . .'
 ```
@@ -283,7 +283,7 @@ Lines with no field name but with row and column numbers produce literals. The t
 
 Lines with `K` in column 17 define function keys. The key name appears in columns 19–28. An `IND(nn)` or `INDICATOR(nn)` keyword assigns an indicator.
 
-```dds
+```dspf
      A          K F3                          IND(03)
      A          K F12                         IND(12)
 ```
@@ -294,7 +294,7 @@ If no `IND` keyword is present, the indicator is inferred from the key name (`F3
 
 Columns 7–9 (0-based) of a field or literal line hold an option indicator number. When set, the field or literal is shown; when off, it is hidden. `N` in column 7 negates the condition.
 
-```dds
+```dspf
      A  50        ERRMSG        78A  O 24  2COLOR(RED)
      A N50                            22  2'Press F3 to exit'
 ```
@@ -330,8 +330,8 @@ Columns 7–9 (0-based) of a field or literal line hold an option indicator numb
 
 Every record has a `"type"` field in the JSON descriptor:
 
-| Type | Free-format | DDS keyword | Description |
-|------|-------------|-------------|-------------|
+| Type | Free-format | Fixed-format keyword | Description |
+|------|-------------|----------------------|-------------|
 | `normal` | Default | (none) | Standard display record |
 | `sfl` | `RECORD name SUBFILE` | `SFL` on record line | Subfile data record |
 | `sflctl` | `SFLCTL recordname` | `SFLCTL(name)` on record line | Subfile control record |
@@ -455,7 +455,7 @@ After EXFMT, the 1-based relative record number (RRN) of the selected row is wri
 
 Declare `SFLRCDNBR` as a `HIDDEN` field in the SFLCTL record to receive the selected row number:
 
-```dds
+```dspf
      A            SFLRCDNBR      4S 0  H
 ```
 
@@ -516,11 +516,11 @@ LITERAL  ROW(22) COL(2)  'F6=Save'  COND(*IN50)
 LITERAL  ROW(23) COL(2)  'Unsaved changes!'  COND(N*IN03)
 ```
 
-### DDS A-Spec — Option Indicators
+### Fixed-Format — Option Indicators
 
-In DDS, conditioning uses the option indicator columns (7–9, 0-based). `N` in column 7 negates the condition.
+In fixed-format, conditioning uses the option indicator columns (7–9, 0-based). `N` in column 7 negates the condition.
 
-```dds
+```dspf
      A  90        ERRMSG        78A  O 24  2COLOR(RED)
      A  50                           22  2'F6=Save'
      A N03                           23  2'Unsaved changes!'
@@ -819,7 +819,7 @@ This syncs the current indicator state to the runtime so conditioning (`COND(*IN
 **custmenu.dspf:**
 
 ```dspf
-**DSPF
+**FREE
 
 RECORD MAINMENU
   SCREEN SIZE(24 80)
