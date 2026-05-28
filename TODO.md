@@ -33,40 +33,38 @@ Features are grouped by priority for real IBM i RPG migration work.
 ## Important — common in real DDS
 
 ### Numeric field display
-- [ ] Right-align numeric field values (`S`, `P`, `B`, `F` types) on output
-- [ ] Zero-pad to field length and decimal places
-- [ ] Show decimal point at correct position
+- [x] Right-align numeric field values (`S`, `P`, `B`, `F` types) on output
+- [ ] Zero-pad to declared field length (no EDTCDE/EDTWRD)
+- [ ] Show decimal point at correct position when no edit code is applied
 
 ### Auto-advance on field fill
-- [ ] Cursor automatically moves to next field when current field is full
-- [ ] `AUTO` keyword (auto-advance attribute)
+- [x] Cursor automatically moves to next field when current field is full
+- [ ] `AUTO` keyword (explicit auto-advance attribute)
 
 ### REFFLD — reference field definitions
-- [ ] Parse `REFFLD(fieldname [recordname] [*FILE filename])` in DDS reader
-- [ ] Look up referenced field length, type, and edit code
-- [ ] Apply inherited attributes to the referencing field
+- (not supported — skipped by design)
 
-### PROTECT — conditional write-protect
-- [ ] `PROTECT` keyword: write-protect all input/both fields based on indicator
-- [ ] Runtime: skip editable fields when record-level PROTECT is active
+### PROTECT — conditional write-protect ✅
+- [x] `PROTECT` keyword: write-protect all input/both fields (record-level)
+- [x] `PROTECT(*INxx)` — indicator-conditioned write-protect
+- [x] Runtime: editable field list suppressed when PROTECT is active
 
 ### Error indicators and highlighting
-- [ ] `*IN99` (general error indicator) — highlight erroneous field in reverse/red
+- [ ] Field-level conditional DSPATR via option indicators (two entries, same field name, different indicators)
 - [ ] `ERRSFL` — route error messages to subfile
-- [ ] Field-level error indicator: highlight specific field when its indicator is on
 
 ---
 
 ## Runtime behaviour gaps
 
-- [ ] `KEY_HOME` / `KEY_END` — jump to first / last field
-- [ ] `KEY_UP` / `KEY_DOWN` — move between fields by row
-- [ ] `KEY_PPAGE` / `KEY_NPAGE` — Page Up / Page Down (needed for subfiles)
-- [ ] `CLRL` — clear remainder of screen before writing
-- [ ] `OVERLAY` — do not clear screen before writing (overlay on prior record)
-- [ ] `ALARM` — ring terminal bell on EXFMT
-- [ ] `NOINPUT` — disable all input fields for this EXFMT
-- [ ] `NOCLEAR` — retain prior screen content
+- [x] `KEY_HOME` / `KEY_END` — jump to first / last field
+- [x] `KEY_UP` / `KEY_DOWN` — move between fields (same as Tab/Shift-Tab)
+- [x] `OVERLAY` — do not clear screen before writing (overlay on prior record)
+- [x] `ALARM` — ring terminal bell on EXFMT
+- [x] `NOINPUT` — disable all input fields for this EXFMT
+- [x] `NOCLEAR` — retain prior screen content
+- [ ] `CLRL` — clear remainder of screen/line before writing
+- [ ] `KEY_PPAGE` / `KEY_NPAGE` — Page Up / Page Down for non-subfile records (subfiles ✅)
 
 ---
 
