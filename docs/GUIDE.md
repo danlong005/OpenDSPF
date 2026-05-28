@@ -238,7 +238,7 @@ DDS source uses fixed columns (1-based):
 | 6 | Form type — must be `A` |
 | 7 | `*` = comment line |
 | 8–16 | Conditioning / option indicators (cols 7–9, 0-based) |
-| 17 | Name type: `R` = record format, `K` = function key line, blank = field/literal |
+| 17 | Name type: `R` = record format, blank = field/literal |
 | 19–28 | Field or record name |
 | 30–34 | Field length |
 | 35 | Data type (`A`, `S`, `P`, `B`, `F`) |
@@ -279,16 +279,27 @@ Lines with no field name but with row and column numbers produce literals. The t
      A                                  9  2'Option . . .'
 ```
 
-### Key Definitions
+### Function Keys
 
-Lines with `K` in column 17 define function keys. The key name appears in columns 19–28. An `IND(nn)` or `INDICATOR(nn)` keyword assigns an indicator.
+Function keys are declared with `CF` (Command Function) or `CA` (Command Attention) keywords in the keyword area. They can appear on the record definition line or on keyword-only continuation lines.
+
+- **`CF`** — key returns all field values to the program (same as EXFMT)
+- **`CA`** — key signals attention only; field values are not returned
 
 ```dspf
-     A          K F3                          IND(03)
-     A          K F12                         IND(12)
+     A          R MAINMENU
+     A                                        CF03(03)
+     A                                        CF12(12)
 ```
 
-If no `IND` keyword is present, the indicator is inferred from the key name (`F3` → 3, `F12` → 12, etc.).
+The number inside the parentheses is the response indicator that gets set when the key is pressed. If omitted, the indicator defaults to the key number.
+
+```dspf
+     A                                        CF03(03 'Exit')
+     A                                        CA12(12 'Cancel')
+```
+
+The optional text label (e.g. `'Exit'`) is informational only.
 
 ### Option Indicators
 
@@ -316,12 +327,12 @@ Columns 7–9 (0-based) of a field or literal line hold an option indicator numb
      A                                        SFLPAG(10)
      A                                        SFLSIZ(100)
      A                                        TEXT('Customer List')
+     A                                        CF03(03 'Exit')
+     A                                        CF12(12 'Cancel')
      A                                   1 30'CUSTOMER LIST'
      A                                   4  2'Number'
      A                                   4 14'Name'
      A                                   4 46'Balance'
-     A          K F3                          IND(03)
-     A          K F12                         IND(12)
 ```
 
 ---
@@ -456,6 +467,7 @@ After EXFMT, the 1-based relative record number (RRN) of the selected row is wri
 Declare `SFLRCDNBR` as a `HIDDEN` field in the SFLCTL record to receive the selected row number:
 
 ```dspf
+     A          R CUSTCTL                     SFLCTL(CUSTSFL)
      A            SFLRCDNBR      4S 0  H
 ```
 

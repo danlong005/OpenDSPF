@@ -65,8 +65,10 @@ rpgc myprog.rpgle
 Files without a `**FREE` header are treated as fixed-format (IBM i DDS A-spec column layout). The form type (`A`) lives in column 6, `R`/`K` in column 17 mark record/key lines, field length and type in columns 30–38, row/column in 39–44, and keywords from column 45 onward.
 
 ```dspf
-     A*  Customer menu — IBM i DDS A-spec
+     A*  Customer menu — fixed-format DSPF
      A          R MAINMENU                  TEXT('Customer Information System')
+     A                                        CF03(03 'Exit')
+     A                                        CF12(12 'Cancel')
      A                                  1 25'CUSTOMER INFORMATION SYSTEM'
      A                                  3  2'Select one of the following:'
      A                                  5  5'1. Customer Inquiry'
@@ -75,8 +77,6 @@ Files without a `**FREE` header are treated as fixed-format (IBM i DDS A-spec co
      A                                  9  2'Option . . .'
      A            OPTION         1A  I  9 16
      A                                 24  2'F3=Exit   F12=Cancel'
-     A          K F3
-     A          K F12
 ```
 
 ```bash

@@ -65,6 +65,30 @@ static std::string upperKw(const std::string& s) {
     return r;
 }
 
+// Parse CFnn(ind) or CAnn(ind) — display file function key keyword.
+// Returns true and fills keyName ("F3", "F12", etc.) and indicator.
+static bool parseCFCA(const std::string& kw, std::string& keyName, int& indicator) {
+    if (kw.size() < 4) return false;
+    if (kw[0] != 'C' || (kw[1] != 'F' && kw[1] != 'A')) return false;
+    size_t p = 2;
+    while (p < kw.size() && isdigit((unsigned char)kw[p])) p++;
+    if (p == 2) return false;
+    int keyNum = parseNum(kw.substr(2, p - 2));
+    if (keyNum < 1 || keyNum > 24) return false;
+    keyName = "F" + std::to_string(keyNum);
+    indicator = keyNum; // default: indicator == key number
+    if (p < kw.size() && kw[p] == '(') {
+        size_t q = p + 1;
+        while (q < kw.size() && kw[q] == ' ') q++;
+        if (q < kw.size() && isdigit((unsigned char)kw[q])) {
+            size_t r = q;
+            while (r < kw.size() && isdigit((unsigned char)kw[r])) r++;
+            indicator = parseNum(kw.substr(q, r - q));
+        }
+    }
+    return true;
+}
+
 // Parse keyword string at cols 44+ (0-based) e.g. "COLOR(RED) DSPATR(HI) TEXT('foo')"
 static std::vector<std::string> parseKeywords(const std::string& kwstr) {
     std::vector<std::string> result;
@@ -152,35 +176,15 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                 } else if (kw.rfind("TEXT(", 0) == 0) {
                     std::string inner = kw.substr(5, kw.size() - 6);
                     rec.title = stripQuotes(inner);
-                }
-            }
-            file.records.push_back(std::move(rec));
-
-        } else if (nameType == 'K') {
-            // Key definition: key name at cols 18+
-            std::string keyname = toUpper(trim(cols(line, 18, 28)));
-            if (file.records.empty() || keyname.empty()) continue;
-            DspfKey k;
-            k.key = keyname;
-            k.indicator = 0;
-            // Check for IND keyword
-            std::string funcs = cols(line, 44, 80);
-            for (auto& kw : parseKeywords(funcs)) {
-                if (kw.rfind("IND(", 0) == 0 || kw.rfind("INDICATOR(", 0) == 0) {
-                    size_t p = kw.find('(');
-                    if (p != std::string::npos) {
-                        k.indicator = parseNum(kw.substr(p + 1, kw.size() - p - 2));
+                } else {
+                    std::string keyName; int ind;
+                    if (parseCFCA(kw, keyName, ind)) {
+                        DspfKey k; k.key = keyName; k.indicator = ind;
+                        rec.keys.push_back(std::move(k));
                     }
                 }
             }
-            // Infer indicator from key name: F3 → 03, F12 → 12, etc.
-            if (k.indicator == 0 && keyname.size() >= 2 && keyname[0] == 'F') {
-                try { k.indicator = std::stoi(keyname.substr(1)); } catch (...) {}
-                // Map F1-F9 → indicators 01-09, F10-F12 → 10-12, etc.
-                // Clamp to valid range
-                if (k.indicator < 1 || k.indicator > 99) k.indicator = 0;
-            }
-            file.records.back().keys.push_back(std::move(k));
+            file.records.push_back(std::move(rec));
 
         } else {
             if (file.records.empty()) continue;
@@ -216,6 +220,13 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                         file.records.back().sflPag = parseNum(kw.substr(7, kw.size()-8));
                     else if (kw.rfind("SFLSIZ(", 0) == 0)
                         file.records.back().sflSiz = parseNum(kw.substr(7, kw.size()-8));
+                    else {
+                        std::string keyName; int ind;
+                        if (parseCFCA(kw, keyName, ind)) {
+                            DspfKey k; k.key = keyName; k.indicator = ind;
+                            file.records.back().keys.push_back(std::move(k));
+                        }
+                    }
                 }
                 continue;
             }
