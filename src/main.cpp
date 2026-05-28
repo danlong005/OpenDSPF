@@ -45,7 +45,8 @@ static SrcFormat detectFormat(const std::string& filename) {
         std::string tl = line;
         while (!tl.empty() && (tl.front() == ' ' || tl.front() == '\t')) tl.erase(tl.begin());
         if (tl.empty()) continue;
-        if (tl.rfind("**DSPF", 0) == 0 || tl.rfind("**dspf", 0) == 0) return SrcFormat::FREE;
+        if (tl.rfind("**FREE", 0) == 0 || tl.rfind("**free", 0) == 0 ||
+            tl.rfind("**DSPF", 0) == 0 || tl.rfind("**dspf", 0) == 0) return SrcFormat::FREE;
         if (line.size() > 5 && (line[5] == 'A' || line[5] == 'a')) return SrcFormat::DDS;
         return SrcFormat::UNKNOWN;
     }
@@ -84,7 +85,7 @@ int main(int argc, char* argv[]) {
 
     SrcFormat fmt = detectFormat(infile);
     if (fmt == SrcFormat::UNKNOWN) {
-        std::cerr << "dspfc: cannot determine source format (expected **DSPF header or DDS A-specs)\n";
+        std::cerr << "dspfc: cannot determine source format (expected **FREE header or fixed-format A-specs)\n";
         return 1;
     }
 
@@ -93,7 +94,7 @@ int main(int argc, char* argv[]) {
     fileAst.name = base;
 
     if (fmt == SrcFormat::DDS) {
-        std::cout << "dspfc: reading DDS A-spec source: " << infile << "\n";
+        std::cout << "dspfc: reading fixed-format DSPF source: " << infile << "\n";
         try {
             fileAst = dspf::parseDDS(infile, base);
         } catch (const std::exception& e) {

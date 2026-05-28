@@ -1,6 +1,6 @@
 # OpenDSPF User's Guide
 
-OpenDSPF compiles IBM i display file source into portable artifacts that run on macOS, Linux, or Windows — no IBM i required. It accepts both free-format `.dspf` and traditional DDS A-spec `.dds` source, and pairs with [OpenRPG](https://github.com/danlong005/OpenRPG) to run RPG programs that use `DCL-F ... WORKSTN` display files.
+OpenDSPF compiles IBM i display file source into portable artifacts that run on macOS, Linux, or Windows — no IBM i required. Both source formats use the `.dspf` extension: a `**FREE` header at the top selects free-format syntax; files without it are interpreted as fixed-format (IBM i DDS A-spec column layout). OpenDSPF pairs with [OpenRPG](https://github.com/danlong005/OpenRPG) to run RPG programs that use `DCL-F ... WORKSTN` display files.
 
 ---
 
@@ -61,7 +61,7 @@ This installs:
 ## CLI Reference
 
 ```
-dspfc <file.dspf|file.dds> [-o outdir] [-v]
+dspfc <file.dspf> [-o outdir] [-v]
 ```
 
 | Flag | Description |
@@ -69,13 +69,13 @@ dspfc <file.dspf|file.dds> [-o outdir] [-v]
 | `-o dir` | Write output files to `dir` (default: same directory as source) |
 | `-v`, `--version` | Print version and exit |
 
-`dspfc` detects the source format automatically:
-- File contains a `**DSPF` header → free-format
-- Column 5 of the first non-blank line is `A` → DDS A-spec
+`dspfc` detects the source format from the file content — no flags needed:
+- First non-blank line is `**FREE` → free-format syntax
+- Column 5 of the first non-blank line is `A` → fixed-format (DDS A-spec columns)
 
 ```bash
-dspfc custmenu.dspf              # free-format
-dspfc CUSTMENU.dds               # DDS A-spec
+dspfc custmenu.dspf              # **FREE header → free-format
+dspfc custmenu_fixed.dspf        # no **FREE → fixed-format
 dspfc custmenu.dspf -o build/    # output to build/
 dspfc -v
 ```
@@ -91,12 +91,12 @@ For each input file, two output files are written:
 
 ## Free-Format Syntax
 
-Free-format source begins with the `**DSPF` header line. Comments start with `//`. The syntax is case-insensitive.
+Free-format source begins with `**FREE` on the first line — the same convention as RPG IV. Comments start with `//`. The syntax is case-insensitive.
 
 ### File Structure
 
 ```dspf
-**DSPF
+**FREE
 
 // Optional comments
 
@@ -184,7 +184,7 @@ When a function key is pressed, the indicator specified in `INDICATOR(nn)` is se
 ### Complete Example
 
 ```dspf
-**DSPF
+**FREE
 
 RECORD MAINMENU
   SCREEN SIZE(24 80)
@@ -224,9 +224,9 @@ END-RECORD
 
 ---
 
-## DDS A-Spec Input
+## Fixed-Format Syntax
 
-`dspfc` also reads traditional DDS A-spec source — the column-fixed format used by IBM i source members. This lets you compile existing DDS source directly without conversion.
+Files without a `**FREE` header are treated as fixed-format — the column-fixed DDS A-spec layout used by IBM i source members. This lets you compile existing DDS source directly without conversion, just rename the file to `.dspf`.
 
 ### Column Layout
 
@@ -304,9 +304,9 @@ Columns 7–9 (0-based) of a field or literal line hold an option indicator numb
 
 `dspfc` translates these into `COND(*IN50)` and `COND(N*IN50)` keywords in the JSON descriptor.
 
-### Complete DDS Example
+### Complete Fixed-Format Example
 
-```dds
+```dspf
      A*  Customer list subfile
      A          R CUSTSFL                     SFL
      A            CUSTNO         10A    O   6  2
@@ -880,11 +880,11 @@ The test suite in `tests/` contains 5 golden-file tests:
 
 | Test | File | Coverage |
 |------|------|----------|
-| test01 | `test01_basic.dspf` | Literals, fields, keys, COLOR |
-| test02 | `test02_subfile.dspf` | SUBFILE, SFLCTL, SFLPAG, SFLSIZ, EDTCDE |
-| test03 | `test03_cond.dspf` | COND(*INxx) on fields and literals |
-| test04 | `test04_dds_subfile.dds` | DDS A-spec, SFL/SFLCTL, option indicators |
-| test05 | `CUSTMENU.dds` + `CUSTMENU.dspf` | Both formats produce identical output |
+| test01 | `test01_basic.dspf` | Free-format: literals, fields, keys, COLOR |
+| test02 | `test02_subfile.dspf` | Free-format: SUBFILE, SFLCTL, SFLPAG, SFLSIZ, EDTCDE |
+| test03 | `test03_cond.dspf` | Free-format: COND(*INxx) on fields and literals |
+| test04 | `test04_fixed_subfile.dspf` | Fixed-format: SFL/SFLCTL, option indicators |
+| test05 | `CUSTMENU_fixed.dspf` + `CUSTMENU.dspf` | Both formats produce identical output |
 
 Each test compiles the source file with `dspfc` and diffs the `.dspfd` JSON output against an expected golden file in `tests/expected/`. A mismatch prints a diff and fails the build.
 
@@ -893,9 +893,9 @@ Each test compiles the source file with `dspfc` and diffs the `.dspfd` JSON outp
 If you add features that change the JSON output format, regenerate the golden files:
 
 ```bash
-./dspfc tests/test01_basic.dspf      -o tests/expected/
-./dspfc tests/test02_subfile.dspf    -o tests/expected/
-./dspfc tests/test03_cond.dspf       -o tests/expected/
-./dspfc tests/test04_dds_subfile.dds -o tests/expected/
-./dspfc tests/CUSTMENU.dspf          -o tests/
+./dspfc tests/test01_basic.dspf           -o tests/expected/
+./dspfc tests/test02_subfile.dspf         -o tests/expected/
+./dspfc tests/test03_cond.dspf            -o tests/expected/
+./dspfc tests/test04_fixed_subfile.dspf   -o tests/expected/
+./dspfc tests/CUSTMENU.dspf               -o tests/
 ```

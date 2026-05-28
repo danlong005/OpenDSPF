@@ -1,5 +1,5 @@
-#ifndef TEST04_DDS_SUBFILE_DSPF_H
-#define TEST04_DDS_SUBFILE_DSPF_H
+#ifndef TEST04_FIXED_SUBFILE_DSPF_H
+#define TEST04_FIXED_SUBFILE_DSPF_H
 
 #include <string>
 
@@ -15,4 +15,4 @@ struct EMPCTL_buf {
     long SFLRCDNB = 0;
 };
 
-#endif // TEST04_DDS_SUBFILE_DSPF_H
+#endif // TEST04_FIXED_SUBFILE_DSPF_H

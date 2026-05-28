@@ -56,12 +56,12 @@ run_test "test02: subfile (SUBFILE/SFLCTL/SFLPAG/SFLSIZ/EDTCDE)" \
 run_test "test03: conditioning indicators (COND(*INxx) on fields and literals)" \
     "$TESTDIR/test03_cond.dspf"         "$EXPECTED/test03_cond.dspfd"
 
-# ── DDS A-spec tests ──────────────────────────────────────────────────────────
-run_test "test04: DDS subfile (SFL/SFLCTL/option indicators)" \
-    "$TESTDIR/test04_dds_subfile.dds"   "$EXPECTED/test04_dds_subfile.dspfd"
+# ── Fixed-format tests ────────────────────────────────────────────────────────
+run_test "test04: fixed-format subfile (SFL/SFLCTL/option indicators)" \
+    "$TESTDIR/test04_fixed_subfile.dspf"   "$EXPECTED/test04_fixed_subfile.dspfd"
 
-run_test "test05: DDS — CUSTMENU (both formats produce identical output)" \
-    "$TESTDIR/CUSTMENU.dds"             "$TESTDIR/CUSTMENU.dspfd"
+run_test "test05: CUSTMENU (free-format and fixed-format produce identical output)" \
+    "$TESTDIR/CUSTMENU_fixed.dspf"      "$TESTDIR/CUSTMENU.dspfd"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""

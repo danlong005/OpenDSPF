@@ -1,15 +1,17 @@
 # OpenDSPF
 
-OpenDSPF is an open-source compiler for IBM i display file source — both free-format `.dspf` and DDS A-spec `.dds`. The `dspfc` binary reads display file source, validates it, and emits two portable artifacts: a `.dspfd` JSON descriptor and a `_dspf.h` C++ buffer header. Programs compiled with [OpenRPG](https://github.com/danlong005/OpenRPG) use these artifacts plus the included ncurses runtime to render interactive terminal screens — no IBM i required.
+OpenDSPF is an open-source compiler for IBM i display file source. The `dspfc` binary accepts `.dspf` files in two formats and emits two portable artifacts: a `.dspfd` JSON descriptor and a `_dspf.h` C++ buffer header. Programs compiled with [OpenRPG](https://github.com/danlong005/OpenRPG) use these artifacts plus the included ncurses runtime to render interactive terminal screens — no IBM i required.
+
+Both source formats use the `.dspf` extension. A `**FREE` header at the top of the file selects free-format syntax; files without it are interpreted as fixed-format (IBM i DDS A-spec column layout).
 
 ---
 
-## Quick Start
+## Quick Start — Free-Format
 
-**Write a display file (free-format):**
+Start the file with `**FREE` to use the free-format syntax, just like RPG IV:
 
 ```dspf
-**DSPF
+**FREE
 
 RECORD MAINMENU
   SCREEN SIZE(24 80)
@@ -58,11 +60,11 @@ rpgc myprog.rpgle
 
 ---
 
-## Quick Start — DDS A-Spec (fixed-format)
+## Quick Start — Fixed-Format
 
-If you have existing IBM i DDS source members, `dspfc` reads them directly. DDS uses fixed columns: the form type (`A`) in column 6, `R` / `K` in column 17 to mark record/key lines, field lengths and types in columns 30–38, row/column in 39–44, and keywords starting at column 45.
+Files without a `**FREE` header are treated as fixed-format (IBM i DDS A-spec column layout). The form type (`A`) lives in column 6, `R`/`K` in column 17 mark record/key lines, field length and type in columns 30–38, row/column in 39–44, and keywords from column 45 onward.
 
-```dds
+```dspf
      A*  Customer menu — IBM i DDS A-spec
      A          R MAINMENU                  TEXT('Customer Information System')
      A                                  1 25'CUSTOMER INFORMATION SYSTEM'
@@ -78,7 +80,7 @@ If you have existing IBM i DDS source members, `dspfc` reads them directly. DDS 
 ```
 
 ```bash
-dspfc CUSTMENU.dds
+dspfc CUSTMENU_fixed.dspf
 ```
 
 Both formats produce the same `.dspfd` JSON descriptor and `_dspf.h` header — the RPG program is identical either way.
@@ -96,13 +98,13 @@ dspfc <file.dspf|file.dds> [-o outdir] [-v]
 | `-o dir` | Write output files to `dir` (default: same directory as the source file) |
 | `-v`, `--version` | Print version and exit |
 
-`dspfc` auto-detects the source format from the file content:
-- Lines starting with `**DSPF` → free-format
-- Column 5 of the first non-blank line is `A` → DDS A-spec
+`dspfc` detects the format from the file content — no flags needed:
+- First non-blank line is `**FREE` → free-format syntax
+- Column 5 of the first non-blank line is `A` → fixed-format (DDS A-spec columns)
 
 ```bash
-dspfc mainmenu.dspf              # auto-detected as free-format
-dspfc CUSTMENU.dds               # auto-detected as DDS A-spec
+dspfc mainmenu.dspf              # **FREE header → free-format
+dspfc custmenu_fixed.dspf        # no **FREE header → fixed-format
 dspfc mainmenu.dspf -o build/    # write outputs to build/
 dspfc -v                         # print version
 ```

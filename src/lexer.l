@@ -32,7 +32,8 @@ COMMENT  "//"[^\n]*
 
 %%
 
-"**DSPF"        { /* header line — skip */ }
+"**FREE"        { /* free-format header — skip */ }
+"**DSPF"        { /* legacy free-format header — skip */ }
 {COMMENT}       { /* line comment — skip */ }
 {NL}            { /* newlines — skip */ }
 {WS}            { /* whitespace — skip */ }
