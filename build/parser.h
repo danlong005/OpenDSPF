@@ -84,12 +84,22 @@ extern int yydebug;
     KW_OUTPUT = 277,               /* KW_OUTPUT  */
     KW_BOTH = 278,                 /* KW_BOTH  */
     KW_HIDDEN = 279,               /* KW_HIDDEN  */
-    LPAREN = 280,                  /* LPAREN  */
-    RPAREN = 281,                  /* RPAREN  */
-    COLON = 282,                   /* COLON  */
-    INTEGER = 283,                 /* INTEGER  */
-    STRING = 284,                  /* STRING  */
-    IDENTIFIER = 285               /* IDENTIFIER  */
+    KW_SUBFILE = 280,              /* KW_SUBFILE  */
+    KW_SFLCTL = 281,               /* KW_SFLCTL  */
+    KW_SFLPAG = 282,               /* KW_SFLPAG  */
+    KW_SFLSIZ = 283,               /* KW_SFLSIZ  */
+    KW_OVERLAY = 284,              /* KW_OVERLAY  */
+    KW_NOCLEAR = 285,              /* KW_NOCLEAR  */
+    KW_ALARM = 286,                /* KW_ALARM  */
+    KW_NOINPUT = 287,              /* KW_NOINPUT  */
+    KW_PROTECT = 288,              /* KW_PROTECT  */
+    LPAREN = 289,                  /* LPAREN  */
+    RPAREN = 290,                  /* RPAREN  */
+    COLON = 291,                   /* COLON  */
+    INTEGER = 292,                 /* INTEGER  */
+    STRING = 293,                  /* STRING  */
+    IDENTIFIER = 294,              /* IDENTIFIER  */
+    INDICATOR_REF = 295            /* INDICATOR_REF  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -98,12 +108,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 31 "src/parser.y"
+#line 32 "src/parser.y"
 
     int   ival;
     char* sval;
 
-#line 107 "build/parser.h"
+#line 117 "build/parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

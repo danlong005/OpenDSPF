@@ -41,6 +41,7 @@ struct DspfRecord {
     int screenRows = 24;
     int screenCols = 80;
     std::string title;
+    int winRow = 0, winCol = 0, winHeight = 0, winWidth = 0; // 0 = not a window record
     std::vector<std::string> keywords; // e.g. "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT", "PROTECT(*IN99)"
     std::vector<DspfLiteral> literals;
     std::vector<DspfField>   fields;

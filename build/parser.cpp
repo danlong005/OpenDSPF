@@ -88,8 +88,9 @@ static std::string take(char* s) { std::string r(s ? s : ""); free(s); return r;
 // Globals for accumulating the current field being parsed
 static dspf::DspfField  g_field;
 static std::vector<std::string> g_keywords;
+static dspf::RecType    g_recType;
 
-#line 93 "build/parser.cpp"
+#line 94 "build/parser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -142,29 +143,46 @@ enum yysymbol_kind_t
   YYSYMBOL_KW_OUTPUT = 22,                 /* KW_OUTPUT  */
   YYSYMBOL_KW_BOTH = 23,                   /* KW_BOTH  */
   YYSYMBOL_KW_HIDDEN = 24,                 /* KW_HIDDEN  */
-  YYSYMBOL_LPAREN = 25,                    /* LPAREN  */
-  YYSYMBOL_RPAREN = 26,                    /* RPAREN  */
-  YYSYMBOL_COLON = 27,                     /* COLON  */
-  YYSYMBOL_INTEGER = 28,                   /* INTEGER  */
-  YYSYMBOL_STRING = 29,                    /* STRING  */
-  YYSYMBOL_IDENTIFIER = 30,                /* IDENTIFIER  */
-  YYSYMBOL_YYACCEPT = 31,                  /* $accept  */
-  YYSYMBOL_file = 32,                      /* file  */
-  YYSYMBOL_record_list = 33,               /* record_list  */
-  YYSYMBOL_record = 34,                    /* record  */
-  YYSYMBOL_35_1 = 35,                      /* $@1  */
-  YYSYMBOL_record_body = 36,               /* record_body  */
-  YYSYMBOL_record_item = 37,               /* record_item  */
-  YYSYMBOL_screen_clause = 38,             /* screen_clause  */
-  YYSYMBOL_title_clause = 39,              /* title_clause  */
-  YYSYMBOL_literal_clause = 40,            /* literal_clause  */
-  YYSYMBOL_field_clause = 41,              /* field_clause  */
-  YYSYMBOL_42_2 = 42,                      /* $@2  */
-  YYSYMBOL_field_type = 43,                /* field_type  */
-  YYSYMBOL_field_usage = 44,               /* field_usage  */
-  YYSYMBOL_opt_field_keywords = 45,        /* opt_field_keywords  */
-  YYSYMBOL_field_keyword = 46,             /* field_keyword  */
-  YYSYMBOL_key_clause = 47                 /* key_clause  */
+  YYSYMBOL_KW_SUBFILE = 25,                /* KW_SUBFILE  */
+  YYSYMBOL_KW_SFLCTL = 26,                 /* KW_SFLCTL  */
+  YYSYMBOL_KW_SFLPAG = 27,                 /* KW_SFLPAG  */
+  YYSYMBOL_KW_SFLSIZ = 28,                 /* KW_SFLSIZ  */
+  YYSYMBOL_KW_OVERLAY = 29,                /* KW_OVERLAY  */
+  YYSYMBOL_KW_NOCLEAR = 30,                /* KW_NOCLEAR  */
+  YYSYMBOL_KW_ALARM = 31,                  /* KW_ALARM  */
+  YYSYMBOL_KW_NOINPUT = 32,                /* KW_NOINPUT  */
+  YYSYMBOL_KW_PROTECT = 33,                /* KW_PROTECT  */
+  YYSYMBOL_LPAREN = 34,                    /* LPAREN  */
+  YYSYMBOL_RPAREN = 35,                    /* RPAREN  */
+  YYSYMBOL_COLON = 36,                     /* COLON  */
+  YYSYMBOL_INTEGER = 37,                   /* INTEGER  */
+  YYSYMBOL_STRING = 38,                    /* STRING  */
+  YYSYMBOL_IDENTIFIER = 39,                /* IDENTIFIER  */
+  YYSYMBOL_INDICATOR_REF = 40,             /* INDICATOR_REF  */
+  YYSYMBOL_YYACCEPT = 41,                  /* $accept  */
+  YYSYMBOL_file = 42,                      /* file  */
+  YYSYMBOL_record_list = 43,               /* record_list  */
+  YYSYMBOL_record = 44,                    /* record  */
+  YYSYMBOL_45_1 = 45,                      /* $@1  */
+  YYSYMBOL_46_2 = 46,                      /* $@2  */
+  YYSYMBOL_opt_sfl_kw = 47,                /* opt_sfl_kw  */
+  YYSYMBOL_record_body = 48,               /* record_body  */
+  YYSYMBOL_record_item = 49,               /* record_item  */
+  YYSYMBOL_screen_clause = 50,             /* screen_clause  */
+  YYSYMBOL_title_clause = 51,              /* title_clause  */
+  YYSYMBOL_literal_clause = 52,            /* literal_clause  */
+  YYSYMBOL_53_3 = 53,                      /* $@3  */
+  YYSYMBOL_field_clause = 54,              /* field_clause  */
+  YYSYMBOL_55_4 = 55,                      /* $@4  */
+  YYSYMBOL_field_type = 56,                /* field_type  */
+  YYSYMBOL_field_usage = 57,               /* field_usage  */
+  YYSYMBOL_opt_field_keywords = 58,        /* opt_field_keywords  */
+  YYSYMBOL_field_keyword = 59,             /* field_keyword  */
+  YYSYMBOL_sflctl_clause = 60,             /* sflctl_clause  */
+  YYSYMBOL_sflpag_clause = 61,             /* sflpag_clause  */
+  YYSYMBOL_sflsiz_clause = 62,             /* sflsiz_clause  */
+  YYSYMBOL_rec_kw_clause = 63,             /* rec_kw_clause  */
+  YYSYMBOL_key_clause = 64                 /* key_clause  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -492,19 +510,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   88
+#define YYLAST   114
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  31
+#define YYNTOKENS  41
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  17
+#define YYNNTS  24
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  35
+#define YYNRULES  55
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  95
+#define YYNSTATES  128
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   285
+#define YYMAXUTOK   295
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -546,17 +564,20 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
+      35,    36,    37,    38,    39,    40
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    47,    47,    51,    52,    57,    56,    66,    67,    71,
-      72,    73,    74,    75,    79,    87,    94,   106,   105,   124,
-     126,   128,   130,   135,   136,   137,   138,   142,   143,   147,
-     149,   151,   153,   155,   160,   167
+       0,    50,    50,    54,    55,    60,    62,    59,    72,    73,
+      77,    78,    82,    83,    84,    85,    86,    87,    88,    89,
+      90,    94,   102,   110,   109,   124,   123,   142,   144,   146,
+     148,   153,   154,   155,   156,   160,   161,   165,   167,   169,
+     171,   173,   175,   177,   182,   188,   193,   198,   199,   200,
+     201,   202,   203,   205,   210,   217
 };
 #endif
 
@@ -576,12 +597,15 @@ static const char *const yytname[] =
   "KW_END_RECORD", "KW_LITERAL", "KW_FIELD", "KW_KEY", "KW_SCREEN",
   "KW_TITLE", "KW_ROW", "KW_COL", "KW_SIZE", "KW_INDICATOR", "KW_COLOR",
   "KW_DSPATR", "KW_TEXT", "KW_CHAR", "KW_ZONED", "KW_PACKED", "KW_INT",
-  "KW_INPUT", "KW_OUTPUT", "KW_BOTH", "KW_HIDDEN", "LPAREN", "RPAREN",
-  "COLON", "INTEGER", "STRING", "IDENTIFIER", "$accept", "file",
-  "record_list", "record", "$@1", "record_body", "record_item",
-  "screen_clause", "title_clause", "literal_clause", "field_clause", "$@2",
-  "field_type", "field_usage", "opt_field_keywords", "field_keyword",
-  "key_clause", YY_NULLPTR
+  "KW_INPUT", "KW_OUTPUT", "KW_BOTH", "KW_HIDDEN", "KW_SUBFILE",
+  "KW_SFLCTL", "KW_SFLPAG", "KW_SFLSIZ", "KW_OVERLAY", "KW_NOCLEAR",
+  "KW_ALARM", "KW_NOINPUT", "KW_PROTECT", "LPAREN", "RPAREN", "COLON",
+  "INTEGER", "STRING", "IDENTIFIER", "INDICATOR_REF", "$accept", "file",
+  "record_list", "record", "$@1", "$@2", "opt_sfl_kw", "record_body",
+  "record_item", "screen_clause", "title_clause", "literal_clause", "$@3",
+  "field_clause", "$@4", "field_type", "field_usage", "opt_field_keywords",
+  "field_keyword", "sflctl_clause", "sflpag_clause", "sflsiz_clause",
+  "rec_kw_clause", "key_clause", YY_NULLPTR
 };
 
 static const char *
@@ -591,7 +615,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-16)
+#define YYPACT_NINF (-62)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -605,16 +629,19 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-     -16,    13,    11,   -16,   -15,   -16,   -16,   -16,    -1,   -16,
-      12,    -9,    -7,    14,    -5,   -16,   -16,   -16,   -16,   -16,
-     -16,     0,   -16,    15,     2,   -16,     1,    -8,     5,     3,
-       6,     8,     9,    10,    16,    -4,    17,    18,    25,    19,
-      20,    21,    22,   -16,   -16,   -16,   -16,    27,    26,    28,
-      30,    31,    24,    29,    32,    34,   -16,   -16,    33,   -16,
-      35,    36,   -16,    37,    40,    41,    42,    43,    44,   -16,
-     -16,    49,   -16,    45,    46,    50,   -16,   -14,    47,    52,
-      53,    54,   -16,    23,    51,    55,    56,    57,    59,    61,
-      62,   -16,   -16,   -16,   -16
+     -62,     9,    11,   -62,   -18,   -62,   -62,     5,   -62,   -62,
+     -62,    -4,   -62,    23,    -3,    -2,    26,     1,     2,     6,
+       8,   -62,   -62,   -62,   -62,    10,   -62,   -62,   -62,   -62,
+     -62,   -62,   -62,   -62,   -62,   -62,    12,   -62,    30,    13,
+     -62,   -62,    14,    15,   -20,    16,    -7,    20,    18,    21,
+      22,    24,    25,    27,    29,    31,    32,    33,    -6,    34,
+      35,   -62,   -62,   -62,   -62,    37,    36,    38,    39,    40,
+     -62,   -62,   -62,   -62,    48,    43,    44,    46,    47,    28,
+      45,    49,    51,   -62,   -62,    50,   -62,    52,    53,   -62,
+      54,    57,    58,    59,    60,     7,   -62,   -62,    63,   -62,
+      62,   -62,    61,    -8,    64,    66,    67,    68,    69,   -62,
+     -62,    65,    70,    72,    -5,    -8,    71,    73,    76,    77,
+      78,    79,   -62,   -62,   -62,   -62,   -62,   -62
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -622,30 +649,35 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       3,     0,     2,     1,     0,     4,     5,     7,     0,     6,
-       0,     0,     0,     0,     0,     8,     9,    10,    11,    12,
-      13,     0,    17,    35,     0,    15,     0,     0,     0,     0,
+       3,     0,     2,     1,     0,     4,     5,     8,     9,     6,
+      10,     0,     7,     0,     0,     0,     0,     0,     0,     0,
+       0,    47,    48,    49,    50,    51,    11,    12,    13,    14,
+      15,    17,    18,    19,    20,    16,     0,    25,    55,     0,
+      22,    44,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    23,    24,    25,    26,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    34,    14,     0,    19,
-       0,     0,    22,     0,     0,     0,     0,     0,     0,    20,
-      21,     0,    16,     0,     0,     0,    27,    18,     0,     0,
-       0,    33,    28,     0,     0,     0,     0,     0,     0,     0,
-       0,    29,    30,    31,    32
+       0,    45,    46,    53,    52,     0,     0,     0,     0,     0,
+      31,    32,    33,    34,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,    54,    21,     0,    27,     0,     0,    30,
+       0,     0,     0,     0,     0,     0,    28,    29,     0,    23,
+       0,    35,     0,    24,     0,     0,     0,     0,    43,    36,
+      35,     0,     0,     0,     0,    26,     0,     0,     0,     0,
+       0,     0,    37,    38,    39,    41,    40,    42
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -16,   -16,   -16,   -16,   -16,   -16,   -16,   -16,   -16,   -16,
-     -16,   -16,   -16,   -16,   -16,   -16,   -16
+     -62,   -62,   -62,   -62,   -62,   -62,   -62,   -62,   -62,   -62,
+     -62,   -62,   -62,   -62,   -62,   -62,   -62,   -61,   -62,   -62,
+     -62,   -62,   -62,   -62
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     1,     2,     5,     7,     8,    15,    16,    17,    18,
-      19,    27,    35,    47,    77,    82,    20
+       0,     1,     2,     5,     7,    10,     9,    11,    26,    27,
+      28,    29,   101,    30,    46,    58,    74,   103,   109,    31,
+      32,    33,    34,    35
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -653,62 +685,75 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      78,    79,    80,     9,    10,    11,    12,    13,    14,    31,
-      32,    33,    34,     3,     4,     6,    81,    43,    44,    45,
-      46,    22,    21,    23,    25,    26,    24,    29,    28,    30,
-      36,    37,    38,    39,    40,    41,    50,    55,     0,     0,
-       0,    42,     0,     0,     0,    48,    49,    51,    52,    53,
-      54,    60,    56,    87,    57,    58,    61,    59,    62,    63,
-      73,    64,     0,    65,    66,    67,    68,    69,    70,    71,
-      74,     0,    83,    72,    75,     0,    76,    84,    85,    86,
-       0,    88,     0,    91,    89,    92,    90,    93,    94
+      12,    13,    14,    15,    16,    17,   105,   106,   107,     3,
+      54,    55,    56,    57,     4,    70,    71,    72,    73,    51,
+      52,     6,    18,    19,    20,    21,    22,    23,    24,    25,
+       8,   108,   119,    36,   120,   121,    37,    38,    39,    40,
+      42,    41,    43,    47,    44,    99,    45,    48,    77,   115,
+       0,    49,    50,    53,    59,    60,    61,    62,    82,    63,
+      64,     0,    65,    66,    87,    67,    68,    69,     0,     0,
+       0,    75,    76,    78,   100,    79,    80,    81,    83,    84,
+      85,    88,    86,     0,    89,    90,     0,    91,     0,    92,
+      93,    94,    95,    96,    97,    98,   102,     0,   104,   110,
+     111,   112,   113,   114,   116,     0,   122,     0,   123,   117,
+     118,   124,   125,   126,   127
 };
 
 static const yytype_int8 yycheck[] =
 {
-      14,    15,    16,     4,     5,     6,     7,     8,     9,    17,
-      18,    19,    20,     0,     3,    30,    30,    21,    22,    23,
-      24,    30,    10,    30,    29,    25,    12,    25,    13,    28,
-      25,    28,    26,    25,    25,    25,    11,    10,    -1,    -1,
-      -1,    25,    -1,    -1,    -1,    28,    28,    28,    28,    28,
-      28,    27,    26,    30,    26,    25,    27,    26,    26,    25,
-      11,    28,    -1,    28,    28,    28,    26,    26,    26,    26,
-      25,    -1,    25,    29,    28,    -1,    26,    25,    25,    25,
-      -1,    30,    -1,    26,    29,    26,    30,    26,    26
+       4,     5,     6,     7,     8,     9,    14,    15,    16,     0,
+      17,    18,    19,    20,     3,    21,    22,    23,    24,    39,
+      40,    39,    26,    27,    28,    29,    30,    31,    32,    33,
+      25,    39,    37,    10,    39,    40,    39,    39,    12,    38,
+      34,    39,    34,    13,    34,    38,    34,    34,    11,   110,
+      -1,    37,    37,    37,    34,    37,    35,    35,    10,    35,
+      35,    -1,    35,    34,    36,    34,    34,    34,    -1,    -1,
+      -1,    37,    37,    37,    11,    37,    37,    37,    35,    35,
+      34,    36,    35,    -1,    35,    34,    -1,    37,    -1,    37,
+      37,    37,    35,    35,    35,    35,    34,    -1,    37,    35,
+      34,    34,    34,    34,    39,    -1,    35,    -1,    35,    39,
+      38,    35,    35,    35,    35
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    32,    33,     0,     3,    34,    30,    35,    36,     4,
-       5,     6,     7,     8,     9,    37,    38,    39,    40,    41,
-      47,    10,    30,    30,    12,    29,    25,    42,    13,    25,
-      28,    17,    18,    19,    20,    43,    25,    28,    26,    25,
-      25,    25,    25,    21,    22,    23,    24,    44,    28,    28,
-      11,    28,    28,    28,    28,    10,    26,    26,    25,    26,
-      27,    27,    26,    25,    28,    28,    28,    28,    26,    26,
-      26,    26,    29,    11,    25,    28,    26,    45,    14,    15,
-      16,    30,    46,    25,    25,    25,    25,    30,    30,    29,
-      30,    26,    26,    26,    26
+       0,    42,    43,     0,     3,    44,    39,    45,    25,    47,
+      46,    48,     4,     5,     6,     7,     8,     9,    26,    27,
+      28,    29,    30,    31,    32,    33,    49,    50,    51,    52,
+      54,    60,    61,    62,    63,    64,    10,    39,    39,    12,
+      38,    39,    34,    34,    34,    34,    55,    13,    34,    37,
+      37,    39,    40,    37,    17,    18,    19,    20,    56,    34,
+      37,    35,    35,    35,    35,    35,    34,    34,    34,    34,
+      21,    22,    23,    24,    57,    37,    37,    11,    37,    37,
+      37,    37,    10,    35,    35,    34,    35,    36,    36,    35,
+      34,    37,    37,    37,    37,    35,    35,    35,    35,    38,
+      11,    53,    34,    58,    37,    14,    15,    16,    39,    59,
+      35,    34,    34,    34,    34,    58,    39,    39,    38,    37,
+      39,    40,    35,    35,    35,    35,    35,    35
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    31,    32,    33,    33,    35,    34,    36,    36,    37,
-      37,    37,    37,    37,    38,    39,    40,    42,    41,    43,
-      43,    43,    43,    44,    44,    44,    44,    45,    45,    46,
-      46,    46,    46,    46,    47,    47
+       0,    41,    42,    43,    43,    45,    46,    44,    47,    47,
+      48,    48,    49,    49,    49,    49,    49,    49,    49,    49,
+      49,    50,    51,    53,    52,    55,    54,    56,    56,    56,
+      56,    57,    57,    57,    57,    58,    58,    59,    59,    59,
+      59,    59,    59,    59,    60,    61,    62,    63,    63,    63,
+      63,    63,    63,    63,    64,    64
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     0,     2,     0,     5,     0,     2,     1,
-       1,     1,     1,     1,     6,     2,    10,     0,    14,     4,
-       6,     6,     4,     1,     1,     1,     1,     0,     2,     4,
-       4,     4,     4,     1,     6,     2
+       0,     2,     1,     0,     2,     0,     0,     7,     0,     1,
+       0,     2,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     6,     2,     0,    12,     0,    14,     4,     6,     6,
+       4,     1,     1,     1,     1,     0,     2,     4,     4,     4,
+       4,     4,     4,     1,     2,     4,     4,     1,     1,     1,
+       1,     1,     4,     4,     6,     2
 };
 
 
@@ -1174,166 +1219,259 @@ yyreduce:
   switch (yyn)
     {
   case 5: /* $@1: %empty  */
-#line 57 "src/parser.y"
-      {
-          result->records.emplace_back();
-          result->records.back().name = take((yyvsp[0].sval));
-      }
-#line 1183 "build/parser.cpp"
+#line 60 "src/parser.y"
+      { g_recType = dspf::RecType::NORMAL; }
+#line 1225 "build/parser.cpp"
     break;
 
-  case 14: /* screen_clause: KW_SCREEN KW_SIZE LPAREN INTEGER INTEGER RPAREN  */
-#line 80 "src/parser.y"
+  case 6: /* $@2: %empty  */
+#line 62 "src/parser.y"
+      {
+          result->records.emplace_back();
+          result->records.back().name    = take((yyvsp[-2].sval));
+          result->records.back().recType = g_recType;
+      }
+#line 1235 "build/parser.cpp"
+    break;
+
+  case 9: /* opt_sfl_kw: KW_SUBFILE  */
+#line 73 "src/parser.y"
+                 { g_recType = dspf::RecType::SFL; }
+#line 1241 "build/parser.cpp"
+    break;
+
+  case 21: /* screen_clause: KW_SCREEN KW_SIZE LPAREN INTEGER INTEGER RPAREN  */
+#line 95 "src/parser.y"
       {
           result->records.back().screenRows = (yyvsp[-2].ival);
           result->records.back().screenCols = (yyvsp[-1].ival);
       }
-#line 1192 "build/parser.cpp"
+#line 1250 "build/parser.cpp"
     break;
 
-  case 15: /* title_clause: KW_TITLE STRING  */
-#line 88 "src/parser.y"
+  case 22: /* title_clause: KW_TITLE STRING  */
+#line 103 "src/parser.y"
       {
           result->records.back().title = take((yyvsp[0].sval));
       }
-#line 1200 "build/parser.cpp"
+#line 1258 "build/parser.cpp"
     break;
 
-  case 16: /* literal_clause: KW_LITERAL KW_ROW LPAREN INTEGER RPAREN KW_COL LPAREN INTEGER RPAREN STRING  */
-#line 95 "src/parser.y"
+  case 23: /* $@3: %empty  */
+#line 110 "src/parser.y"
+      { g_keywords.clear(); }
+#line 1264 "build/parser.cpp"
+    break;
+
+  case 24: /* literal_clause: KW_LITERAL KW_ROW LPAREN INTEGER RPAREN KW_COL LPAREN INTEGER RPAREN STRING $@3 opt_field_keywords  */
+#line 112 "src/parser.y"
       {
           dspf::DspfLiteral lit;
-          lit.row  = (yyvsp[-6].ival);
-          lit.col  = (yyvsp[-2].ival);
-          lit.text = take((yyvsp[0].sval));
+          lit.row      = (yyvsp[-8].ival);
+          lit.col      = (yyvsp[-4].ival);
+          lit.text     = take((yyvsp[-2].sval));
+          lit.keywords = g_keywords;
           result->records.back().literals.push_back(std::move(lit));
       }
-#line 1212 "build/parser.cpp"
+#line 1277 "build/parser.cpp"
     break;
 
-  case 17: /* $@2: %empty  */
-#line 106 "src/parser.y"
+  case 25: /* $@4: %empty  */
+#line 124 "src/parser.y"
       {
           g_field = dspf::DspfField{};
           g_field.name = take((yyvsp[0].sval));
           g_keywords.clear();
       }
-#line 1222 "build/parser.cpp"
+#line 1287 "build/parser.cpp"
     break;
 
-  case 18: /* field_clause: KW_FIELD IDENTIFIER $@2 field_type field_usage KW_ROW LPAREN INTEGER RPAREN KW_COL LPAREN INTEGER RPAREN opt_field_keywords  */
-#line 115 "src/parser.y"
+  case 26: /* field_clause: KW_FIELD IDENTIFIER $@4 field_type field_usage KW_ROW LPAREN INTEGER RPAREN KW_COL LPAREN INTEGER RPAREN opt_field_keywords  */
+#line 133 "src/parser.y"
       {
           g_field.row      = (yyvsp[-6].ival);
           g_field.col      = (yyvsp[-2].ival);
           g_field.keywords = g_keywords;
           result->records.back().fields.push_back(g_field);
       }
-#line 1233 "build/parser.cpp"
+#line 1298 "build/parser.cpp"
     break;
 
-  case 19: /* field_type: KW_CHAR LPAREN INTEGER RPAREN  */
-#line 125 "src/parser.y"
+  case 27: /* field_type: KW_CHAR LPAREN INTEGER RPAREN  */
+#line 143 "src/parser.y"
       { g_field.dtype = 'A'; g_field.len = (yyvsp[-1].ival); g_field.dec = 0; }
-#line 1239 "build/parser.cpp"
+#line 1304 "build/parser.cpp"
     break;
 
-  case 20: /* field_type: KW_ZONED LPAREN INTEGER COLON INTEGER RPAREN  */
-#line 127 "src/parser.y"
+  case 28: /* field_type: KW_ZONED LPAREN INTEGER COLON INTEGER RPAREN  */
+#line 145 "src/parser.y"
       { g_field.dtype = 'S'; g_field.len = (yyvsp[-3].ival); g_field.dec = (yyvsp[-1].ival); }
-#line 1245 "build/parser.cpp"
+#line 1310 "build/parser.cpp"
     break;
 
-  case 21: /* field_type: KW_PACKED LPAREN INTEGER COLON INTEGER RPAREN  */
-#line 129 "src/parser.y"
+  case 29: /* field_type: KW_PACKED LPAREN INTEGER COLON INTEGER RPAREN  */
+#line 147 "src/parser.y"
       { g_field.dtype = 'P'; g_field.len = (yyvsp[-3].ival); g_field.dec = (yyvsp[-1].ival); }
-#line 1251 "build/parser.cpp"
+#line 1316 "build/parser.cpp"
     break;
 
-  case 22: /* field_type: KW_INT LPAREN INTEGER RPAREN  */
-#line 131 "src/parser.y"
+  case 30: /* field_type: KW_INT LPAREN INTEGER RPAREN  */
+#line 149 "src/parser.y"
       { g_field.dtype = 'B'; g_field.len = (yyvsp[-1].ival); g_field.dec = 0; }
-#line 1257 "build/parser.cpp"
+#line 1322 "build/parser.cpp"
     break;
 
-  case 23: /* field_usage: KW_INPUT  */
-#line 135 "src/parser.y"
+  case 31: /* field_usage: KW_INPUT  */
+#line 153 "src/parser.y"
                  { g_field.io = 'I'; }
-#line 1263 "build/parser.cpp"
+#line 1328 "build/parser.cpp"
     break;
 
-  case 24: /* field_usage: KW_OUTPUT  */
-#line 136 "src/parser.y"
-                 { g_field.io = 'O'; }
-#line 1269 "build/parser.cpp"
-    break;
-
-  case 25: /* field_usage: KW_BOTH  */
-#line 137 "src/parser.y"
-                 { g_field.io = 'B'; }
-#line 1275 "build/parser.cpp"
-    break;
-
-  case 26: /* field_usage: KW_HIDDEN  */
-#line 138 "src/parser.y"
-                 { g_field.io = 'H'; }
-#line 1281 "build/parser.cpp"
-    break;
-
-  case 29: /* field_keyword: KW_COLOR LPAREN IDENTIFIER RPAREN  */
-#line 148 "src/parser.y"
-      { g_keywords.push_back("COLOR(" + take((yyvsp[-1].sval)) + ")"); }
-#line 1287 "build/parser.cpp"
-    break;
-
-  case 30: /* field_keyword: KW_DSPATR LPAREN IDENTIFIER RPAREN  */
-#line 150 "src/parser.y"
-      { g_keywords.push_back("DSPATR(" + take((yyvsp[-1].sval)) + ")"); }
-#line 1293 "build/parser.cpp"
-    break;
-
-  case 31: /* field_keyword: KW_TEXT LPAREN STRING RPAREN  */
-#line 152 "src/parser.y"
-      { g_keywords.push_back("TEXT(" + take((yyvsp[-1].sval)) + ")"); }
-#line 1299 "build/parser.cpp"
-    break;
-
-  case 32: /* field_keyword: IDENTIFIER LPAREN IDENTIFIER RPAREN  */
+  case 32: /* field_usage: KW_OUTPUT  */
 #line 154 "src/parser.y"
-      { std::string k = take((yyvsp[-3].sval)); g_keywords.push_back(k + "(" + take((yyvsp[-1].sval)) + ")"); }
-#line 1305 "build/parser.cpp"
+                 { g_field.io = 'O'; }
+#line 1334 "build/parser.cpp"
     break;
 
-  case 33: /* field_keyword: IDENTIFIER  */
+  case 33: /* field_usage: KW_BOTH  */
+#line 155 "src/parser.y"
+                 { g_field.io = 'B'; }
+#line 1340 "build/parser.cpp"
+    break;
+
+  case 34: /* field_usage: KW_HIDDEN  */
 #line 156 "src/parser.y"
-      { g_keywords.push_back(take((yyvsp[0].sval))); }
-#line 1311 "build/parser.cpp"
+                 { g_field.io = 'H'; }
+#line 1346 "build/parser.cpp"
     break;
 
-  case 34: /* key_clause: KW_KEY IDENTIFIER KW_INDICATOR LPAREN INTEGER RPAREN  */
-#line 161 "src/parser.y"
+  case 37: /* field_keyword: KW_COLOR LPAREN IDENTIFIER RPAREN  */
+#line 166 "src/parser.y"
+      { g_keywords.push_back("COLOR(" + take((yyvsp[-1].sval)) + ")"); }
+#line 1352 "build/parser.cpp"
+    break;
+
+  case 38: /* field_keyword: KW_DSPATR LPAREN IDENTIFIER RPAREN  */
+#line 168 "src/parser.y"
+      { g_keywords.push_back("DSPATR(" + take((yyvsp[-1].sval)) + ")"); }
+#line 1358 "build/parser.cpp"
+    break;
+
+  case 39: /* field_keyword: KW_TEXT LPAREN STRING RPAREN  */
+#line 170 "src/parser.y"
+      { g_keywords.push_back("TEXT(" + take((yyvsp[-1].sval)) + ")"); }
+#line 1364 "build/parser.cpp"
+    break;
+
+  case 40: /* field_keyword: IDENTIFIER LPAREN IDENTIFIER RPAREN  */
+#line 172 "src/parser.y"
+      { std::string k = take((yyvsp[-3].sval)); g_keywords.push_back(k + "(" + take((yyvsp[-1].sval)) + ")"); }
+#line 1370 "build/parser.cpp"
+    break;
+
+  case 41: /* field_keyword: IDENTIFIER LPAREN INTEGER RPAREN  */
+#line 174 "src/parser.y"
+      { std::string k = take((yyvsp[-3].sval)); g_keywords.push_back(k + "(" + std::to_string((yyvsp[-1].ival)) + ")"); }
+#line 1376 "build/parser.cpp"
+    break;
+
+  case 42: /* field_keyword: IDENTIFIER LPAREN INDICATOR_REF RPAREN  */
+#line 176 "src/parser.y"
+      { std::string k = take((yyvsp[-3].sval)); g_keywords.push_back(k + "(" + take((yyvsp[-1].sval)) + ")"); }
+#line 1382 "build/parser.cpp"
+    break;
+
+  case 43: /* field_keyword: IDENTIFIER  */
+#line 178 "src/parser.y"
+      { g_keywords.push_back(take((yyvsp[0].sval))); }
+#line 1388 "build/parser.cpp"
+    break;
+
+  case 44: /* sflctl_clause: KW_SFLCTL IDENTIFIER  */
+#line 183 "src/parser.y"
+      { result->records.back().recType    = dspf::RecType::SFLCTL;
+        result->records.back().sflCtlFor  = take((yyvsp[0].sval)); }
+#line 1395 "build/parser.cpp"
+    break;
+
+  case 45: /* sflpag_clause: KW_SFLPAG LPAREN INTEGER RPAREN  */
+#line 189 "src/parser.y"
+      { result->records.back().sflPag = (yyvsp[-1].ival); }
+#line 1401 "build/parser.cpp"
+    break;
+
+  case 46: /* sflsiz_clause: KW_SFLSIZ LPAREN INTEGER RPAREN  */
+#line 194 "src/parser.y"
+      { result->records.back().sflSiz = (yyvsp[-1].ival); }
+#line 1407 "build/parser.cpp"
+    break;
+
+  case 47: /* rec_kw_clause: KW_OVERLAY  */
+#line 198 "src/parser.y"
+                  { result->records.back().keywords.push_back("OVERLAY"); }
+#line 1413 "build/parser.cpp"
+    break;
+
+  case 48: /* rec_kw_clause: KW_NOCLEAR  */
+#line 199 "src/parser.y"
+                  { result->records.back().keywords.push_back("NOCLEAR"); }
+#line 1419 "build/parser.cpp"
+    break;
+
+  case 49: /* rec_kw_clause: KW_ALARM  */
+#line 200 "src/parser.y"
+                  { result->records.back().keywords.push_back("ALARM"); }
+#line 1425 "build/parser.cpp"
+    break;
+
+  case 50: /* rec_kw_clause: KW_NOINPUT  */
+#line 201 "src/parser.y"
+                  { result->records.back().keywords.push_back("NOINPUT"); }
+#line 1431 "build/parser.cpp"
+    break;
+
+  case 51: /* rec_kw_clause: KW_PROTECT  */
+#line 202 "src/parser.y"
+                  { result->records.back().keywords.push_back("PROTECT"); }
+#line 1437 "build/parser.cpp"
+    break;
+
+  case 52: /* rec_kw_clause: KW_PROTECT LPAREN INDICATOR_REF RPAREN  */
+#line 204 "src/parser.y"
+      { result->records.back().keywords.push_back("PROTECT(" + take((yyvsp[-1].sval)) + ")"); }
+#line 1443 "build/parser.cpp"
+    break;
+
+  case 53: /* rec_kw_clause: KW_PROTECT LPAREN IDENTIFIER RPAREN  */
+#line 206 "src/parser.y"
+      { result->records.back().keywords.push_back("PROTECT(" + take((yyvsp[-1].sval)) + ")"); }
+#line 1449 "build/parser.cpp"
+    break;
+
+  case 54: /* key_clause: KW_KEY IDENTIFIER KW_INDICATOR LPAREN INTEGER RPAREN  */
+#line 211 "src/parser.y"
       {
           dspf::DspfKey k;
           k.key       = take((yyvsp[-4].sval));
           k.indicator = (yyvsp[-1].ival);
           result->records.back().keys.push_back(std::move(k));
       }
-#line 1322 "build/parser.cpp"
+#line 1460 "build/parser.cpp"
     break;
 
-  case 35: /* key_clause: KW_KEY IDENTIFIER  */
-#line 168 "src/parser.y"
+  case 55: /* key_clause: KW_KEY IDENTIFIER  */
+#line 218 "src/parser.y"
       {
           dspf::DspfKey k;
           k.key       = take((yyvsp[0].sval));
           k.indicator = 0;
           result->records.back().keys.push_back(std::move(k));
       }
-#line 1333 "build/parser.cpp"
+#line 1471 "build/parser.cpp"
     break;
 
 
-#line 1337 "build/parser.cpp"
+#line 1475 "build/parser.cpp"
 
       default: break;
     }
@@ -1526,7 +1664,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 176 "src/parser.y"
+#line 226 "src/parser.y"
 
 
 void yyerror(dspf::DspfFile* /*result*/, const char* msg) {
