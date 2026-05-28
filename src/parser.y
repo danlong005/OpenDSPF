@@ -39,6 +39,7 @@ static dspf::RecType    g_recType;
 %token KW_CHAR KW_ZONED KW_PACKED KW_INT
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
 %token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
+%token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT
 %token LPAREN RPAREN COLON
 %token <ival> INTEGER
 %token <sval> STRING IDENTIFIER INDICATOR_REF
@@ -86,6 +87,7 @@ record_item
     | sflctl_clause
     | sflpag_clause
     | sflsiz_clause
+    | rec_kw_clause
     ;
 
 screen_clause
@@ -190,6 +192,18 @@ sflpag_clause
 sflsiz_clause
     : KW_SFLSIZ LPAREN INTEGER RPAREN
       { result->records.back().sflSiz = $3; }
+    ;
+
+rec_kw_clause
+    : KW_OVERLAY  { result->records.back().keywords.push_back("OVERLAY"); }
+    | KW_NOCLEAR  { result->records.back().keywords.push_back("NOCLEAR"); }
+    | KW_ALARM    { result->records.back().keywords.push_back("ALARM"); }
+    | KW_NOINPUT  { result->records.back().keywords.push_back("NOINPUT"); }
+    | KW_PROTECT  { result->records.back().keywords.push_back("PROTECT"); }
+    | KW_PROTECT LPAREN INDICATOR_REF RPAREN
+      { result->records.back().keywords.push_back("PROTECT(" + take($3) + ")"); }
+    | KW_PROTECT LPAREN IDENTIFIER RPAREN
+      { result->records.back().keywords.push_back("PROTECT(" + take($3) + ")"); }
     ;
 
 key_clause

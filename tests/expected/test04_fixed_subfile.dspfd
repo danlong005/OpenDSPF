@@ -6,6 +6,7 @@
       "type": "sfl",
       "title": "EMPSFL",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
       ],
       "fields": [
@@ -51,6 +52,7 @@
       "sflsiz": 200,
       "title": "EMPCTL",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
       ],
       "fields": [

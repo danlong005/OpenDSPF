@@ -6,6 +6,7 @@
       "type": "normal",
       "title": "Customer Information System",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
         { "row": 1, "col": 25, "text": "CUSTOMER INFORMATION SYSTEM", "keywords": [] },
         { "row": 3, "col": 2, "text": "Select one of the following:", "keywords": [] },
@@ -37,6 +38,7 @@
       "type": "normal",
       "title": "Customer Display",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
         { "row": 1, "col": 30, "text": "CUSTOMER DISPLAY", "keywords": [] },
         { "row": 3, "col": 2, "text": "Customer Number:", "keywords": [] },

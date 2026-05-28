@@ -61,6 +61,12 @@ std::string emitJSON(const DspfFile& file) {
         }
         o << "      \"title\": " << jsonStr(rec.title.empty() ? rec.name : rec.title) << ",\n";
         o << "      \"screen\": { \"rows\": " << rec.screenRows << ", \"cols\": " << rec.screenCols << " },\n";
+        o << "      \"keywords\": [";
+        for (size_t ki = 0; ki < rec.keywords.size(); ki++) {
+            o << jsonStr(rec.keywords[ki]);
+            if (ki + 1 < rec.keywords.size()) o << ", ";
+        }
+        o << "],\n";
 
         // Literals
         o << "      \"literals\": [\n";

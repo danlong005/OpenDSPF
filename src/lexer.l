@@ -68,6 +68,12 @@ COMMENT  "//"[^\n]*
 "SFLPAG"        { return KW_SFLPAG; }
 "SFLSIZ"        { return KW_SFLSIZ; }
 
+"OVERLAY"       { return KW_OVERLAY; }
+"NOCLEAR"       { return KW_NOCLEAR; }
+"ALARM"         { return KW_ALARM; }
+"NOINPUT"       { return KW_NOINPUT; }
+"PROTECT"       { return KW_PROTECT; }
+
 N?\*IN[0-9]+    { yylval.sval = strdup(yytext); return INDICATOR_REF; }
 {INTEGER}       { yylval.ival = atoi(yytext); return INTEGER; }
 {STRING}        { yylval.sval = strip_quotes(yytext); return STRING; }

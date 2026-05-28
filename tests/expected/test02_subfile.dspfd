@@ -6,6 +6,7 @@
       "type": "sfl",
       "title": "CUSTSFL",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
       ],
       "fields": [
@@ -51,6 +52,7 @@
       "sflsiz": 100,
       "title": "Customer List",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
         { "row": 1, "col": 30, "text": "CUSTOMER LIST", "keywords": [] },
         { "row": 4, "col": 2, "text": "Number", "keywords": [] },

@@ -181,6 +181,19 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                     if (parseCFCA(kw, keyName, ind)) {
                         DspfKey k; k.key = keyName; k.indicator = ind;
                         rec.keys.push_back(std::move(k));
+                    } else {
+                        // Record-level runtime keywords
+                        static const char* const recRtKws[] = {
+                            "PROTECT", "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT", nullptr
+                        };
+                        for (int ri = 0; recRtKws[ri]; ri++) {
+                            size_t klen = strlen(recRtKws[ri]);
+                            if (kw.rfind(recRtKws[ri], 0) == 0 &&
+                                (kw.size() == klen || kw[klen] == '(')) {
+                                rec.keywords.push_back(kw);
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -225,6 +238,18 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                         if (parseCFCA(kw, keyName, ind)) {
                             DspfKey k; k.key = keyName; k.indicator = ind;
                             file.records.back().keys.push_back(std::move(k));
+                        } else {
+                            static const char* const recRtKws[] = {
+                                "PROTECT", "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT", nullptr
+                            };
+                            for (int ri = 0; recRtKws[ri]; ri++) {
+                                size_t klen = strlen(recRtKws[ri]);
+                                if (kw.rfind(recRtKws[ri], 0) == 0 &&
+                                    (kw.size() == klen || kw[klen] == '(')) {
+                                    file.records.back().keywords.push_back(kw);
+                                    break;
+                                }
+                            }
                         }
                     }
                 }

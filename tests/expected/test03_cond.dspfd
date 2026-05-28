@@ -6,6 +6,7 @@
       "type": "normal",
       "title": "Order Display",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
         { "row": 1, "col": 30, "text": "ORDER DISPLAY", "keywords": [] },
         { "row": 3, "col": 2, "text": "Order Number:", "keywords": [] },

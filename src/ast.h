@@ -41,6 +41,7 @@ struct DspfRecord {
     int screenRows = 24;
     int screenCols = 80;
     std::string title;
+    std::vector<std::string> keywords; // e.g. "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT", "PROTECT(*IN99)"
     std::vector<DspfLiteral> literals;
     std::vector<DspfField>   fields;
     std::vector<DspfKey>     keys;

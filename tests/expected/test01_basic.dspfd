@@ -6,6 +6,7 @@
       "type": "normal",
       "title": "Main Menu",
       "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
       "literals": [
         { "row": 1, "col": 25, "text": "MAIN MENU", "keywords": [] },
         { "row": 3, "col": 2, "text": "Select an option:", "keywords": [] },
