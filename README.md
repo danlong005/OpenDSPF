@@ -58,6 +58,33 @@ rpgc myprog.rpgle
 
 ---
 
+## Quick Start — DDS A-Spec (fixed-format)
+
+If you have existing IBM i DDS source members, `dspfc` reads them directly. DDS uses fixed columns: the form type (`A`) in column 6, `R` / `K` in column 17 to mark record/key lines, field lengths and types in columns 30–38, row/column in 39–44, and keywords starting at column 45.
+
+```dds
+     A*  Customer menu — IBM i DDS A-spec
+     A          R MAINMENU                  TEXT('Customer Information System')
+     A                                  1 25'CUSTOMER INFORMATION SYSTEM'
+     A                                  3  2'Select one of the following:'
+     A                                  5  5'1. Customer Inquiry'
+     A                                  6  5'2. Add Customer'
+     A                                  7  5'3. Delete Customer'
+     A                                  9  2'Option . . .'
+     A            OPTION         1A  I  9 16
+     A                                 24  2'F3=Exit   F12=Cancel'
+     A          K F3
+     A          K F12
+```
+
+```bash
+dspfc CUSTMENU.dds
+```
+
+Both formats produce the same `.dspfd` JSON descriptor and `_dspf.h` header — the RPG program is identical either way.
+
+---
+
 ## Usage
 
 ```
