@@ -1,6 +1,6 @@
 #include "codegen.h"
+#include <set>
 #include <sstream>
-#include <algorithm>
 #include <cctype>
 
 namespace dspf {
@@ -148,8 +148,10 @@ std::string emitHeader(const DspfFile& file) {
 
     for (const DspfRecord& rec : file.records) {
         o << "struct " << rec.name << "_buf {\n";
+        std::set<std::string> emitted;
         for (const DspfField& f : rec.fields) {
             if (f.io == 'H') continue; // hidden fields are not in the buffer
+            if (!emitted.insert(f.name).second) continue; // duplicate display entry
             std::string ct = cppFieldType(f);
             if (ct == "std::string") {
                 // Fixed char array (len + 1 for NUL)

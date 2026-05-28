@@ -34,12 +34,12 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ### Numeric field display
 - [x] Right-align numeric field values (`S`, `P`, `B`, `F` types) on output
-- [ ] Zero-pad to declared field length (no EDTCDE/EDTWRD)
-- [ ] Show decimal point at correct position when no edit code is applied
+- [x] Zero-pad to declared field length (no EDTCDE/EDTWRD) — IBM i style `001234.56`
+- [x] Decimal point at correct position when no edit code is applied
 
 ### Auto-advance on field fill
 - [x] Cursor automatically moves to next field when current field is full
-- [ ] `AUTO` keyword (explicit auto-advance attribute)
+- [ ] `AUTO` keyword (explicit auto-advance attribute — behavior already default)
 
 ### REFFLD — reference field definitions
 - (not supported — skipped by design)
@@ -49,8 +49,8 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] `PROTECT(*INxx)` — indicator-conditioned write-protect
 - [x] Runtime: editable field list suppressed when PROTECT is active
 
-### Error indicators and highlighting
-- [ ] Field-level conditional DSPATR via option indicators (two entries, same field name, different indicators)
+### Error indicators and highlighting ✅
+- [x] Field-level conditional DSPATR via option indicators — same field appears twice with mutually exclusive COND; duplicate buffer-slot sharing in runtime; header deduplication in codegen
 - [ ] `ERRSFL` — route error messages to subfile
 
 ---

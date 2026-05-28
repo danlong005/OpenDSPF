@@ -60,6 +60,9 @@ run_test "test03: conditioning indicators (COND(*INxx) on fields and literals)" 
 run_test "test04: fixed-format subfile (SFL/SFLCTL/option indicators)" \
     "$TESTDIR/test04_fixed_subfile.dspf"   "$EXPECTED/test04_fixed_subfile.dspfd"
 
+run_test "test06: conditional DSPATR (duplicate field, mutually exclusive COND)" \
+    "$TESTDIR/test06_cond_dspatr.dspf"     "$EXPECTED/test06_cond_dspatr.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

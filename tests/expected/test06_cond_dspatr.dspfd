@@ -1,0 +1,53 @@
+{
+  "name": "test06_cond_dspatr",
+  "records": [
+    {
+      "name": "ORDENTRY",
+      "type": "normal",
+      "title": "Order Entry",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 30, "text": "ORDER ENTRY", "keywords": [] },
+        { "row": 3, "col": 2, "text": "Order No:", "keywords": [] },
+        { "row": 5, "col": 2, "text": "Amount:", "keywords": [] },
+        { "row": 24, "col": 2, "text": "F3=Exit", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "ORDNO",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "B",
+          "row": 3,
+          "col": 12,
+          "keywords": ["COND(N*IN99)"]
+        },
+        {
+          "name": "ORDNO",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "B",
+          "row": 3,
+          "col": 12,
+          "keywords": ["DSPATR(RI)", "COND(*IN99)"]
+        },
+        {
+          "name": "AMOUNT",
+          "type": "S",
+          "len": 9,
+          "dec": 2,
+          "io": "O",
+          "row": 5,
+          "col": 10,
+          "keywords": []
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}
