@@ -1,0 +1,22 @@
+**DSPF
+
+// test03 — conditioning indicators: COND(*INxx) on fields and literals
+
+RECORD ORDRDSP
+  SCREEN SIZE(24 80)
+  TITLE 'Order Display'
+
+  LITERAL  ROW(1)  COL(30)  'ORDER DISPLAY'
+  LITERAL  ROW(3)  COL(2)   'Order Number:'
+  FIELD ORDNO    CHAR(10)   BOTH    ROW(3)  COL(17)
+
+  // ERRMSG only shown when *IN90 is on
+  FIELD ERRMSG   CHAR(78)   OUTPUT  ROW(24) COL(2)   COLOR(RED) COND(*IN90)
+
+  // Save button label only shown when *IN50 is on
+  LITERAL  ROW(22) COL(2)  'F6=Save'  COND(*IN50)
+
+  KEY F3   INDICATOR(03)
+  KEY F6   INDICATOR(06)
+  KEY F12  INDICATOR(12)
+END-RECORD

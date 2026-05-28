@@ -1,0 +1,21 @@
+     A*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     A* test04 — DDS A-spec subfile with conditioning
+     A*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     A          R EMPSFL                      SFL
+     A            EMPNO          6A     O   6  2
+     A            EMPNAME       30A     O   6 10
+     A            SALARY         9S 2   O   6 42  EDTCDE(1)
+     A          R EMPCTL                      SFLCTL(EMPSFL)
+     A                                        SFLPAG(15)
+     A                                        SFLSIZ(200)
+     A                                        TEXT('Employee List')
+     A  01                                    SFLDSP
+     A                                        SFLDSPC
+     A            SFLRCDNBR      4S 0  H
+     A                                   1 30'EMPLOYEE LIST'
+     A                                   3  2'Number'
+     A                                   3 10'Name'
+     A                                   3 42'Salary'
+     A          K F3                          IND(03)
+     A          K F6                          IND(06)
+     A          K F12                         IND(12)

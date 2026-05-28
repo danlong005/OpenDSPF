@@ -1,0 +1,43 @@
+{
+  "name": "test03_cond",
+  "records": [
+    {
+      "name": "ORDRDSP",
+      "type": "normal",
+      "title": "Order Display",
+      "screen": { "rows": 24, "cols": 80 },
+      "literals": [
+        { "row": 1, "col": 30, "text": "ORDER DISPLAY", "keywords": [] },
+        { "row": 3, "col": 2, "text": "Order Number:", "keywords": [] },
+        { "row": 22, "col": 2, "text": "F6=Save", "keywords": ["COND(*IN50)"] }
+      ],
+      "fields": [
+        {
+          "name": "ORDNO",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "B",
+          "row": 3,
+          "col": 17,
+          "keywords": []
+        },
+        {
+          "name": "ERRMSG",
+          "type": "A",
+          "len": 78,
+          "dec": 0,
+          "io": "O",
+          "row": 24,
+          "col": 2,
+          "keywords": ["COLOR(RED)", "COND(*IN90)"]
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 },
+        { "key": "F6", "indicator": 6 },
+        { "key": "F12", "indicator": 12 }
+      ]
+    }
+  ]
+}

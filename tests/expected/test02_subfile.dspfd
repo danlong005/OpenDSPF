@@ -1,0 +1,68 @@
+{
+  "name": "test02_subfile",
+  "records": [
+    {
+      "name": "CUSTSFL",
+      "type": "sfl",
+      "title": "CUSTSFL",
+      "screen": { "rows": 24, "cols": 80 },
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "CUSTNO",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "O",
+          "row": 6,
+          "col": 2,
+          "keywords": []
+        },
+        {
+          "name": "CUSTNAME",
+          "type": "A",
+          "len": 30,
+          "dec": 0,
+          "io": "O",
+          "row": 6,
+          "col": 14,
+          "keywords": []
+        },
+        {
+          "name": "CUSTBAL",
+          "type": "S",
+          "len": 9,
+          "dec": 2,
+          "io": "O",
+          "row": 6,
+          "col": 46,
+          "keywords": ["EDTCDE(1)"]
+        }
+      ],
+      "keys": [
+      ]
+    },
+    {
+      "name": "CUSTCTL",
+      "type": "sflctl",
+      "sfl": "CUSTSFL",
+      "sflpag": 10,
+      "sflsiz": 100,
+      "title": "Customer List",
+      "screen": { "rows": 24, "cols": 80 },
+      "literals": [
+        { "row": 1, "col": 30, "text": "CUSTOMER LIST", "keywords": [] },
+        { "row": 4, "col": 2, "text": "Number", "keywords": [] },
+        { "row": 4, "col": 14, "text": "Name", "keywords": [] },
+        { "row": 4, "col": 46, "text": "Balance", "keywords": [] }
+      ],
+      "fields": [
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 },
+        { "key": "F12", "indicator": 12 }
+      ]
+    }
+  ]
+}

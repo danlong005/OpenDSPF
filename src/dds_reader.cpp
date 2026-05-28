@@ -49,6 +49,22 @@ static std::string stripQuotes(const std::string& s) {
     return t;
 }
 
+// Uppercase a keyword string but preserve content inside single quotes.
+static std::string upperKw(const std::string& s) {
+    std::string r;
+    bool inQ = false;
+    for (size_t i = 0; i < s.size(); i++) {
+        if (!inQ && s[i] == '\'') { inQ = true;  r += s[i]; }
+        else if (inQ && s[i] == '\'' && i+1 < s.size() && s[i+1] == '\'') {
+            r += "''"; i++;  // escaped quote inside string
+        }
+        else if (inQ && s[i] == '\'') { inQ = false; r += s[i]; }
+        else if (!inQ) { r += (char)toupper((unsigned char)s[i]); }
+        else            { r += s[i]; }
+    }
+    return r;
+}
+
 // Parse keyword string at cols 44+ (0-based) e.g. "COLOR(RED) DSPATR(HI) TEXT('foo')"
 static std::vector<std::string> parseKeywords(const std::string& kwstr) {
     std::vector<std::string> result;
@@ -88,7 +104,7 @@ static std::vector<std::string> parseKeywords(const std::string& kwstr) {
             kw += s.substr(i, j - i);
             i = j;
         }
-        if (!kw.empty()) result.push_back(toUpper(kw));
+        if (!kw.empty()) result.push_back(upperKw(kw));
     }
     return result;
 }
@@ -121,10 +137,19 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
             if (recname.empty()) continue;
             DspfRecord rec;
             rec.name = recname;
-            // Check for TEXT keyword in functions area
+            // Check keywords in functions area (cols 44+)
             std::string funcs = cols(line, 44, 80);
             for (auto& kw : parseKeywords(funcs)) {
-                if (kw.rfind("TEXT(", 0) == 0) {
+                if (kw == "SFL") {
+                    rec.recType = RecType::SFL;
+                } else if (kw.rfind("SFLCTL(", 0) == 0) {
+                    rec.recType    = RecType::SFLCTL;
+                    rec.sflCtlFor  = kw.substr(7, kw.size() - 8);
+                } else if (kw.rfind("SFLPAG(", 0) == 0) {
+                    rec.sflPag = parseNum(kw.substr(7, kw.size() - 8));
+                } else if (kw.rfind("SFLSIZ(", 0) == 0) {
+                    rec.sflSiz = parseNum(kw.substr(7, kw.size() - 8));
+                } else if (kw.rfind("TEXT(", 0) == 0) {
                     std::string inner = kw.substr(5, kw.size() - 6);
                     rec.title = stripQuotes(inner);
                 }
@@ -160,6 +185,21 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
         } else {
             if (file.records.empty()) continue;
 
+            // Parse option indicator from cols 7-9 (0-based) → COND keyword
+            std::string condKw;
+            {
+                std::string opt = trim(cols(line, 7, 10));
+                if (!opt.empty() && (isdigit((unsigned char)opt[0]) ||
+                                     opt[0]=='N' || opt[0]=='n')) {
+                    bool neg = (opt[0]=='N' || opt[0]=='n');
+                    std::string digits = trim(neg ? opt.substr(1) : opt);
+                    if (digits.size() >= 2 && isdigit((unsigned char)digits[0])) {
+                        condKw = std::string(neg ? "COND(N*IN" : "COND(*IN")
+                                 + digits.substr(0,2) + ")";
+                    }
+                }
+            }
+
             std::string fieldname = toUpper(trim(cols(line, 16, 26)));
             std::string lenstr    = trim(cols(line, 29, 34));
             char dtype            = (char)toupper((unsigned char)line[34]);
@@ -169,7 +209,16 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
             int  col              = parseNum(cols(line, 41, 44));
             std::string funcs     = cols(line, 44, 80);
 
-            if (row == 0 && col == 0 && fieldname.empty()) continue;
+            // Keyword-only lines (no field name, no position): SFLPAG, SFLSIZ, etc.
+            if (row == 0 && col == 0 && fieldname.empty()) {
+                for (auto& kw : parseKeywords(funcs)) {
+                    if (kw.rfind("SFLPAG(", 0) == 0)
+                        file.records.back().sflPag = parseNum(kw.substr(7, kw.size()-8));
+                    else if (kw.rfind("SFLSIZ(", 0) == 0)
+                        file.records.back().sflSiz = parseNum(kw.substr(7, kw.size()-8));
+                }
+                continue;
+            }
 
             if (!fieldname.empty() && !lenstr.empty()) {
                 // Data field
@@ -182,21 +231,26 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                 f.row   = row;
                 f.col   = col;
                 f.keywords = parseKeywords(funcs);
+                if (!condKw.empty()) f.keywords.push_back(condKw);
                 file.records.back().fields.push_back(std::move(f));
             } else if (row > 0 && col > 0) {
                 // Literal: text appears in functions area as a quoted string
                 std::string literalText;
+                std::vector<std::string> litKws;
                 for (auto& kw : parseKeywords(funcs)) {
                     if (!kw.empty() && kw.front() == '\'') {
-                        literalText = stripQuotes(kw);
-                        break;
+                        if (literalText.empty()) literalText = stripQuotes(kw);
+                    } else {
+                        litKws.push_back(kw);
                     }
                 }
+                if (!condKw.empty()) litKws.push_back(condKw);
                 if (!literalText.empty()) {
                     DspfLiteral lit;
-                    lit.row  = row;
-                    lit.col  = col;
-                    lit.text = literalText;
+                    lit.row      = row;
+                    lit.col      = col;
+                    lit.text     = literalText;
+                    lit.keywords = std::move(litKws);
                     file.records.back().literals.push_back(std::move(lit));
                 }
             }

@@ -49,6 +49,16 @@ std::string emitJSON(const DspfFile& file) {
         const DspfRecord& rec = file.records[ri];
         o << "    {\n";
         o << "      \"name\": " << jsonStr(rec.name) << ",\n";
+        // Record type
+        std::string recTypeStr = "normal";
+        if (rec.recType == RecType::SFL)    recTypeStr = "sfl";
+        if (rec.recType == RecType::SFLCTL) recTypeStr = "sflctl";
+        o << "      \"type\": " << jsonStr(recTypeStr) << ",\n";
+        if (rec.recType == RecType::SFLCTL) {
+            o << "      \"sfl\": " << jsonStr(rec.sflCtlFor) << ",\n";
+            o << "      \"sflpag\": " << rec.sflPag << ",\n";
+            o << "      \"sflsiz\": " << rec.sflSiz << ",\n";
+        }
         o << "      \"title\": " << jsonStr(rec.title.empty() ? rec.name : rec.title) << ",\n";
         o << "      \"screen\": { \"rows\": " << rec.screenRows << ", \"cols\": " << rec.screenCols << " },\n";
 
@@ -58,7 +68,13 @@ std::string emitJSON(const DspfFile& file) {
             const DspfLiteral& lit = rec.literals[i];
             o << "        { \"row\": " << lit.row
               << ", \"col\": " << lit.col
-              << ", \"text\": " << jsonStr(lit.text) << " }";
+              << ", \"text\": " << jsonStr(lit.text)
+              << ", \"keywords\": [";
+            for (size_t ki = 0; ki < lit.keywords.size(); ki++) {
+                o << jsonStr(lit.keywords[ki]);
+                if (ki + 1 < lit.keywords.size()) o << ", ";
+            }
+            o << "] }";
             if (i + 1 < rec.literals.size()) o << ",";
             o << "\n";
         }

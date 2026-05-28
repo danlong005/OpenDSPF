@@ -1,0 +1,19 @@
+**DSPF
+
+// test01 — basic single-record display file: literals, fields, keys, colors
+
+RECORD MAINMENU
+  SCREEN SIZE(24 80)
+  TITLE 'Main Menu'
+
+  LITERAL  ROW(1)  COL(25)  'MAIN MENU'
+  LITERAL  ROW(3)  COL(2)   'Select an option:'
+  LITERAL  ROW(5)  COL(4)   '1. Option One'
+  LITERAL  ROW(6)  COL(4)   '2. Option Two'
+  LITERAL  ROW(9)  COL(2)   'Option:'
+  FIELD OPTION   CHAR(1)    INPUT   ROW(9)  COL(10)
+  FIELD ERRMSG   CHAR(78)   OUTPUT  ROW(24) COL(2)   COLOR(RED)
+
+  LITERAL  ROW(23) COL(2)   'F3=Exit'
+  KEY F3   INDICATOR(03)
+END-RECORD

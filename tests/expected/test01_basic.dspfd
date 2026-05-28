@@ -1,0 +1,44 @@
+{
+  "name": "test01_basic",
+  "records": [
+    {
+      "name": "MAINMENU",
+      "type": "normal",
+      "title": "Main Menu",
+      "screen": { "rows": 24, "cols": 80 },
+      "literals": [
+        { "row": 1, "col": 25, "text": "MAIN MENU", "keywords": [] },
+        { "row": 3, "col": 2, "text": "Select an option:", "keywords": [] },
+        { "row": 5, "col": 4, "text": "1. Option One", "keywords": [] },
+        { "row": 6, "col": 4, "text": "2. Option Two", "keywords": [] },
+        { "row": 9, "col": 2, "text": "Option:", "keywords": [] },
+        { "row": 23, "col": 2, "text": "F3=Exit", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "OPTION",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 9,
+          "col": 10,
+          "keywords": []
+        },
+        {
+          "name": "ERRMSG",
+          "type": "A",
+          "len": 78,
+          "dec": 0,
+          "io": "O",
+          "row": 24,
+          "col": 2,
+          "keywords": ["COLOR(RED)"]
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

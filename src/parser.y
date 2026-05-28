@@ -24,6 +24,7 @@ static std::string take(char* s) { std::string r(s ? s : ""); free(s); return r;
 // Globals for accumulating the current field being parsed
 static dspf::DspfField  g_field;
 static std::vector<std::string> g_keywords;
+static dspf::RecType    g_recType;
 %}
 
 %parse-param { dspf::DspfFile* result }
@@ -37,9 +38,10 @@ static std::vector<std::string> g_keywords;
 %token KW_ROW KW_COL KW_SIZE KW_INDICATOR KW_COLOR KW_DSPATR KW_TEXT
 %token KW_CHAR KW_ZONED KW_PACKED KW_INT
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
+%token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
 %token LPAREN RPAREN COLON
 %token <ival> INTEGER
-%token <sval> STRING IDENTIFIER
+%token <sval> STRING IDENTIFIER INDICATOR_REF
 
 %%
 
@@ -54,12 +56,20 @@ record_list
 
 record
     : KW_RECORD IDENTIFIER
+      { g_recType = dspf::RecType::NORMAL; }
+      opt_sfl_kw
       {
           result->records.emplace_back();
-          result->records.back().name = take($2);
+          result->records.back().name    = take($2);
+          result->records.back().recType = g_recType;
       }
       record_body
       KW_END_RECORD
+    ;
+
+opt_sfl_kw
+    : /* empty */
+    | KW_SUBFILE { g_recType = dspf::RecType::SFL; }
     ;
 
 record_body
@@ -73,6 +83,9 @@ record_item
     | literal_clause
     | field_clause
     | key_clause
+    | sflctl_clause
+    | sflpag_clause
+    | sflsiz_clause
     ;
 
 screen_clause
@@ -92,11 +105,14 @@ title_clause
 
 literal_clause
     : KW_LITERAL KW_ROW LPAREN INTEGER RPAREN KW_COL LPAREN INTEGER RPAREN STRING
+      { g_keywords.clear(); }
+      opt_field_keywords
       {
           dspf::DspfLiteral lit;
-          lit.row  = $4;
-          lit.col  = $8;
-          lit.text = take($10);
+          lit.row      = $4;
+          lit.col      = $8;
+          lit.text     = take($10);
+          lit.keywords = g_keywords;
           result->records.back().literals.push_back(std::move(lit));
       }
     ;
@@ -152,8 +168,28 @@ field_keyword
       { g_keywords.push_back("TEXT(" + take($3) + ")"); }
     | IDENTIFIER LPAREN IDENTIFIER RPAREN
       { std::string k = take($1); g_keywords.push_back(k + "(" + take($3) + ")"); }
+    | IDENTIFIER LPAREN INTEGER RPAREN
+      { std::string k = take($1); g_keywords.push_back(k + "(" + std::to_string($3) + ")"); }
+    | IDENTIFIER LPAREN INDICATOR_REF RPAREN
+      { std::string k = take($1); g_keywords.push_back(k + "(" + take($3) + ")"); }
     | IDENTIFIER
       { g_keywords.push_back(take($1)); }
+    ;
+
+sflctl_clause
+    : KW_SFLCTL IDENTIFIER
+      { result->records.back().recType    = dspf::RecType::SFLCTL;
+        result->records.back().sflCtlFor  = take($2); }
+    ;
+
+sflpag_clause
+    : KW_SFLPAG LPAREN INTEGER RPAREN
+      { result->records.back().sflPag = $3; }
+    ;
+
+sflsiz_clause
+    : KW_SFLSIZ LPAREN INTEGER RPAREN
+      { result->records.back().sflSiz = $3; }
     ;
 
 key_clause

@@ -6,6 +6,9 @@
 
 namespace dspf {
 
+// Record format type
+enum class RecType { NORMAL, SFL, SFLCTL };
+
 struct DspfField {
     std::string name;
     char  dtype = 'A';  // A=char, S=zoned, P=packed, B=binary, F=float
@@ -14,13 +17,14 @@ struct DspfField {
     char  io    = 'O';  // I=input, O=output, B=both, H=hidden
     int   row   = 0;
     int   col   = 0;
-    std::vector<std::string> keywords; // e.g. "COLOR(RED)", "DSPATR(HI)"
+    std::vector<std::string> keywords; // e.g. "COLOR(RED)", "DSPATR(HI)", "COND(*IN03)"
 };
 
 struct DspfLiteral {
     int row = 0;
     int col = 0;
     std::string text;
+    std::vector<std::string> keywords; // e.g. "COND(*IN01)"
 };
 
 struct DspfKey {
@@ -30,6 +34,10 @@ struct DspfKey {
 
 struct DspfRecord {
     std::string name;
+    RecType     recType    = RecType::NORMAL;
+    std::string sflCtlFor; // SFLCTL: name of associated SFL record
+    int         sflPag    = 0;
+    int         sflSiz    = 0;
     int screenRows = 24;
     int screenCols = 80;
     std::string title;

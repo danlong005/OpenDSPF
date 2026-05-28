@@ -1,0 +1,75 @@
+{
+  "name": "test04_dds_subfile",
+  "records": [
+    {
+      "name": "EMPSFL",
+      "type": "sfl",
+      "title": "EMPSFL",
+      "screen": { "rows": 24, "cols": 80 },
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "EMPNO",
+          "type": "A",
+          "len": 6,
+          "dec": 0,
+          "io": "O",
+          "row": 0,
+          "col": 0,
+          "keywords": ["6", "2"]
+        },
+        {
+          "name": "EMPNAME",
+          "type": "A",
+          "len": 30,
+          "dec": 0,
+          "io": "O",
+          "row": 0,
+          "col": 0,
+          "keywords": ["6", "10"]
+        },
+        {
+          "name": "SALARY",
+          "type": "S",
+          "len": 9,
+          "dec": 2,
+          "io": "O",
+          "row": 0,
+          "col": 0,
+          "keywords": ["6", "42", "EDTCDE(1)"]
+        }
+      ],
+      "keys": [
+      ]
+    },
+    {
+      "name": "EMPCTL",
+      "type": "sflctl",
+      "sfl": "EMPSFL",
+      "sflpag": 15,
+      "sflsiz": 200,
+      "title": "EMPCTL",
+      "screen": { "rows": 24, "cols": 80 },
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "SFLRCDNB",
+          "type": "S",
+          "len": 4,
+          "dec": 0,
+          "io": "O",
+          "row": 0,
+          "col": 0,
+          "keywords": []
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 },
+        { "key": "F6", "indicator": 6 },
+        { "key": "F12", "indicator": 12 }
+      ]
+    }
+  ]
+}

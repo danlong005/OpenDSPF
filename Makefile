@@ -84,12 +84,7 @@ uninstall:
 RPGC ?= $(shell which rpgc 2>/dev/null || echo ../OpenRPG/rpgc)
 
 test: $(TARGET)
-	@echo "--- free-format DSPF ---"
-	./$(TARGET) tests/CUSTMENU.dspf -o /tmp
-	@echo "--- DDS A-spec ---"
-	./$(TARGET) tests/CUSTMENU.dds  -o /tmp
-	@echo "--- compare outputs ---"
-	@diff /tmp/CUSTMENU.dspfd /tmp/CUSTMENU.dspfd && echo "OK: descriptors match"
+	@DSPFC=./$(TARGET) bash tests/run_tests.sh
 	@echo "--- RPG integration: compile test_exfmt.rpgle ---"
 	@if [ -x "$(RPGC)" ]; then \
 	    $(RPGC) tests/test_exfmt.rpgle -o /tmp/test_exfmt && \

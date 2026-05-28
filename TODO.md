@@ -6,42 +6,27 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ## Critical — breaks real programs
 
-### Subfiles
-The most impactful missing feature. Most inquiry and list screens use a subfile
-control record (`SFLCTL`) paired with a subfile data record (`SFLDTA`) to render
-scrollable tables.
+### Subfiles ✅
+- [x] `SUBFILE` / `SFLCTL` record type in lexer, parser, AST
+- [x] `SFLPAG` / `SFLSIZ` keywords (free-format and DDS A-spec)
+- [x] Codegen: emit `"type"`, `"sfl"`, `"sflpag"`, `"sflsiz"` to `.dspfd` JSON
+- [x] Runtime: `dspf_write` SFL record appends row to subfile store
+- [x] Runtime: `dspf_write` SFLCTL clears the associated subfile
+- [x] Runtime: `dspf_exfmt` SFLCTL renders scrollable table (Up/Down/PgUp/PgDn)
+- [x] Runtime: Enter / F-key exits with selected RRN written to SFLRCDNBR field
+- [ ] `SFLNXTCHG` — mark changed subfile records (low priority)
 
-- [ ] `SUBFILE` / `SFLCTL` / `SFLDTA` record type in lexer and parser
-- [ ] `SFLPAG` (page size) and `SFLSIZ` (total size) keywords
-- [ ] `SFLNXTCHG` — mark changed subfile records
-- [ ] AST nodes for subfile record pairs
-- [ ] Codegen: emit subfile metadata to `.dspfd` JSON
-- [ ] Runtime: render subfile as a scrollable ncurses table (Page Up / Page Down)
-- [ ] Buffer: generate array-of-struct in `_dspf.h` for subfile rows
+### Conditioning indicators ✅
+- [x] `COND(*INxx)` / `COND(N*INxx)` stored on fields and literals in AST / JSON
+- [x] DDS A-spec option indicators (cols 7–9) parsed → `COND` keyword
+- [x] `dspf_set_indicators(bool*, int)` API — caller passes indicator array before each I/O op
+- [x] OpenRPG codegen emits `dspf_set_indicators(rpg_indicators, 100)` before EXFMT/WRITE/READ
+- [x] Runtime: conditioned fields and literals skipped when indicator is off
 
-### Conditioning indicators
-Fields and records conditioned on `*IN01`–`*IN99` are silently ignored today;
-the field always displays regardless of indicator state.
-
-- [ ] `COND(indicator field)` keyword in lexer / parser
-- [ ] Store indicator conditions on fields and records in AST / JSON
-- [ ] Runtime: skip rendering fields whose condition indicator is off
-- [ ] Runtime: write-protect fields when condition indicator is on
-
-### EDTCDE / EDTWRD (numeric formatting)
-Edit codes and edit words are parsed but never applied. Numeric output fields
-display raw digits with no commas, decimal points, sign, or date separators.
-
-- [ ] Parse `EDTCDE(n)` arguments into structured JSON (not opaque string)
-- [ ] Parse `EDTWRD('mask')` into structured JSON
-- [ ] Runtime: apply edit code formatting when rendering output/both numeric fields
-  - `1` — comma separator, no sign
-  - `2` — comma separator, sign (CR)
-  - `3` / `4` — no separator variants
-  - `A`–`D` — zero-suppress variants
-  - `J`–`Q` — date/time edit codes
-  - `Y` — date with separators
-  - `Z` — remove leading zeros and sign
+### EDTCDE / EDTWRD (numeric formatting) ✅
+- [x] Runtime: `dspf__applyEditCode` — codes 1–4, A–D, J–Q, Y, Z
+- [x] Runtime: `dspf__applyEditWord` — digit-slot mask formatting
+- [x] Applied automatically during screen rendering for numeric output/both fields
 
 ---
 

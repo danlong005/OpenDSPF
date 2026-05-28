@@ -62,6 +62,12 @@ COMMENT  "//"[^\n]*
 "BOTH"          { return KW_BOTH; }
 "HIDDEN"        { return KW_HIDDEN; }
 
+"SUBFILE"       { return KW_SUBFILE; }
+"SFLCTL"        { return KW_SFLCTL; }
+"SFLPAG"        { return KW_SFLPAG; }
+"SFLSIZ"        { return KW_SFLSIZ; }
+
+N?\*IN[0-9]+    { yylval.sval = strdup(yytext); return INDICATOR_REF; }
 {INTEGER}       { yylval.ival = atoi(yytext); return INTEGER; }
 {STRING}        { yylval.sval = strip_quotes(yytext); return STRING; }
 {IDENT}         { yylval.sval = strdup(yytext); return IDENTIFIER; }
