@@ -1,0 +1,39 @@
+**DSPF
+
+// Customer menu — free-format OpenDSPF source
+
+RECORD MAINMENU
+  SCREEN SIZE(24 80)
+  TITLE 'Customer Information System'
+
+  LITERAL  ROW(1)  COL(25)  'CUSTOMER INFORMATION SYSTEM'
+  LITERAL  ROW(3)  COL(2)   'Select one of the following:'
+  LITERAL  ROW(5)  COL(5)   '1. Customer Inquiry'
+  LITERAL  ROW(6)  COL(5)   '2. Add Customer'
+  LITERAL  ROW(7)  COL(5)   '3. Delete Customer'
+  LITERAL  ROW(9)  COL(2)   'Option . . .'
+  FIELD OPTION   CHAR(1)    INPUT   ROW(9)  COL(16)
+
+  LITERAL  ROW(24) COL(2)   'F3=Exit   F12=Cancel'
+  KEY F3   INDICATOR(03)
+  KEY F12  INDICATOR(12)
+END-RECORD
+
+RECORD CUSTDSP
+  SCREEN SIZE(24 80)
+  TITLE 'Customer Display'
+
+  LITERAL  ROW(1)  COL(30)  'CUSTOMER DISPLAY'
+  LITERAL  ROW(3)  COL(2)   'Customer Number:'
+  FIELD CUSTNO   CHAR(10)   BOTH    ROW(3)  COL(20)
+  LITERAL  ROW(4)  COL(2)   'Name . . . . :'
+  FIELD CUSTNAME CHAR(50)   BOTH    ROW(4)  COL(20)
+  LITERAL  ROW(5)  COL(2)   'Balance  . . :'
+  FIELD CUSTBAL  ZONED(9:2) BOTH    ROW(5)  COL(20)
+  FIELD ERRMSG   CHAR(78)   OUTPUT  ROW(24) COL(2)  COLOR(RED)
+
+  LITERAL  ROW(23) COL(2)   'F3=Exit   F6=Save   F12=Cancel'
+  KEY F3   INDICATOR(03)
+  KEY F6   INDICATOR(06)
+  KEY F12  INDICATOR(12)
+END-RECORD

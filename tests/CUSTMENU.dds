@@ -1,0 +1,27 @@
+     A*%%TS  SD  20240101  120000  DLONG     REL-V7R4M0  5770-WDS
+     A*  Customer menu — IBM i DDS A-spec source (column-based)
+     A*
+     A          R MAINMENU                  TEXT('Customer Information System')
+     A                                  1 25'CUSTOMER INFORMATION SYSTEM'
+     A                                  3  2'Select one of the following:'
+     A                                  5  5'1. Customer Inquiry'
+     A                                  6  5'2. Add Customer'
+     A                                  7  5'3. Delete Customer'
+     A                                  9  2'Option . . .'
+     A            OPTION         1A  I  9 16
+     A                                 24  2'F3=Exit   F12=Cancel'
+     A          K F3
+     A          K F12
+     A          R CUSTDSP                   TEXT('Customer Display')
+     A                                  1 30'CUSTOMER DISPLAY'
+     A                                  3  2'Customer Number:'
+     A            CUSTNO        10A  B  3 20
+     A                                  4  2'Name . . . . :'
+     A            CUSTNAME      50A  B  4 20
+     A                                  5  2'Balance  . . :'
+     A            CUSTBAL        9S 2B  5 20
+     A            ERRMSG        78A  O 24  2COLOR(RED)
+     A                                 23  2'F3=Exit   F6=Save   F12=Cancel'
+     A          K F3
+     A          K F6
+     A          K F12
