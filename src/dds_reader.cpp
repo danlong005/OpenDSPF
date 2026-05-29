@@ -1,6 +1,7 @@
 #include "dds_reader.h"
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
