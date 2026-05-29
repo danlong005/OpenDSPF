@@ -42,6 +42,9 @@ struct DspfRecord {
     int screenCols = 80;
     std::string title;
     int winRow = 0, winCol = 0, winHeight = 0, winWidth = 0; // 0 = not a window record
+    std::string wdwBorderChars; // 8-char border string (IBM i order); empty = ACS defaults
+    std::string wdwBorderColor; // "GREEN", "RED", etc.; empty = default
+    std::string wdwBorderAttr;  // "HI", "BL", "RI", "UL"; empty = normal
     std::vector<std::string> keywords; // e.g. "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT", "PROTECT(*IN99)"
     std::vector<DspfLiteral> literals;
     std::vector<DspfField>   fields;

@@ -84,8 +84,8 @@ Features are grouped by priority for real IBM i RPG migration work.
 ## Advanced / low priority
 
 ### Window and overlay records
-- [ ] `WINDOW(row col height width)` keyword
-- [ ] Runtime: render record in a bordered ncurses subwindow at specified position
+- [x] `WINDOW(row col height width)` keyword — parsed by compiler, emitted to `.dspfd` JSON
+- [x] Runtime: render record in a bordered ncurses subwindow at specified position
 - [ ] `OVERLAY` — write record without clearing the screen first
 
 ### Field validation

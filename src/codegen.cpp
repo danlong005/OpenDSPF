@@ -61,6 +61,19 @@ std::string emitJSON(const DspfFile& file) {
         }
         o << "      \"title\": " << jsonStr(rec.title.empty() ? rec.name : rec.title) << ",\n";
         o << "      \"screen\": { \"rows\": " << rec.screenRows << ", \"cols\": " << rec.screenCols << " },\n";
+        if (rec.winRow || rec.winCol || rec.winHeight || rec.winWidth) {
+            o << "      \"window\": { \"row\": " << rec.winRow
+              << ", \"col\": " << rec.winCol
+              << ", \"height\": " << rec.winHeight
+              << ", \"width\": " << rec.winWidth << " },\n";
+        }
+        if (!rec.wdwBorderChars.empty() || !rec.wdwBorderColor.empty() || !rec.wdwBorderAttr.empty()) {
+            o << "      \"wdwborder\": { "
+              << "\"chars\": " << jsonStr(rec.wdwBorderChars)
+              << ", \"color\": " << jsonStr(rec.wdwBorderColor)
+              << ", \"dspatr\": " << jsonStr(rec.wdwBorderAttr)
+              << " },\n";
+        }
         o << "      \"keywords\": [";
         for (size_t ki = 0; ki < rec.keywords.size(); ki++) {
             o << jsonStr(rec.keywords[ki]);

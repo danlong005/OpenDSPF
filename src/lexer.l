@@ -73,6 +73,11 @@ COMMENT  "//"[^\n]*
 "ALARM"         { return KW_ALARM; }
 "NOINPUT"       { return KW_NOINPUT; }
 "PROTECT"       { return KW_PROTECT; }
+"WINDOW"        { return KW_WINDOW; }
+"WDWBORDER"     { return KW_WDWBORDER; }
+"*CHAR"         { return KW_STAR_CHAR; }
+"*COLOR"        { return KW_STAR_COLOR; }
+"*DSPATR"       { return KW_STAR_DSPATR; }
 
 N?\*IN[0-9]+    { yylval.sval = strdup(yytext); return INDICATOR_REF; }
 {INTEGER}       { yylval.ival = atoi(yytext); return INTEGER; }

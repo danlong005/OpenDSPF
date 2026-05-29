@@ -93,6 +93,35 @@
         { "key": "F6", "indicator": 6 },
         { "key": "F12", "indicator": 12 }
       ]
+    },
+    {
+      "name": "CONFIRM",
+      "type": "normal",
+      "title": "CONFIRM",
+      "screen": { "rows": 24, "cols": 80 },
+      "window": { "row": 9, "col": 21, "height": 7, "width": 40 },
+      "wdwborder": { "chars": "        ", "color": "GREEN", "dspatr": "" },
+      "keywords": ["OVERLAY"],
+      "literals": [
+        { "row": 10, "col": 28, "text": "--- Delete Customer ---", "keywords": [] },
+        { "row": 12, "col": 23, "text": "Are you sure? (Y/N) :", "keywords": [] },
+        { "row": 14, "col": 23, "text": "Enter=Yes   F12=Cancel", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "ANSWER",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 12,
+          "col": 45,
+          "keywords": []
+        }
+      ],
+      "keys": [
+        { "key": "F12", "indicator": 12 }
+      ]
     }
   ]
 }

@@ -39,7 +39,8 @@ static dspf::RecType    g_recType;
 %token KW_CHAR KW_ZONED KW_PACKED KW_INT
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
 %token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
-%token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT
+%token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT KW_WINDOW KW_WDWBORDER
+%token KW_STAR_CHAR KW_STAR_COLOR KW_STAR_DSPATR
 %token LPAREN RPAREN COLON
 %token <ival> INTEGER
 %token <sval> STRING IDENTIFIER INDICATOR_REF
@@ -88,6 +89,8 @@ record_item
     | sflpag_clause
     | sflsiz_clause
     | rec_kw_clause
+    | window_clause
+    | wdwborder_clause
     ;
 
 screen_clause
@@ -192,6 +195,34 @@ sflpag_clause
 sflsiz_clause
     : KW_SFLSIZ LPAREN INTEGER RPAREN
       { result->records.back().sflSiz = $3; }
+    ;
+
+wdwborder_clause
+    : KW_WDWBORDER LPAREN wdwborder_params RPAREN
+    ;
+
+wdwborder_params
+    : /* empty */
+    | wdwborder_params wdwborder_param
+    ;
+
+wdwborder_param
+    : LPAREN KW_STAR_CHAR STRING RPAREN
+      { result->records.back().wdwBorderChars = take($3); }
+    | LPAREN KW_STAR_COLOR IDENTIFIER RPAREN
+      { result->records.back().wdwBorderColor = take($3); }
+    | LPAREN KW_STAR_DSPATR IDENTIFIER RPAREN
+      { result->records.back().wdwBorderAttr = take($3); }
+    ;
+
+window_clause
+    : KW_WINDOW LPAREN INTEGER INTEGER INTEGER INTEGER RPAREN
+      {
+          result->records.back().winRow    = $3;
+          result->records.back().winCol    = $4;
+          result->records.back().winHeight = $5;
+          result->records.back().winWidth  = $6;
+      }
     ;
 
 rec_kw_clause
