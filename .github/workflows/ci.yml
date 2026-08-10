@@ -1,0 +1,73 @@
+name: CI
+
+# Builds dspfc from source and runs its golden-file test suite on every push,
+# on all three supported platforms.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flex bison g++
+
+      - name: Build
+        run: make
+
+      - name: Run test suite
+        run: make test
+
+  test-macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: brew install flex bison
+
+      - name: Build
+        run: make
+
+      - name: Run test suite
+        run: make test
+
+  test-windows:
+    runs-on: windows-2025-vs2026
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: msys2/setup-msys2@v2.31.1
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            flex
+            bison
+            make
+            diffutils
+
+      - name: Build
+        run: make
+
+      - name: Run test suite
+        run: make test
