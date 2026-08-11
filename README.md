@@ -192,6 +192,8 @@ OpenDSPF and [OpenRPG](https://github.com/danlong005/OpenRPG) are designed as a 
 
 The runtime renders screens using the JSON descriptor, handles keyboard input, evaluates conditioning indicators, formats numeric fields (EDTCDE/EDTWRD), and manages scrollable subfiles — all transparently.
 
+On Windows, both `-lpdcurses` and the C++ compiler `rpgc`/`dspfc` shell out to are bundled with the [OpenRPG installer](https://github.com/danlong005/OpenRPG#windows) — nothing else needs to be installed separately to compile or run WORKSTN programs.
+
 See [docs/GUIDE.md](docs/GUIDE.md#integration-with-openrpg) for full details.
 
 ---
