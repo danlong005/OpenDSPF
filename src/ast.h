@@ -11,7 +11,10 @@ enum class RecType { NORMAL, SFL, SFLCTL };
 
 struct DspfField {
     std::string name;
-    char  dtype = 'A';  // A=char, S=zoned, P=packed, B=binary, F=float
+    char  dtype = 'A';  // A=char, S=zoned, P=packed, B=binary, F=float,
+                        // L=date, T=time, Z=timestamp (stored as char[], no
+                        // date-specific parsing/formatting — see codegen's
+                        // cppFieldType default case)
     int   len   = 1;
     int   dec   = 0;
     char  io    = 'O';  // I=input, O=output, B=both, H=hidden

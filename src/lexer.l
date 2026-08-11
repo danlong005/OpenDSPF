@@ -58,6 +58,9 @@ COMMENT  "//"[^\n]*
 "ZONED"         { return KW_ZONED; }
 "PACKED"        { return KW_PACKED; }
 "INT"           { return KW_INT; }
+"DATE"          { return KW_DATE; }
+"TIME"          { return KW_TIME; }
+"TIMESTAMP"     { return KW_TIMESTAMP; }
 "INPUT"         { return KW_INPUT; }
 "OUTPUT"        { return KW_OUTPUT; }
 "BOTH"          { return KW_BOTH; }

@@ -1,0 +1,16 @@
+**FREE
+
+// test12b — interactive companion to TEST12_DATETIME: confirms the buffer
+// walk advances correctly past a DATE field (char[11]) so the field after
+// it isn't corrupted. See tests/run_interactive.sh.
+
+RECORD DTINPUT
+  SCREEN SIZE(24 80)
+  TITLE 'Date Buffer Layout Test'
+
+  LITERAL  ROW(1)  COL(2)   'Date:'
+  FIELD FLDDATE   DATE       INPUT   ROW(1)  COL(10)
+
+  LITERAL  ROW(2)  COL(2)   'After:'
+  FIELD FLDAFTER  CHAR(5)    INPUT   ROW(2)  COL(10)
+END-RECORD

@@ -359,12 +359,23 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                 continue;
             }
 
-            if (!fieldname.empty() && !lenstr.empty()) {
+            // DDS conventionally leaves the length column blank for L/T/Z
+            // fields (length is implied by the *ISO default format), so the
+            // field-vs-literal test below can't require lenstr like it does
+            // for every other type.
+            bool isDateTimeType = (dtype == 'L' || dtype == 'T' || dtype == 'Z');
+            if (!fieldname.empty() && (!lenstr.empty() || isDateTimeType)) {
                 // Data field
                 DspfField f;
                 f.name  = fieldname;
-                f.dtype = (dtype == 'S' || dtype == 'P' || dtype == 'B' || dtype == 'F') ? dtype : 'A';
-                f.len   = parseNum(lenstr);
+                f.dtype = (dtype == 'S' || dtype == 'P' || dtype == 'B' || dtype == 'F' ||
+                           dtype == 'L' || dtype == 'T' || dtype == 'Z') ? dtype : 'A';
+                f.len   = lenstr.empty() ? 0 : parseNum(lenstr);
+                if (f.len == 0 && isDateTimeType) {
+                    // *ISO default lengths: date=10 (YYYY-MM-DD), time=8
+                    // (HH.MM.SS), timestamp=26 (YYYY-MM-DD-HH.MM.SS.NNNNNN).
+                    f.len = (dtype == 'L') ? 10 : (dtype == 'T') ? 8 : 26;
+                }
                 f.dec   = parseNum(decstr);
                 f.io    = (usage == 'I' || usage == 'O' || usage == 'B' || usage == 'H') ? usage : 'O';
                 f.row   = row;

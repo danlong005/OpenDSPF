@@ -49,7 +49,7 @@ fi
 # 2-byte ESC sequences), then pulls out RESULT:name=value tokens.
 strip_and_extract() {
     perl -pe 's/\x1b\[[0-9;?]*[a-zA-Z=<>]//g; s/\x1b[()][0-9A-Za-z]//g; s/\x1b[=><]//g; s/\x0f//g' \
-        | grep -oE 'RESULT:[A-Za-z0-9_]+=[A-Za-z0-9]*'
+        | grep -oE 'RESULT:[A-Za-z0-9_]+=[A-Za-z0-9-]*'
 }
 
 # Pulls distinct terminal row numbers (1-based) that were cursor-positioned
@@ -188,6 +188,20 @@ run_interactive_test \
     '\r' \
     "$EXPECTED/TEST11_CLRL.out" \
     "" "1"
+
+# ── test12: L/T/Z (DATE/TIME/TIMESTAMP) buffer layout ────────────────────
+# A date field is a char[len+1] in the generated buffer struct, not a
+# fixed-size double — both OpenDSPF's dspf__extractFields/applyFields and
+# OpenRPG's own WORKSTN field codegen originally treated any type other than
+# 'A'/'B' as numeric, which would desync the buffer walk for every field
+# after a date/time/timestamp one. Confirmed for real: before both fixes
+# landed, this exact test failed to *compile* (char[11] vs double type
+# mismatch in the generated C++) rather than just producing wrong output.
+run_interactive_test \
+    "test12: date field doesn't corrupt the field after it in the buffer" \
+    "$TESTDIR/TEST12_DATETIME2.dspf" "$TESTDIR/TEST12_DATETIME2.rpgle" \
+    '2026-01-01\tAFTER\r' \
+    "$EXPECTED/TEST12_DATETIME2.out"
 
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""

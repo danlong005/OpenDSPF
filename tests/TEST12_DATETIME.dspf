@@ -1,0 +1,18 @@
+**FREE
+
+// test12 — L/T/Z (DATE/TIME/TIMESTAMP) field types. Stored as plain
+// char[] buffers (no date-specific parsing) at their *ISO default lengths.
+
+RECORD DTTEST
+  SCREEN SIZE(24 80)
+  TITLE 'Date/Time Test'
+
+  LITERAL  ROW(1)  COL(2)   'Date:'
+  FIELD FLDDATE   DATE        OUTPUT  ROW(1)  COL(10)
+
+  LITERAL  ROW(2)  COL(2)   'Time:'
+  FIELD FLDTIME   TIME        OUTPUT  ROW(2)  COL(10)
+
+  LITERAL  ROW(3)  COL(2)   'Timestamp:'
+  FIELD FLDTS     TIMESTAMP   OUTPUT  ROW(3)  COL(10)
+END-RECORD

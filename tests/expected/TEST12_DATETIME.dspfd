@@ -1,0 +1,51 @@
+{
+  "name": "TEST12_DATETIME",
+  "records": [
+    {
+      "name": "DTTEST",
+      "type": "normal",
+      "title": "Date/Time Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Date:", "keywords": [] },
+        { "row": 2, "col": 2, "text": "Time:", "keywords": [] },
+        { "row": 3, "col": 2, "text": "Timestamp:", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "FLDDATE",
+          "type": "L",
+          "len": 10,
+          "dec": 0,
+          "io": "O",
+          "row": 1,
+          "col": 10,
+          "keywords": []
+        },
+        {
+          "name": "FLDTIME",
+          "type": "T",
+          "len": 8,
+          "dec": 0,
+          "io": "O",
+          "row": 2,
+          "col": 10,
+          "keywords": []
+        },
+        {
+          "name": "FLDTS",
+          "type": "Z",
+          "len": 26,
+          "dec": 0,
+          "io": "O",
+          "row": 3,
+          "col": 10,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

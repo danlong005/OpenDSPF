@@ -36,7 +36,7 @@ static dspf::RecType    g_recType;
 
 %token KW_RECORD KW_END_RECORD KW_LITERAL KW_FIELD KW_KEY KW_SCREEN KW_TITLE
 %token KW_ROW KW_COL KW_SIZE KW_INDICATOR KW_COLOR KW_DSPATR KW_TEXT
-%token KW_CHAR KW_ZONED KW_PACKED KW_INT
+%token KW_CHAR KW_ZONED KW_PACKED KW_INT KW_DATE KW_TIME KW_TIMESTAMP
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
 %token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
 %token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT KW_WINDOW KW_WDWBORDER
@@ -154,6 +154,12 @@ field_type
       { g_field.dtype = 'P'; g_field.len = $3; g_field.dec = $5; }
     | KW_INT LPAREN INTEGER RPAREN
       { g_field.dtype = 'B'; g_field.len = $3; g_field.dec = 0; }
+    | KW_DATE
+      { g_field.dtype = 'L'; g_field.len = 10; g_field.dec = 0; } // *ISO YYYY-MM-DD
+    | KW_TIME
+      { g_field.dtype = 'T'; g_field.len = 8;  g_field.dec = 0; } // *ISO HH.MM.SS
+    | KW_TIMESTAMP
+      { g_field.dtype = 'Z'; g_field.len = 26; g_field.dec = 0; } // *ISO YYYY-MM-DD-HH.MM.SS.NNNNNN
     ;
 
 field_usage
