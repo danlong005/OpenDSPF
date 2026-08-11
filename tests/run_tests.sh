@@ -79,7 +79,8 @@ if [ $rc1 -eq 0 ] && [ $rc2 -eq 0 ]; then
         echo -e "${GREEN}PASS${NC}"; PASS=$((PASS + 1))
     else
         echo -e "${RED}FAIL${NC} (output mismatch)"
-        diff "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd" | head -20
+        wc -l "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd"
+        diff "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd"
         FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test05: CUSTMENU format parity"
     fi
 else
