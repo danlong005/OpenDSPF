@@ -69,10 +69,9 @@ run_test "test06: conditional DSPATR (duplicate field, mutually exclusive COND)"
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.
 printf "%-45s " "test05: CUSTMENU (free-format == fixed-format output)"
-err1=$("$DSPFC" "$TESTDIR/CUSTMENU.dspf"       -o "$TMPDIR" 2>&1 >/dev/null)
-rc1=$?
-err2=$("$DSPFC" "$TESTDIR/CUSTMENU_fixed.dspf" -o "$TMPDIR" 2>&1 >/dev/null)
-rc2=$?
+rc1=0; rc2=0
+if ! err1=$("$DSPFC" "$TESTDIR/CUSTMENU.dspf"       -o "$TMPDIR" 2>&1 >/dev/null); then rc1=1; fi
+if ! err2=$("$DSPFC" "$TESTDIR/CUSTMENU_fixed.dspf" -o "$TMPDIR" 2>&1 >/dev/null); then rc2=1; fi
 if [ $rc1 -eq 0 ] && [ $rc2 -eq 0 ]; then
     sed 's/"CUSTMENU_fixed"/"CUSTMENU"/g' \
         "$TMPDIR/CUSTMENU_fixed.dspfd" > "$TMPDIR/CUSTMENU_fixed_norm.dspfd"
