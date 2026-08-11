@@ -187,6 +187,11 @@ field_keyword
       { std::string k = take($1); g_keywords.push_back(k + "(" + std::to_string($3) + ")"); }
     | IDENTIFIER LPAREN INDICATOR_REF RPAREN
       { std::string k = take($1); g_keywords.push_back(k + "(" + take($3) + ")"); }
+    | IDENTIFIER LPAREN STRING RPAREN
+      // Quotes stay in the stored text (e.g. COLHDG('Name Hdg')) so this
+      // matches fixed-format's raw passthrough byte-for-byte — callers like
+      // dspf__renderScreen's COLHDG handling look for a quoted substring.
+      { std::string k = take($1); g_keywords.push_back(k + "('" + take($3) + "')"); }
     | IDENTIFIER
       { g_keywords.push_back(take($1)); }
     | KW_VALUES LPAREN value_list RPAREN

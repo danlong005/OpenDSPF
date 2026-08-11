@@ -83,6 +83,12 @@ run_test "test11: CLRL(begline endline) partial-screen clear" \
 run_test "test12: DATE/TIME/TIMESTAMP field types (L/T/Z)" \
     "$TESTDIR/TEST12_DATETIME.dspf"         "$EXPECTED/TEST12_DATETIME.dspfd"
 
+run_test "test13: ALIAS(name) keyword" \
+    "$TESTDIR/TEST13_ALIAS.dspf"            "$EXPECTED/TEST13_ALIAS.dspfd"
+
+run_test "test14: COLHDG('text') keyword (quoted-string generic keyword arg)" \
+    "$TESTDIR/TEST14_COLHDG.dspf"           "$EXPECTED/TEST14_COLHDG.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

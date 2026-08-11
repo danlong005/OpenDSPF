@@ -85,9 +85,12 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ## DDS A-spec reader gaps
 
-- [ ] `L`, `T`, `Z` date/time/timestamp field types (columns 34–35)
-- [ ] `COLHDG('text')` — column heading (use as field label when no LITERAL)
-- [ ] `ALIAS(name)` — alternate field name for generated struct member
+- [x] `L`, `T`, `Z` date/time/timestamp field types (columns 34–35)
+- [x] `COLHDG('text')` — column heading (use as field label when no LITERAL)
+- [x] `ALIAS(name)` — alternate field name RPG source can reference the field
+      by; the generated struct member itself stays the DDS name (matches
+      real IBM i semantics — ALIAS is an HLL-facing alternate name, not a
+      record-layout rename)
 - [ ] `CHCCTL` — choice control field
 - [x] `VALUES(...)` — allowed value list (validation)
 - [x] `RANGE(lo hi)` — range validation

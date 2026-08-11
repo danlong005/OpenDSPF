@@ -1,0 +1,49 @@
+{
+  "name": "TEST14_COLHDG",
+  "records": [
+    {
+      "name": "COLHDGTEST",
+      "type": "normal",
+      "title": "COLHDG Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 7, "col": 10, "text": "Real Label", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "NAME1",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "O",
+          "row": 5,
+          "col": 10,
+          "keywords": ["COLHDG('Name Hdg')"]
+        },
+        {
+          "name": "NAME2",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "O",
+          "row": 8,
+          "col": 10,
+          "keywords": ["COLHDG('Should Not Show')"]
+        },
+        {
+          "name": "DUMMY",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 15,
+          "col": 1,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

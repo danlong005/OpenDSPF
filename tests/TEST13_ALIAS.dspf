@@ -1,0 +1,13 @@
+**FREE
+
+// test13 — ALIAS(name): RPG programs reference the field by the alias
+// name; the underlying DDS field name (and _dspf.h buffer struct member)
+// stays unchanged. See tests/run_interactive.sh.
+
+RECORD ALIASTEST
+  SCREEN SIZE(24 80)
+  TITLE 'Alias Test'
+
+  LITERAL  ROW(1)  COL(2)   'Cryptic field:'
+  FIELD CRYPTNM   CHAR(8)   INPUT   ROW(1)  COL(20)   ALIAS(CUSTOMERNAME)
+END-RECORD

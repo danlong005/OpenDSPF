@@ -203,6 +203,42 @@ run_interactive_test \
     '2026-01-01\tAFTER\r' \
     "$EXPECTED/TEST12_DATETIME2.out"
 
+# ── test13: ALIAS ─────────────────────────────────────────────────────────
+# The RPG driver references the field only as CUSTOMERNAME (the alias) —
+# never CRYPTNM (the underlying DDS name) — proving the generated variable
+# is actually declared under the alias, not just that the alias parses.
+run_interactive_test \
+    "test13: ALIAS makes the field addressable by its alias name" \
+    "$TESTDIR/TEST13_ALIAS.dspf" "$TESTDIR/TEST13_ALIAS.rpgle" \
+    'JohnDoe\r' \
+    "$EXPECTED/TEST13_ALIAS.out"
+
+# ── test14: COLHDG ────────────────────────────────────────────────────────
+# COLHDG('text') renders as an implicit label one row above its field, at
+# the same column, but only where the record has no explicit LITERAL
+# already sitting there. NAME1 has empty space above it (row 4, col 10) so
+# its heading must be painted; NAME2's heading slot (row 7, col 10) is
+# occupied by the 'Real Label' literal, so its heading must be suppressed —
+# an author who placed an explicit literal there clearly wants their own
+# text, not the fallback. This can't be proven via strip_and_extract's
+# RESULT: tags alone (the heading text never reaches DSPLY), so it's
+# checked directly against the raw captured screen paint below.
+run_interactive_test \
+    "test14: COLHDG renders as an implicit label above its field" \
+    "$TESTDIR/TEST14_COLHDG.dspf" "$TESTDIR/TEST14_COLHDG.rpgle" \
+    '\r' \
+    "$EXPECTED/TEST14_COLHDG.out"
+
+printf "%-55s " "test14b: COLHDG suppressed where a LITERAL already sits"
+raw14="$TMPDIR/TEST14_COLHDG.raw"
+if grep -qF 'Name Hdg' "$raw14" && ! grep -qF 'Should Not Show' "$raw14"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (heading text mismatch)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test14b: COLHDG suppressed where a LITERAL already sits"
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

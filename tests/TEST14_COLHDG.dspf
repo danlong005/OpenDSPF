@@ -1,0 +1,21 @@
+**FREE
+
+// test14 — COLHDG('text'): implicit field label rendered one row above the
+// field, at the field's own column, but ONLY when the record doesn't
+// already have an explicit LITERAL sitting at that exact spot. NAME1 has
+// no literal above it (row 4, col 10) so its heading must render there.
+// NAME2's heading position (row 7, col 10) is already occupied by the
+// 'Real Label' literal, so NAME2's heading must NOT render — the explicit
+// literal wins. See tests/run_interactive.sh for the runtime check.
+
+RECORD COLHDGTEST
+  SCREEN SIZE(24 80)
+  TITLE 'COLHDG Test'
+
+  FIELD NAME1   CHAR(10)  OUTPUT  ROW(5)  COL(10)  COLHDG('Name Hdg')
+
+  LITERAL  ROW(7)  COL(10)  'Real Label'
+  FIELD NAME2   CHAR(10)  OUTPUT  ROW(8)  COL(10)  COLHDG('Should Not Show')
+
+  FIELD DUMMY   CHAR(1)   INPUT   ROW(15) COL(1)
+END-RECORD

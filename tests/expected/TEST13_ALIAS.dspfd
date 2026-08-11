@@ -1,0 +1,29 @@
+{
+  "name": "TEST13_ALIAS",
+  "records": [
+    {
+      "name": "ALIASTEST",
+      "type": "normal",
+      "title": "Alias Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Cryptic field:", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "CRYPTNM",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "I",
+          "row": 1,
+          "col": 20,
+          "keywords": ["ALIAS(CUSTOMERNAME)"]
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}
