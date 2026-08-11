@@ -158,11 +158,17 @@ struct MAINMENU_buf {
 **Prerequisites:** C++17 compiler (clang++ or g++), Flex, Bison.
 
 ```bash
-# macOS
+# macOS (Apple Silicon / arm64 — Intel Macs aren't supported by our CI runners)
 brew install flex bison
 
-# Linux (Debian/Ubuntu)
+# Linux (Debian/Ubuntu) — x86_64 and ARM64 both supported
 sudo apt install flex bison g++
+
+# Windows (x86_64) — use MSYS2 MINGW64 shell
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-flex mingw-w64-x86_64-bison make
+
+# Windows (ARM64) — use MSYS2 CLANGARM64 shell (no native gcc for this target)
+pacman -S mingw-w64-clang-aarch64-toolchain flex bison make
 ```
 
 ```bash
