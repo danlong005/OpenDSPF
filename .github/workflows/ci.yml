@@ -71,3 +71,49 @@ jobs:
 
       - name: Run test suite
         run: make test
+
+  # ── Linux ARM64 ──────────────────────────────────────────────────────────
+  test-linux-arm64:
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flex bison g++
+
+      - name: Build
+        run: make
+
+      - name: Run test suite
+        run: make test
+
+  # ── Windows ARM64 ────────────────────────────────────────────────────────
+  test-windows-arm64:
+    runs-on: windows-11-arm
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: msys2/setup-msys2@v2.31.1
+        with:
+          msystem: CLANGARM64
+          update: true
+          install: >-
+            mingw-w64-clang-aarch64-toolchain
+            flex
+            bison
+            make
+            diffutils
+
+      - name: Build
+        run: make
+
+      - name: Run test suite
+        run: make test
