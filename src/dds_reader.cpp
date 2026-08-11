@@ -134,6 +134,47 @@ static std::vector<std::string> parseKeywords(const std::string& kwstr) {
     return result;
 }
 
+// Parse WINDOW(row col height width) — DDS window keyword.
+static void applyWindowKw(DspfRecord& rec, const std::string& kw) {
+    size_t lp = kw.find('(');
+    size_t rp = kw.rfind(')');
+    if (lp == std::string::npos || rp == std::string::npos || rp <= lp) return;
+    std::istringstream iss(kw.substr(lp + 1, rp - lp - 1));
+    int r = 0, c = 0, h = 0, w = 0;
+    iss >> r >> c >> h >> w;
+    rec.winRow = r; rec.winCol = c; rec.winHeight = h; rec.winWidth = w;
+}
+
+// Parse WDWBORDER((*CHAR 'xxxxxxxx') (*COLOR color) (*DSPATR attr)) — the
+// three parameter groups are optional and order-independent, matching the
+// free-format grammar (parser.y wdwborder_param).
+static void applyWdwBorderKw(DspfRecord& rec, const std::string& kw) {
+    size_t lp = kw.find('(');
+    size_t rp = kw.rfind(')');
+    if (lp == std::string::npos || rp == std::string::npos || rp <= lp) return;
+    std::string inner = kw.substr(lp + 1, rp - lp - 1);
+    size_t i = 0;
+    while (i < inner.size()) {
+        while (i < inner.size() && inner[i] == ' ') i++;
+        if (i >= inner.size() || inner[i] != '(') break;
+        size_t depth = 0, j = i;
+        while (j < inner.size()) {
+            if (inner[j] == '(') depth++;
+            else if (inner[j] == ')') { if (--depth == 0) { j++; break; } }
+            j++;
+        }
+        std::string g = trim(inner.substr(i + 1, j - i - 2));
+        if (g.rfind("*CHAR", 0) == 0) {
+            rec.wdwBorderChars = stripQuotes(trim(g.substr(5)));
+        } else if (g.rfind("*COLOR", 0) == 0) {
+            rec.wdwBorderColor = trim(g.substr(6));
+        } else if (g.rfind("*DSPATR", 0) == 0) {
+            rec.wdwBorderAttr = trim(g.substr(7));
+        }
+        i = j;
+    }
+}
+
 DspfFile parseDDS(const std::string& filename, const std::string& basename) {
     std::ifstream in(filename);
     if (!in.is_open())
@@ -177,6 +218,10 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                 } else if (kw.rfind("TEXT(", 0) == 0) {
                     std::string inner = kw.substr(5, kw.size() - 6);
                     rec.title = stripQuotes(inner);
+                } else if (kw.rfind("WINDOW(", 0) == 0) {
+                    applyWindowKw(rec, kw);
+                } else if (kw.rfind("WDWBORDER(", 0) == 0) {
+                    applyWdwBorderKw(rec, kw);
                 } else {
                     std::string keyName; int ind;
                     if (parseCFCA(kw, keyName, ind)) {
@@ -234,6 +279,10 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                         file.records.back().sflPag = parseNum(kw.substr(7, kw.size()-8));
                     else if (kw.rfind("SFLSIZ(", 0) == 0)
                         file.records.back().sflSiz = parseNum(kw.substr(7, kw.size()-8));
+                    else if (kw.rfind("WINDOW(", 0) == 0)
+                        applyWindowKw(file.records.back(), kw);
+                    else if (kw.rfind("WDWBORDER(", 0) == 0)
+                        applyWdwBorderKw(file.records.back(), kw);
                     else {
                         std::string keyName; int ind;
                         if (parseCFCA(kw, keyName, ind)) {

@@ -25,3 +25,13 @@
      A            CUSTBAL        9S 2B  5 20
      A            ERRMSG        78A  O 24  2COLOR(RED)
      A                                 23  2'F3=Exit   F6=Save   F12=Cancel'
+     A          R CONFIRM
+     A                                      CF12(12)
+     A                                      OVERLAY
+     A                                      WINDOW(9 21 7 40)
+     A                                      WDWBORDER((*CHAR '        '))
+     A                                      WDWBORDER((*COLOR GREEN))
+     A                                 10 28'--- Delete Customer ---'
+     A                                 12 23'Are you sure? (Y/N) :'
+     A            ANSWER         1A  I 12 45
+     A                                 14 23'Enter=Yes   F12=Cancel'
