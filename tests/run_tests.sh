@@ -74,6 +74,9 @@ run_test "test08: AUTO keyword (field-level, generic keyword passthrough)" \
 run_test "test09: ERRSFL / SFLMSGRCD keywords" \
     "$TESTDIR/TEST09_ERRSFL.dspf"           "$EXPECTED/TEST09_ERRSFL.dspfd"
 
+run_test "test10: KEY PAGEUP/PAGEDOWN (fixed-format ROLLUP/ROLLDOWN alias)" \
+    "$TESTDIR/TEST10_PAGEKEY.dspf"          "$EXPECTED/TEST10_PAGEKEY.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

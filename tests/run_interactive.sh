@@ -143,6 +143,23 @@ run_interactive_test \
     "$EXPECTED/TEST09_ERRSFL.out" \
     "20-23"
 
+# ── test10: KEY PAGEUP/PAGEDOWN as exit keys ─────────────────────────────
+# \x1b[5~ / \x1b[6~ are this terminal's (xterm-256color) raw byte sequences
+# for PageUp/PageDown, confirmed against KEY_PPAGE/KEY_NPAGE directly before
+# writing this. A plain (non-subfile) record has nothing to scroll, so
+# these only do anything if the record declares KEY PAGEUP/PAGEDOWN.
+run_interactive_test \
+    "test10a: PAGEUP sets its declared indicator" \
+    "$TESTDIR/TEST10_PAGEKEY.dspf" "$TESTDIR/TEST10_PAGEKEY.rpgle" \
+    '\x1b[5~' \
+    "$EXPECTED/TEST10_PAGEKEY_up.out"
+
+run_interactive_test \
+    "test10b: PAGEDOWN sets its declared indicator" \
+    "$TESTDIR/TEST10_PAGEKEY.dspf" "$TESTDIR/TEST10_PAGEKEY.rpgle" \
+    '\x1b[6~' \
+    "$EXPECTED/TEST10_PAGEKEY_down.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

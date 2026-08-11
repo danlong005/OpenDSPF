@@ -1,0 +1,31 @@
+{
+  "name": "TEST10_PAGEKEY",
+  "records": [
+    {
+      "name": "PAGEKEYTEST",
+      "type": "normal",
+      "title": "Page Key Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Press PageUp or PageDown:", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "DUMMY",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 1,
+          "col": 30,
+          "keywords": []
+        }
+      ],
+      "keys": [
+        { "key": "PAGEUP", "indicator": 21 },
+        { "key": "PAGEDOWN", "indicator": 22 }
+      ]
+    }
+  ]
+}

@@ -73,7 +73,11 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] `NOINPUT` — disable all input fields for this EXFMT
 - [x] `NOCLEAR` — retain prior screen content
 - [ ] `CLRL` — clear remainder of screen/line before writing
-- [ ] `KEY_PPAGE` / `KEY_NPAGE` — Page Up / Page Down for non-subfile records (subfiles ✅)
+- [x] `KEY_PPAGE` / `KEY_NPAGE` — Page Up / Page Down as exit keys on
+      non-subfile records (subfiles already handled scrolling). Fixed-format
+      `ROLLUP(ind)`/`ROLLDOWN(ind)` map to `PAGEDOWN`/`PAGEUP` respectively —
+      real DDS naming is inverted from the physical key (ROLLUP = content
+      rolls up = Page Down).
 
 ---
 

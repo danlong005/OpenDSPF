@@ -104,6 +104,28 @@ static bool parseCFCA(const std::string& kw, std::string& keyName, int& indicato
     return true;
 }
 
+// Parse ROLLUP(ind)/ROLLDOWN(ind) — display file page-key keywords. Real
+// DDS naming is inverted from the physical key: ROLLUP means the content
+// rolls up the screen, which happens when the operator presses Page Down;
+// ROLLDOWN is Page Up. Maps to the same "PAGEUP"/"PAGEDOWN" key names the
+// free-format parser stores for `KEY PAGEUP`/`KEY PAGEDOWN`.
+static bool parseRollKw(const std::string& kw, std::string& keyName, int& indicator) {
+    bool isUp;
+    size_t prefixLen;
+    if (kw.rfind("ROLLUP", 0) == 0)        { isUp = true;  prefixLen = 6; }
+    else if (kw.rfind("ROLLDOWN", 0) == 0) { isUp = false; prefixLen = 8; }
+    else return false;
+    if (prefixLen >= kw.size() || kw[prefixLen] != '(') return false;
+    size_t q = prefixLen + 1;
+    while (q < kw.size() && kw[q] == ' ') q++;
+    if (q >= kw.size() || !isdigit((unsigned char)kw[q])) return false;
+    size_t r = q;
+    while (r < kw.size() && isdigit((unsigned char)kw[r])) r++;
+    indicator = parseNum(kw.substr(q, r - q));
+    keyName = isUp ? "PAGEDOWN" : "PAGEUP";
+    return true;
+}
+
 // Parse keyword string at cols 44+ (0-based) e.g. "COLOR(RED) DSPATR(HI) TEXT('foo')"
 static std::vector<std::string> parseKeywords(const std::string& kwstr) {
     std::vector<std::string> result;
@@ -246,7 +268,7 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                     applyWdwBorderKw(rec, kw);
                 } else {
                     std::string keyName; int ind;
-                    if (parseCFCA(kw, keyName, ind)) {
+                    if (parseCFCA(kw, keyName, ind) || parseRollKw(kw, keyName, ind)) {
                         DspfKey k; k.key = keyName; k.indicator = ind;
                         rec.keys.push_back(std::move(k));
                     } else {
@@ -311,7 +333,7 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                         applyWdwBorderKw(file.records.back(), kw);
                     else {
                         std::string keyName; int ind;
-                        if (parseCFCA(kw, keyName, ind)) {
+                        if (parseCFCA(kw, keyName, ind) || parseRollKw(kw, keyName, ind)) {
                             DspfKey k; k.key = keyName; k.indicator = ind;
                             file.records.back().keys.push_back(std::move(k));
                         } else {

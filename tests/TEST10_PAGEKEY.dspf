@@ -1,0 +1,15 @@
+**FREE
+
+// test10 — KEY PAGEUP/PAGEDOWN as exit keys on a plain (non-subfile)
+// record. See tests/run_interactive.sh for the runtime behavioral check.
+
+RECORD PAGEKEYTEST
+  SCREEN SIZE(24 80)
+  TITLE 'Page Key Test'
+
+  LITERAL  ROW(1)  COL(2)   'Press PageUp or PageDown:'
+  FIELD DUMMY   CHAR(1)   INPUT   ROW(1)  COL(30)
+
+  KEY PAGEUP    INDICATOR(21)
+  KEY PAGEDOWN  INDICATOR(22)
+END-RECORD
