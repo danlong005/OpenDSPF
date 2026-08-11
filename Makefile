@@ -13,6 +13,10 @@ else ifneq (,$(MSYSTEM))
     # would silently miss anything but literal "MINGW".
     FLEX        ?= flex
     BISON       ?= bison
+    # Static-link the C++ runtime so dspfc.exe doesn't depend on MSYS2's
+    # libc++.dll/libstdc++-6.dll/libwinpthread-1.dll being present on the
+    # target machine — the NSIS installer only ships the exe itself.
+    LDFLAGS     ?= -static
     ifeq ($(MSYSTEM),CLANGARM64)
         CXX := clang++
     else
@@ -40,7 +44,15 @@ OBJS := $(BUILDDIR)/lexer.o \
         $(BUILDDIR)/codegen.o \
         $(BUILDDIR)/main.o
 
-VERSION := $(shell git describe --tags --always 2>/dev/null || echo "dev")
+# When checked out as a git submodule, .git is a file (not a directory)
+# pointing at the superproject's gitdir. In that case inherit the
+# superproject's version so `dspfc -v` matches `rpgc -v` when the two are
+# built and shipped together — otherwise fall back to our own tags.
+ifeq ($(shell test -f .git && echo submodule),submodule)
+    VERSION ?= $(shell git -C .. describe --tags --always 2>/dev/null || echo "dev")
+else
+    VERSION ?= $(shell git describe --tags --always 2>/dev/null || echo "dev")
+endif
 CXXFLAGS += -DDSPFC_VERSION='"$(VERSION)"'
 
 PREFIX   ?= /usr/local
@@ -74,7 +86,7 @@ $(BUILDDIR)/main.o: $(SRCDIR)/main.cpp $(SRCDIR)/ast.h $(SRCDIR)/codegen.h $(SRC
 	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -I$(BUILDDIR) -c -o $@ $<
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -rf $(BUILDDIR) $(TARGET)
