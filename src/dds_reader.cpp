@@ -3,10 +3,24 @@
 #include <cctype>
 #include <cstring>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
 namespace dspf {
+
+// Record-level keyword name, stripped of any "(...)" parameter list.
+static std::string keywordName(const std::string& kw) {
+    size_t lp = kw.find('(');
+    return lp == std::string::npos ? kw : kw.substr(0, lp);
+}
+
+static void warnUnknownKeyword(const std::string& filename, int lineNum,
+                                const std::string& recName, const std::string& kw) {
+    std::cerr << "dspfc: warning: " << filename << ":" << lineNum
+              << ": unrecognized keyword " << keywordName(kw)
+              << " on record " << recName << " — ignored\n";
+}
 
 // Zero-based column extraction (end is exclusive, clamped to line length)
 static std::string cols(const std::string& line, int start, int end) {
@@ -184,8 +198,11 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
     file.name = basename;
 
     std::string line;
+    int lineNum = 0;
 
     while (std::getline(in, line)) {
+        lineNum++;
+
         // Tolerate CRLF-terminated source (common when DDS is authored or
         // transferred via Windows) — getline only splits on '\n', so a
         // trailing '\r' would otherwise land inside the padded column data.
@@ -237,14 +254,17 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                         static const char* const recRtKws[] = {
                             "PROTECT", "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT", nullptr
                         };
+                        bool matched = false;
                         for (int ri = 0; recRtKws[ri]; ri++) {
                             size_t klen = strlen(recRtKws[ri]);
                             if (kw.rfind(recRtKws[ri], 0) == 0 &&
                                 (kw.size() == klen || kw[klen] == '(')) {
                                 rec.keywords.push_back(kw);
+                                matched = true;
                                 break;
                             }
                         }
+                        if (!matched) warnUnknownKeyword(filename, lineNum, rec.name, kw);
                     }
                 }
             }
@@ -297,14 +317,18 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                             static const char* const recRtKws[] = {
                                 "PROTECT", "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT", nullptr
                             };
+                            bool matched = false;
                             for (int ri = 0; recRtKws[ri]; ri++) {
                                 size_t klen = strlen(recRtKws[ri]);
                                 if (kw.rfind(recRtKws[ri], 0) == 0 &&
                                     (kw.size() == klen || kw[klen] == '(')) {
                                     file.records.back().keywords.push_back(kw);
+                                    matched = true;
                                     break;
                                 }
                             }
+                            if (!matched)
+                                warnUnknownKeyword(filename, lineNum, file.records.back().name, kw);
                         }
                     }
                 }
