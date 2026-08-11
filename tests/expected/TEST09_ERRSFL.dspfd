@@ -1,0 +1,29 @@
+{
+  "name": "TEST09_ERRSFL",
+  "records": [
+    {
+      "name": "ERRTEST",
+      "type": "normal",
+      "title": "ERRSFL Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": ["ERRSFL", "SFLMSGRCD(20)"],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Enter code (A/B/C):", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "CODE",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 1,
+          "col": 25,
+          "keywords": ["VALUES('A' 'B' 'C')"]
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

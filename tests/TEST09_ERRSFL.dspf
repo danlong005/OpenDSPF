@@ -1,0 +1,15 @@
+**FREE
+
+// test09 — ERRSFL/SFLMSGRCD: validation errors accumulate into a scrollable
+// message area starting at the SFLMSGRCD row, instead of overwriting a
+// single status line each time. See tests/run_interactive.sh.
+
+RECORD ERRTEST
+  SCREEN SIZE(24 80)
+  TITLE 'ERRSFL Test'
+  ERRSFL
+  SFLMSGRCD(20)
+
+  LITERAL  ROW(1)  COL(2)   'Enter code (A/B/C):'
+  FIELD CODE   CHAR(1)   INPUT   ROW(1)  COL(25)   VALUES('A' 'B' 'C')
+END-RECORD

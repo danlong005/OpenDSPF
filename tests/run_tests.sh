@@ -71,6 +71,9 @@ run_test "test07: field validation keywords (VALUES/RANGE/COMP)" \
 run_test "test08: AUTO keyword (field-level, generic keyword passthrough)" \
     "$TESTDIR/TEST08_AUTO.dspf"             "$EXPECTED/TEST08_AUTO.dspfd"
 
+run_test "test09: ERRSFL / SFLMSGRCD keywords" \
+    "$TESTDIR/TEST09_ERRSFL.dspf"           "$EXPECTED/TEST09_ERRSFL.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

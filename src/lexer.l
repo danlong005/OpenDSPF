@@ -73,6 +73,8 @@ COMMENT  "//"[^\n]*
 "ALARM"         { return KW_ALARM; }
 "NOINPUT"       { return KW_NOINPUT; }
 "PROTECT"       { return KW_PROTECT; }
+"ERRSFL"        { return KW_ERRSFL; }
+"SFLMSGRCD"     { return KW_SFLMSGRCD; }
 "WINDOW"        { return KW_WINDOW; }
 "WDWBORDER"     { return KW_WDWBORDER; }
 "VALUES"        { return KW_VALUES; }

@@ -52,7 +52,15 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ### Error indicators and highlighting ✅
 - [x] Field-level conditional DSPATR via option indicators — same field appears twice with mutually exclusive COND; duplicate buffer-slot sharing in runtime; header deduplication in codegen
-- [ ] `ERRSFL` — route error messages to subfile
+- [x] `ERRSFL` / `SFLMSGRCD(nn)` — validation errors accumulate into a
+      scrollable message area starting at row nn, instead of overwriting a
+      single status line each time. Not a full IBM i message-file/program
+      message queue implementation (OpenDSPF has neither) — routes the
+      validation-error text dspf__validateField already produces, same
+      observable multi-message-list behavior. Still only enforced in the
+      main input loop (dspf__inputLoop), not the SFLCTL control-record loop
+      (dspf__sflExfmt) — see the pre-existing note under Field validation
+      below; that's a separate gap (validation not enforced there at all).
 
 ---
 

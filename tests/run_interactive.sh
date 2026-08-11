@@ -52,12 +52,27 @@ strip_and_extract() {
         | grep -oE 'RESULT:[A-Za-z0-9_]+=[A-Za-z0-9]*'
 }
 
+# Pulls distinct terminal row numbers (1-based) that were cursor-positioned
+# to within [lo,hi] out of the RAW (unstripped) output — i.e. rows ncurses
+# actually wrote to via a CUP escape (ESC[row;colH). Used to confirm a
+# message-subfile area accumulated multiple rows rather than overwriting
+# the same one each time (see test09).
+extract_touched_rows() {
+    local lo="$1" hi="$2"
+    grep -aoE '\[[0-9]+;[0-9]+H' \
+        | sed -E 's/\[([0-9]+);.*/\1/' \
+        | awk -v lo="$lo" -v hi="$hi" '$1>=lo && $1<=hi' \
+        | sort -un \
+        | sed 's/^/MSGROW:/'
+}
+
 run_interactive_test() {
     local label="$1"
     local dspf_src="$2"
     local rpg_src="$3"
     local keys="$4"      # printf-format keystroke string, e.g. 'ABC\t123\r'
     local golden="$5"
+    local row_range="$6" # optional "lo-hi": also assert which rows got touched
 
     printf "%-55s " "$label"
 
@@ -78,10 +93,20 @@ run_interactive_test() {
         return
     fi
 
+    local raw="$TMPDIR/${base}.raw"
     local actual="$TMPDIR/${base}.actual"
     # Run from $TESTDIR: the compiled program looks for its .dspfd relative
-    # to its own working directory at runtime, not next to the exe.
-    (cd "$TESTDIR" && printf "$keys" | $TIMEOUT_CMD "$exe") 2>&1 | strip_and_extract > "$actual" || true
+    # to its own working directory at runtime, not next to the exe. (dspfc
+    # also had to write the .dspfd there, not $TMPDIR, since rpgc's own
+    # WORKSTN pre-pass looks for it next to the .rpgle source at compile
+    # time — clean those generated files up below so repeated runs don't
+    # leave build output sitting in the source tree.)
+    (cd "$TESTDIR" && printf "$keys" | $TIMEOUT_CMD "$exe") > "$raw" 2>&1 || true
+    rm -f "$TESTDIR/${base}.dspfd" "$TESTDIR/${base}_dspf.h"
+    strip_and_extract < "$raw" > "$actual"
+    if [ -n "$row_range" ]; then
+        extract_touched_rows "${row_range%-*}" "${row_range#*-}" < "$raw" >> "$actual"
+    fi
 
     if diff -q --strip-trailing-cr "$actual" "$golden" > /dev/null 2>&1; then
         echo -e "${GREEN}PASS${NC}"
@@ -104,6 +129,19 @@ run_interactive_test \
     "$TESTDIR/TEST08_AUTO.dspf" "$TESTDIR/TEST08_AUTO.rpgle" \
     'ABCXYZ\t123\r' \
     "$EXPECTED/TEST08_AUTO.out"
+
+# ── test09: ERRSFL / SFLMSGRCD ───────────────────────────────────────────
+# SFLMSGRCD(20) reserves row 20+ for the message subfile. Two invalid
+# attempts ("X", Backspace, "Y") must each land on a distinct row there
+# (accumulating — the point of ERRSFL) rather than both landing on the same
+# row (the pre-ERRSFL single-status-line behavior this replaces for records
+# that opt in), then a valid attempt ("A") succeeds.
+run_interactive_test \
+    "test09: ERRSFL accumulates messages at distinct rows" \
+    "$TESTDIR/TEST09_ERRSFL.dspf" "$TESTDIR/TEST09_ERRSFL.rpgle" \
+    'X\r\bY\r\bA\r' \
+    "$EXPECTED/TEST09_ERRSFL.out" \
+    "20-23"
 
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
