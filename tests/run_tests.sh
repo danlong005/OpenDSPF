@@ -37,12 +37,12 @@ run_test() {
         return
     fi
 
-    if diff -q "$out" "$golden" >/dev/null 2>&1; then
+    if diff -q --strip-trailing-cr "$out" "$golden" >/dev/null 2>&1; then
         echo -e "${GREEN}PASS${NC}"
         PASS=$((PASS + 1))
     else
         echo -e "${RED}FAIL${NC} (output mismatch)"
-        diff "$golden" "$out" | head -20
+        diff --strip-trailing-cr "$golden" "$out" | head -20
         FAIL=$((FAIL + 1))
         FAILURES="$FAILURES\n  $label"
     fi
@@ -75,13 +75,11 @@ if ! err2=$("$DSPFC" "$TESTDIR/CUSTMENU_fixed.dspf" -o "$TMPDIR" 2>&1 >/dev/null
 if [ $rc1 -eq 0 ] && [ $rc2 -eq 0 ]; then
     sed 's/"CUSTMENU_fixed"/"CUSTMENU"/g' \
         "$TMPDIR/CUSTMENU_fixed.dspfd" > "$TMPDIR/CUSTMENU_fixed_norm.dspfd"
-    if diff -q "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd" >/dev/null 2>&1; then
+    if diff -q --strip-trailing-cr "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd" >/dev/null 2>&1; then
         echo -e "${GREEN}PASS${NC}"; PASS=$((PASS + 1))
     else
         echo -e "${RED}FAIL${NC} (output mismatch)"
-        wc -lc "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd"
-        cmp -l "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd" 2>&1 | head -10
-        diff "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd"
+        diff --strip-trailing-cr "$TMPDIR/CUSTMENU.dspfd" "$TMPDIR/CUSTMENU_fixed_norm.dspfd"
         FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test05: CUSTMENU format parity"
     fi
 else

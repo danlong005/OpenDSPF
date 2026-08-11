@@ -54,7 +54,10 @@ static SrcFormat detectFormat(const std::string& filename) {
 }
 
 static void writeFile(const std::string& path, const std::string& content) {
-    std::ofstream out(path);
+    // Binary mode: on Windows, default (text) mode silently rewrites every
+    // '\n' in content to "\r\n", making dspfc's output depend on the host
+    // platform. Write the bytes we built exactly as built, everywhere.
+    std::ofstream out(path, std::ios::binary);
     if (!out.is_open()) {
         std::cerr << "dspfc: cannot write " << path << "\n";
         return;
