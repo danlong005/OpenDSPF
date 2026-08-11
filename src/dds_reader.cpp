@@ -275,7 +275,7 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                         // Record-level runtime keywords
                         static const char* const recRtKws[] = {
                             "PROTECT", "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT",
-                            "ERRSFL", "SFLMSGRCD", "CLRL", nullptr
+                            "ERRSFL", "SFLMSGRCD", "CLRL", "CHANGE", nullptr
                         };
                         bool matched = false;
                         for (int ri = 0; recRtKws[ri]; ri++) {
@@ -339,7 +339,7 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                         } else {
                             static const char* const recRtKws[] = {
                                 "PROTECT", "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT",
-                                "ERRSFL", "SFLMSGRCD", "CLRL", nullptr
+                                "ERRSFL", "SFLMSGRCD", "CLRL", "CHANGE", nullptr
                             };
                             bool matched = false;
                             for (int ri = 0; recRtKws[ri]; ri++) {

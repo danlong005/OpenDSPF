@@ -89,6 +89,9 @@ run_test "test13: ALIAS(name) keyword" \
 run_test "test14: COLHDG('text') keyword (quoted-string generic keyword arg)" \
     "$TESTDIR/TEST14_COLHDG.dspf"           "$EXPECTED/TEST14_COLHDG.dspfd"
 
+run_test "test15: CHANGE / BLANKS keywords (record- and field-level)" \
+    "$TESTDIR/TEST15_CHANGE_BLANKS.dspf"    "$EXPECTED/TEST15_CHANGE_BLANKS.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

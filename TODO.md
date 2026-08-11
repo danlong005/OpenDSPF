@@ -91,11 +91,26 @@ Features are grouped by priority for real IBM i RPG migration work.
       by; the generated struct member itself stays the DDS name (matches
       real IBM i semantics — ALIAS is an HLL-facing alternate name, not a
       record-layout rename)
-- [ ] `CHCCTL` — choice control field
+- [ ] `CHCCTL` — choice control field. **Deferred**: real IBM i semantics tie
+      this to `CHOICE`/`PSHBTNCHC` selection-field keywords (GUI-style
+      list/radio controls for 5250 graphical workstations), none of which
+      this ncurses/terminal-based compiler implements. It already parses
+      without error (generic keyword passthrough) but has no runtime
+      effect. Giving it real behavior means building a selection-field
+      subsystem first — out of scope for this tier; revisit if/when CHOICE
+      fields are undertaken as their own feature.
 - [x] `VALUES(...)` — allowed value list (validation)
 - [x] `RANGE(lo hi)` — range validation
 - [x] `COMP(op value)` — comparison validation
-- [ ] `BLANKS` / `CHANGE` — condition keywords
+- [x] `BLANKS(ind ['text'])` / `CHANGE(ind ['text'])` — condition keywords.
+      BLANKS: field-level, numeric input fields — sets `ind` on when the
+      field is left/keyed blank (distinguishing that from a real zero).
+      CHANGE: record- or field-level — sets `ind` on when the operator
+      keys into the field (or any input-capable field, at record level)
+      during that screen's input cycle, mirroring real MDT semantics
+      (keying the same value back in still counts; it resets fresh each
+      EXFMT since this runtime always redraws rather than modeling
+      PUTRETAIN).
 
 ---
 

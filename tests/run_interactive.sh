@@ -239,6 +239,22 @@ else
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test14b: COLHDG suppressed where a LITERAL already sits"
 fi
 
+# ── test15: CHANGE / BLANKS ──────────────────────────────────────────────
+# Two EXFMT passes of the same record prove both keywords reset fresh each
+# pass rather than sticking from a prior one. Pass 1 types into FLDX and
+# backspaces FLDQTY's pre-filled "0" blank (an untouched numeric field's
+# edit buffer always starts as "0" — see the .rpgle comment — so blanking
+# it has to be explicit to test the real "blank" case). Pass 2 leaves FLDX
+# untouched and explicitly types "0" into FLDQTY.
+#   Pass 1: *IN67 (CHANGE) on, *IN01 (BLANKS) on
+#   Pass 2: *IN67 off (nothing keyed this time), *IN01 off (a keyed zero
+#           isn't "blank")
+run_interactive_test \
+    "test15: CHANGE / BLANKS reset fresh each EXFMT pass" \
+    "$TESTDIR/TEST15_CHANGE_BLANKS.dspf" "$TESTDIR/TEST15_CHANGE_BLANKS.rpgle" \
+    'ABC\t\b\r\t0\r' \
+    "$EXPECTED/TEST15_CHANGE_BLANKS.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

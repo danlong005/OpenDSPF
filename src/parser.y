@@ -40,7 +40,7 @@ static dspf::RecType    g_recType;
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
 %token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
 %token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT KW_WINDOW KW_WDWBORDER
-%token KW_ERRSFL KW_SFLMSGRCD KW_CLRL
+%token KW_ERRSFL KW_SFLMSGRCD KW_CLRL KW_CHANGE
 %token KW_VALUES KW_RANGE KW_COMP
 %token KW_STAR_CHAR KW_STAR_COLOR KW_STAR_DSPATR
 %token LPAREN RPAREN COLON
@@ -192,8 +192,16 @@ field_keyword
       // matches fixed-format's raw passthrough byte-for-byte — callers like
       // dspf__renderScreen's COLHDG handling look for a quoted substring.
       { std::string k = take($1); g_keywords.push_back(k + "('" + take($3) + "')"); }
+    | IDENTIFIER LPAREN INDICATOR_REF STRING RPAREN
+      // e.g. BLANKS(*IN67 'text') — same quote-preserving shape as above,
+      // for keywords taking an indicator plus an optional trailing comment.
+      { std::string k = take($1); g_keywords.push_back(k + "(" + take($3) + " '" + take($4) + "')"); }
     | IDENTIFIER
       { g_keywords.push_back(take($1)); }
+    | KW_CHANGE LPAREN INDICATOR_REF RPAREN
+      { g_keywords.push_back("CHANGE(" + take($3) + ")"); }
+    | KW_CHANGE LPAREN INDICATOR_REF STRING RPAREN
+      { g_keywords.push_back("CHANGE(" + take($3) + " '" + take($4) + "')"); }
     | KW_VALUES LPAREN value_list RPAREN
       { g_keywords.push_back("VALUES(" + take($3) + ")"); }
     | KW_RANGE LPAREN value_item value_item RPAREN
@@ -281,6 +289,10 @@ rec_kw_clause
       { result->records.back().keywords.push_back("CLRL(" + std::to_string($3) + ")"); }
     | KW_CLRL LPAREN INTEGER INTEGER RPAREN
       { result->records.back().keywords.push_back("CLRL(" + std::to_string($3) + " " + std::to_string($4) + ")"); }
+    | KW_CHANGE LPAREN INDICATOR_REF RPAREN
+      { result->records.back().keywords.push_back("CHANGE(" + take($3) + ")"); }
+    | KW_CHANGE LPAREN INDICATOR_REF STRING RPAREN
+      { result->records.back().keywords.push_back("CHANGE(" + take($3) + " '" + take($4) + "')"); }
     ;
 
 key_clause

@@ -79,6 +79,7 @@ COMMENT  "//"[^\n]*
 "ERRSFL"        { return KW_ERRSFL; }
 "SFLMSGRCD"     { return KW_SFLMSGRCD; }
 "CLRL"          { return KW_CLRL; }
+"CHANGE"        { return KW_CHANGE; }
 "WINDOW"        { return KW_WINDOW; }
 "WDWBORDER"     { return KW_WDWBORDER; }
 "VALUES"        { return KW_VALUES; }

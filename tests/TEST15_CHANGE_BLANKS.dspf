@@ -1,0 +1,18 @@
+**FREE
+
+// test15 — CHANGE(ind ['text']) and BLANKS(ind ['text']): field-level
+// response indicators. FLDX's CHANGE indicator (*IN67) fires only if the
+// operator actually keys into FLDX; FLDQTY's BLANKS indicator (*IN01)
+// fires only if FLDQTY is left blank (not zero) when submitted. See
+// tests/run_interactive.sh for the two distinct runtime passes this drives.
+
+RECORD CHGBLKTEST
+  SCREEN SIZE(24 80)
+  TITLE 'CHANGE / BLANKS Test'
+
+  LITERAL  ROW(1)  COL(2)   'Name:'
+  FIELD FLDX     CHAR(5)     INPUT   ROW(1)  COL(10)  CHANGE(*IN67 'FLDX was changed')
+
+  LITERAL  ROW(2)  COL(2)   'Qty:'
+  FIELD FLDQTY   ZONED(5:0)  INPUT   ROW(2)  COL(10)  BLANKS(*IN01 'ON=FLDQTY IS ALL BLANKS')
+END-RECORD
