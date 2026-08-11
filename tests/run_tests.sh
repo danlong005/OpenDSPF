@@ -65,6 +65,9 @@ run_test "test04: fixed-format subfile (SFL/SFLCTL/option indicators)" \
 run_test "test06: conditional DSPATR (duplicate field, mutually exclusive COND)" \
     "$TESTDIR/test06_cond_dspatr.dspf"     "$EXPECTED/test06_cond_dspatr.dspfd"
 
+run_test "test07: field validation keywords (VALUES/RANGE/COMP)" \
+    "$TESTDIR/test07_validate.dspf"        "$EXPECTED/test07_validate.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

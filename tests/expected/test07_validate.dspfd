@@ -1,0 +1,50 @@
+{
+  "name": "test07_validate",
+  "records": [
+    {
+      "name": "TESTREC",
+      "type": "normal",
+      "title": "TESTREC",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Validation Test", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "GENDER",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 3,
+          "col": 10,
+          "keywords": ["VALUES('M' 'F')"]
+        },
+        {
+          "name": "AGE",
+          "type": "S",
+          "len": 3,
+          "dec": 0,
+          "io": "I",
+          "row": 4,
+          "col": 10,
+          "keywords": ["RANGE(0 120)"]
+        },
+        {
+          "name": "SCORE",
+          "type": "S",
+          "len": 3,
+          "dec": 0,
+          "io": "I",
+          "row": 5,
+          "col": 10,
+          "keywords": ["COMP(GE 0)"]
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

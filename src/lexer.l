@@ -75,6 +75,9 @@ COMMENT  "//"[^\n]*
 "PROTECT"       { return KW_PROTECT; }
 "WINDOW"        { return KW_WINDOW; }
 "WDWBORDER"     { return KW_WDWBORDER; }
+"VALUES"        { return KW_VALUES; }
+"RANGE"         { return KW_RANGE; }
+"COMP"          { return KW_COMP; }
 "*CHAR"         { return KW_STAR_CHAR; }
 "*COLOR"        { return KW_STAR_COLOR; }
 "*DSPATR"       { return KW_STAR_DSPATR; }

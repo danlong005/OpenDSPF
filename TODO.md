@@ -74,9 +74,9 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [ ] `COLHDG('text')` — column heading (use as field label when no LITERAL)
 - [ ] `ALIAS(name)` — alternate field name for generated struct member
 - [ ] `CHCCTL` — choice control field
-- [ ] `VALUES(...)` — allowed value list (validation)
-- [ ] `RANGE(lo hi)` — range validation
-- [ ] `COMP(op value)` — comparison validation
+- [x] `VALUES(...)` — allowed value list (validation)
+- [x] `RANGE(lo hi)` — range validation
+- [x] `COMP(op value)` — comparison validation
 - [ ] `BLANKS` / `CHANGE` — condition keywords
 
 ---
@@ -86,13 +86,13 @@ Features are grouped by priority for real IBM i RPG migration work.
 ### Window and overlay records
 - [x] `WINDOW(row col height width)` keyword — parsed by compiler, emitted to `.dspfd` JSON
 - [x] Runtime: render record in a bordered ncurses subwindow at specified position
-- [ ] `OVERLAY` — write record without clearing the screen first
+- [x] `OVERLAY` — write record without clearing the screen first (see Runtime behaviour gaps above)
 
-### Field validation
-- [ ] `VALUES(v1 v2 ...)` — reject input not in list
-- [ ] `RANGE(lo hi)` — reject input outside range
-- [ ] `COMP(op value)` — comparison check on submit
-- [ ] Display inline error on validation failure before returning to caller
+### Field validation ✅
+- [x] `VALUES(v1 v2 ...)` — reject input not in list
+- [x] `RANGE(lo hi)` — reject input outside range
+- [x] `COMP(op value)` — comparison check on submit
+- [x] Display inline error on validation failure before returning to caller — status-line message on the terminal's extra row (`LINES > 24`), cursor returns to the offending field; not enforced in the subfile control-record loop (`dspf__sflExfmt`), only the main `dspf__inputLoop`
 
 ### Miscellaneous DDS keywords
 - [ ] `PULLDOWN` / `PSHBTN` — menu bar and push-button widgets
@@ -114,8 +114,11 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ## Compiler infrastructure
 
-- [ ] Proper error reporting with source line numbers (currently silent on unknown keywords)
-- [ ] Warning on unrecognised keywords rather than silent ignore
+- [x] Warning on unrecognized record-level DDS keyword, with file:line — the fixed-format reader
+      used to drop anything outside a hardcoded allowlist with zero trace (how WINDOW/WDWBORDER
+      support went missing from this reader for 2.5 months, unnoticed). Field- and literal-level
+      keywords are intentionally left unwarned — both formats store them generically for the
+      runtime to act on later, so an unrecognized one isn't a bug, just not wired up yet.
 - [ ] Validate `SFLPAG` ≤ `SFLSIZ`
 - [ ] Validate field row/col fits within declared `SCREEN SIZE`
 - [ ] Cross-record field reference checking for `REFFLD`

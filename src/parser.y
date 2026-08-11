@@ -40,10 +40,13 @@ static dspf::RecType    g_recType;
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
 %token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
 %token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT KW_WINDOW KW_WDWBORDER
+%token KW_VALUES KW_RANGE KW_COMP
 %token KW_STAR_CHAR KW_STAR_COLOR KW_STAR_DSPATR
 %token LPAREN RPAREN COLON
 %token <ival> INTEGER
 %token <sval> STRING IDENTIFIER INDICATOR_REF
+
+%type <sval> value_item value_list
 
 %%
 
@@ -179,6 +182,29 @@ field_keyword
       { std::string k = take($1); g_keywords.push_back(k + "(" + take($3) + ")"); }
     | IDENTIFIER
       { g_keywords.push_back(take($1)); }
+    | KW_VALUES LPAREN value_list RPAREN
+      { g_keywords.push_back("VALUES(" + take($3) + ")"); }
+    | KW_RANGE LPAREN value_item value_item RPAREN
+      { g_keywords.push_back("RANGE(" + take($3) + " " + take($4) + ")"); }
+    | KW_COMP LPAREN IDENTIFIER value_item RPAREN
+      { g_keywords.push_back("COMP(" + take($3) + " " + take($4) + ")"); }
+    ;
+
+// A single VALUES/RANGE/COMP operand — quoted strings stay quoted (so the
+// runtime's whitespace splitter can tell "M F" apart from unquoted M/F) and
+// integers render bare.
+value_item
+    : STRING
+      { std::string s = "'" + take($1) + "'"; $$ = strdup(s.c_str()); }
+    | INTEGER
+      { $$ = strdup(std::to_string($1).c_str()); }
+    ;
+
+value_list
+    : value_item
+      { $$ = $1; }
+    | value_list value_item
+      { std::string s = take($1) + " " + take($2); $$ = strdup(s.c_str()); }
     ;
 
 sflctl_clause
