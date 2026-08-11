@@ -1,0 +1,51 @@
+{
+  "name": "TEST08_AUTO",
+  "records": [
+    {
+      "name": "AUTOTEST",
+      "type": "normal",
+      "title": "Auto Advance Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Field 1 (AUTO):", "keywords": [] },
+        { "row": 2, "col": 2, "text": "Field 2:", "keywords": [] },
+        { "row": 3, "col": 2, "text": "Field 3:", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "FLD1",
+          "type": "A",
+          "len": 3,
+          "dec": 0,
+          "io": "I",
+          "row": 1,
+          "col": 20,
+          "keywords": ["AUTO"]
+        },
+        {
+          "name": "FLD2",
+          "type": "A",
+          "len": 3,
+          "dec": 0,
+          "io": "I",
+          "row": 2,
+          "col": 20,
+          "keywords": []
+        },
+        {
+          "name": "FLD3",
+          "type": "A",
+          "len": 3,
+          "dec": 0,
+          "io": "I",
+          "row": 3,
+          "col": 20,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

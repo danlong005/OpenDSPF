@@ -868,7 +868,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
             wattron(win, COLOR_PAIR(pair) | ext | A_REVERSE);
             mvwprintw(win, f.row, f.col, "%-*s", f.len, f.val.c_str());
             wattroff(win, COLOR_PAIR(pair) | ext | A_REVERSE);
-            if ((int)f.val.size() >= f.len) {
+            if ((int)f.val.size() >= f.len && dspf__hasRecKw(fields[f.recIdx], "AUTO")) {
                 cur = (cur + 1) % (int)ef.size();
                 wrefresh(win);
             }

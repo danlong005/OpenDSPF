@@ -1,0 +1,19 @@
+**FREE
+
+// test08 — AUTO keyword: field-fill auto-advance is conditional on AUTO
+// being present, not unconditional. FLD1 has AUTO; FLD2/FLD3 don't, so
+// filling them must NOT auto-advance the cursor (see tests/run_interactive.sh).
+
+RECORD AUTOTEST
+  SCREEN SIZE(24 80)
+  TITLE 'Auto Advance Test'
+
+  LITERAL  ROW(1)  COL(2)   'Field 1 (AUTO):'
+  FIELD FLD1   CHAR(3)   INPUT   ROW(1)  COL(20)   AUTO
+
+  LITERAL  ROW(2)  COL(2)   'Field 2:'
+  FIELD FLD2   CHAR(3)   INPUT   ROW(2)  COL(20)
+
+  LITERAL  ROW(3)  COL(2)   'Field 3:'
+  FIELD FLD3   CHAR(3)   INPUT   ROW(3)  COL(20)
+END-RECORD

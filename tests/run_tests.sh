@@ -68,6 +68,9 @@ run_test "test06: conditional DSPATR (duplicate field, mutually exclusive COND)"
 run_test "test07: field validation keywords (VALUES/RANGE/COMP)" \
     "$TESTDIR/test07_validate.dspf"        "$EXPECTED/test07_validate.dspfd"
 
+run_test "test08: AUTO keyword (field-level, generic keyword passthrough)" \
+    "$TESTDIR/TEST08_AUTO.dspf"             "$EXPECTED/TEST08_AUTO.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

@@ -101,7 +101,15 @@ uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/$(TARGET)
 	rm -f $(DESTDIR)$(DATADIR)/rpg_dspf_runtime.h
 
-RPGC ?= $(shell which rpgc 2>/dev/null || echo ../OpenRPG/rpgc)
+# Prefer the sibling OpenRPG checkout over a system-installed rpgc: rpgc's
+# own runtime_dir resolution checks (cwd)/runtime before its installed
+# fallback location, and OpenDSPF's own runtime/ subdirectory (real, but
+# containing only rpg_dspf_runtime.h) satisfies that check and wrongly
+# shadows a complete installed copy — breaking a system-installed rpgc's
+# ability to find rpg_runtime.h and friends when invoked from here. The
+# sibling checkout's own runtime/ dir doesn't have this false-positive
+# problem, so prefer it whenever present.
+RPGC ?= $(shell [ -x ../OpenRPG/rpgc ] && echo ../OpenRPG/rpgc || which rpgc 2>/dev/null || echo ../OpenRPG/rpgc)
 
 test: $(TARGET)
 	@DSPFC=./$(TARGET) bash tests/run_tests.sh
@@ -112,5 +120,7 @@ test: $(TARGET)
 	else \
 	    echo "SKIP: rpgc not found (set RPGC=/path/to/rpgc to enable)"; \
 	fi
+	@echo "--- Interactive runtime tests (real ncurses keystrokes) ---"
+	@DSPFC=./$(TARGET) RPGC=$(RPGC) bash tests/run_interactive.sh
 
 .PHONY: all clean install uninstall test

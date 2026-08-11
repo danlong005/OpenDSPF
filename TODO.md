@@ -37,9 +37,10 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] Zero-pad to declared field length (no EDTCDE/EDTWRD) — IBM i style `001234.56`
 - [x] Decimal point at correct position when no edit code is applied
 
-### Auto-advance on field fill
+### Auto-advance on field fill ✅
 - [x] Cursor automatically moves to next field when current field is full
-- [ ] `AUTO` keyword (explicit auto-advance attribute — behavior already default)
+- [x] `AUTO` keyword — advance is now conditional on the keyword being present
+      (was previously unconditional for every field regardless of AUTO)
 
 ### REFFLD — reference field definitions
 - (not supported — skipped by design)
