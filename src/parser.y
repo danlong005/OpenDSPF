@@ -40,7 +40,7 @@ static dspf::RecType    g_recType;
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
 %token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
 %token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT KW_WINDOW KW_WDWBORDER
-%token KW_ERRSFL KW_SFLMSGRCD
+%token KW_ERRSFL KW_SFLMSGRCD KW_CLRL
 %token KW_VALUES KW_RANGE KW_COMP
 %token KW_STAR_CHAR KW_STAR_COLOR KW_STAR_DSPATR
 %token LPAREN RPAREN COLON
@@ -266,6 +266,10 @@ rec_kw_clause
       { result->records.back().keywords.push_back("ERRSFL"); }
     | KW_SFLMSGRCD LPAREN INTEGER RPAREN
       { result->records.back().keywords.push_back("SFLMSGRCD(" + std::to_string($3) + ")"); }
+    | KW_CLRL LPAREN INTEGER RPAREN
+      { result->records.back().keywords.push_back("CLRL(" + std::to_string($3) + ")"); }
+    | KW_CLRL LPAREN INTEGER INTEGER RPAREN
+      { result->records.back().keywords.push_back("CLRL(" + std::to_string($3) + " " + std::to_string($4) + ")"); }
     ;
 
 key_clause

@@ -1,0 +1,24 @@
+**FREE
+
+// test11 — CLRL(begline [endline]): partial-screen clear. FIRST paints
+// three lines across the screen; SECOND has CLRL(15 20) and should only
+// clear rows 15-20 when written, leaving FIRST's other content in place.
+// See tests/run_interactive.sh for the runtime behavioral check.
+
+RECORD FIRST
+  SCREEN SIZE(24 80)
+  TITLE 'CLRL Test - First'
+
+  LITERAL  ROW(1)   COL(1)   'TOPLINE'
+  LITERAL  ROW(10)  COL(1)   'MIDLINE'
+  LITERAL  ROW(20)  COL(1)   'BOTLINE'
+END-RECORD
+
+RECORD SECOND
+  SCREEN SIZE(24 80)
+  TITLE 'CLRL Test - Second'
+  CLRL(15 20)
+
+  LITERAL  ROW(15)  COL(1)   'NEWLINE'
+  FIELD DUMMY   CHAR(1)   INPUT   ROW(15)  COL(30)
+END-RECORD

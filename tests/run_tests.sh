@@ -77,6 +77,9 @@ run_test "test09: ERRSFL / SFLMSGRCD keywords" \
 run_test "test10: KEY PAGEUP/PAGEDOWN (fixed-format ROLLUP/ROLLDOWN alias)" \
     "$TESTDIR/TEST10_PAGEKEY.dspf"          "$EXPECTED/TEST10_PAGEKEY.dspfd"
 
+run_test "test11: CLRL(begline endline) partial-screen clear" \
+    "$TESTDIR/TEST11_CLRL.dspf"             "$EXPECTED/TEST11_CLRL.dspfd"
+
 # test05: compile both formats and compare their outputs (basename-normalised).
 # Free-format CUSTMENU.dspf produces "CUSTMENU"; fixed-format CUSTMENU_fixed.dspf
 # produces "CUSTMENU_fixed" — normalise before diff.

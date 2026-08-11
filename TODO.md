@@ -64,7 +64,7 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ---
 
-## Runtime behaviour gaps
+## Runtime behaviour gaps ✅
 
 - [x] `KEY_HOME` / `KEY_END` — jump to first / last field
 - [x] `KEY_UP` / `KEY_DOWN` — move between fields (same as Tab/Shift-Tab)
@@ -72,7 +72,9 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] `ALARM` — ring terminal bell on EXFMT
 - [x] `NOINPUT` — disable all input fields for this EXFMT
 - [x] `NOCLEAR` — retain prior screen content
-- [ ] `CLRL` — clear remainder of screen/line before writing
+- [x] `CLRL(begline [endline])` — clears only that row range before writing
+      (endline omitted = to the bottom), instead of the default full-screen
+      clear. Takes effect only when neither OVERLAY nor NOCLEAR is present.
 - [x] `KEY_PPAGE` / `KEY_NPAGE` — Page Up / Page Down as exit keys on
       non-subfile records (subfiles already handled scrolling). Fixed-format
       `ROLLUP(ind)`/`ROLLDOWN(ind)` map to `PAGEDOWN`/`PAGEUP` respectively —

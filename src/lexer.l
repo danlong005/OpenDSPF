@@ -75,6 +75,7 @@ COMMENT  "//"[^\n]*
 "PROTECT"       { return KW_PROTECT; }
 "ERRSFL"        { return KW_ERRSFL; }
 "SFLMSGRCD"     { return KW_SFLMSGRCD; }
+"CLRL"          { return KW_CLRL; }
 "WINDOW"        { return KW_WINDOW; }
 "WDWBORDER"     { return KW_WDWBORDER; }
 "VALUES"        { return KW_VALUES; }

@@ -1,0 +1,45 @@
+{
+  "name": "TEST11_CLRL",
+  "records": [
+    {
+      "name": "FIRST",
+      "type": "normal",
+      "title": "CLRL Test - First",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 1, "text": "TOPLINE", "keywords": [] },
+        { "row": 10, "col": 1, "text": "MIDLINE", "keywords": [] },
+        { "row": 20, "col": 1, "text": "BOTLINE", "keywords": [] }
+      ],
+      "fields": [
+      ],
+      "keys": [
+      ]
+    },
+    {
+      "name": "SECOND",
+      "type": "normal",
+      "title": "CLRL Test - Second",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": ["CLRL(15 20)"],
+      "literals": [
+        { "row": 15, "col": 1, "text": "NEWLINE", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "DUMMY",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 15,
+          "col": 30,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

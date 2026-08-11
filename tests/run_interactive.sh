@@ -66,13 +66,24 @@ extract_touched_rows() {
         | sed 's/^/MSGROW:/'
 }
 
+# Counts full-screen-clear escapes (ESC[2J) in the RAW output. A byte-stream
+# capture can't show "this text got cleared" directly — clearing something
+# doesn't retroactively remove its earlier bytes from the log, it only
+# changes what gets sent next — so partial vs. full clear (CLRL vs. the
+# default) has to be distinguished by *how many* full-screen clears
+# happened, not by which text is or isn't present (see test11).
+count_full_clears() {
+    grep -acF $'\x1b[2J'
+}
+
 run_interactive_test() {
     local label="$1"
     local dspf_src="$2"
     local rpg_src="$3"
     local keys="$4"      # printf-format keystroke string, e.g. 'ABC\t123\r'
     local golden="$5"
-    local row_range="$6" # optional "lo-hi": also assert which rows got touched
+    local row_range="$6"    # optional "lo-hi": also assert which rows got touched
+    local check_clears="$7" # optional "1": also assert full-clear count as CLEARCOUNT:n
 
     printf "%-55s " "$label"
 
@@ -106,6 +117,9 @@ run_interactive_test() {
     strip_and_extract < "$raw" > "$actual"
     if [ -n "$row_range" ]; then
         extract_touched_rows "${row_range%-*}" "${row_range#*-}" < "$raw" >> "$actual"
+    fi
+    if [ "$check_clears" = "1" ]; then
+        echo "CLEARCOUNT:$(count_full_clears < "$raw")" >> "$actual"
     fi
 
     if diff -q --strip-trailing-cr "$actual" "$golden" > /dev/null 2>&1; then
@@ -159,6 +173,21 @@ run_interactive_test \
     "$TESTDIR/TEST10_PAGEKEY.dspf" "$TESTDIR/TEST10_PAGEKEY.rpgle" \
     '\x1b[6~' \
     "$EXPECTED/TEST10_PAGEKEY_down.out"
+
+# ── test11: CLRL partial-screen clear ────────────────────────────────────
+# FIRST (no clear-related keywords) does the default full clear once, then
+# SECOND (CLRL(15 20)) must NOT trigger a second full clear — a byte-stream
+# capture can't show "this text got cleared" directly (clearing something
+# doesn't remove its earlier bytes from the log), so the full-clear *count*
+# is what actually distinguishes CLRL's partial clear from a regression
+# back to the unconditional full clear (1 vs. 2 — verified both ways while
+# writing this).
+run_interactive_test \
+    "test11: CLRL clears only its row range, not the whole screen" \
+    "$TESTDIR/TEST11_CLRL.dspf" "$TESTDIR/TEST11_CLRL.rpgle" \
+    '\r' \
+    "$EXPECTED/TEST11_CLRL.out" \
+    "" "1"
 
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
