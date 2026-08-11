@@ -186,6 +186,11 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
     std::string line;
 
     while (std::getline(in, line)) {
+        // Tolerate CRLF-terminated source (common when DDS is authored or
+        // transferred via Windows) — getline only splits on '\n', so a
+        // trailing '\r' would otherwise land inside the padded column data.
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+
         // Pad line to at least 80 chars for safe column access
         while ((int)line.size() < 80) line += ' ';
 
