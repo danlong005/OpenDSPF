@@ -173,8 +173,8 @@ Features are grouped by priority for real IBM i RPG migration work.
 ### Free-format DSPF syntax additions
 - [ ] `COLOR(...)` on `LITERAL` lines
 - [ ] `DSPATR(...)` on `LITERAL` lines
-- [ ] Conditioning indicator syntax on `FIELD` and `LITERAL` lines (`COND(*IN03)`)
-- [ ] `SUBFILE` / `SFLCTL` block syntax
+- [x] Conditioning indicator syntax on `FIELD` and `LITERAL` lines (`COND(*IN03)`) — already implemented and tested (`test03_cond.dspf`); this line was just never checked off
+- [x] `SUBFILE` / `SFLCTL` block syntax — already implemented and tested (`test02_subfile.dspf`); same stale-checkbox situation
 
 ---
 
