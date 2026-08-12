@@ -1,0 +1,55 @@
+{
+  "name": "TEST18_SFLNXTCHG",
+  "records": [
+    {
+      "name": "CUSTSFL4",
+      "type": "sfl",
+      "title": "CUSTSFL4",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": ["SFLNXTCHG(*IN50)"],
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "OPTION",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 6,
+          "col": 2,
+          "keywords": ["VALUES('1' ' ')"]
+        },
+        {
+          "name": "CUSTNO",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "O",
+          "row": 6,
+          "col": 5,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    },
+    {
+      "name": "CUSTCTL4",
+      "type": "sflctl",
+      "sfl": "CUSTSFL4",
+      "sflpag": 5,
+      "sflsiz": 20,
+      "title": "SFLNXTCHG Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+      ],
+      "fields": [
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

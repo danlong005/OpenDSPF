@@ -38,7 +38,20 @@ Features are grouped by priority for real IBM i RPG migration work.
       non-hidden field, since a row's OUTPUT fields (e.g. a key like
       CUSTNO) are how the program identifies *which* row was touched.
       `%EOF(recordname)` reports when there are none left.
-- [ ] `SFLNXTCHG` — mark changed subfile records (low priority)
+- [x] `SFLNXTCHG` — record-level keyword on the SFL record (bare, or
+      conditioned by an option indicator: `SFLNXTCHG(*INxx)`). Real
+      semantics needed a prerequisite this compiler didn't have at all:
+      `UPDATE recordname` for a WORKSTN subfile row — added
+      `dspf_update()`, which rewrites whatever row `READC` most recently
+      returned (mirrors real DDS's implicit "current record" pointer;
+      `UPDATE` takes no RRN itself). When `SFLNXTCHG` is in effect for
+      that `UPDATE` call, the row is force-remarked as changed even
+      though the operator never touched it — the real-world "program
+      detected an error, reject it and make the operator look again"
+      loop. Staged separately from the operator-typed changed-row queue
+      and merged in only at the *next* redisplay, matching real timing
+      (an `UPDATE` mid-`READC`-loop must not resurface in that same loop
+      — it becomes visible starting the next `EXFMT`, not immediately).
 - [x] `HIDDEN` (`H`) usage fields now carry a real value through the
       buffer end-to-end — previously they were skipped at three separate
       layers that all had to agree: the runtime's own

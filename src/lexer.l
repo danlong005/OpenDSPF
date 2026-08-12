@@ -80,6 +80,7 @@ COMMENT  "//"[^\n]*
 "SFLMSGRCD"     { return KW_SFLMSGRCD; }
 "CLRL"          { return KW_CLRL; }
 "CHANGE"        { return KW_CHANGE; }
+"SFLNXTCHG"     { return KW_SFLNXTCHG; }
 "WINDOW"        { return KW_WINDOW; }
 "WDWBORDER"     { return KW_WDWBORDER; }
 "VALUES"        { return KW_VALUES; }

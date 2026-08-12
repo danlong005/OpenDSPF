@@ -165,6 +165,9 @@ run_test "test16: subfile per-row OPTION field (VALUES on a SFL field)" \
 run_test "test17: subfile with no editable fields (HIDDEN SFLRCDNBR)" \
     "$TESTDIR/TEST17_SFLSELECT.dspf"        "$EXPECTED/TEST17_SFLSELECT.dspfd"
 
+run_test "test18: SFLNXTCHG (subfile next changed) keyword" \
+    "$TESTDIR/TEST18_SFLNXTCHG.dspf"        "$EXPECTED/TEST18_SFLNXTCHG.dspfd"
+
 # test15b uses its own golden, not the parity pattern: BLANKS's optional
 # comment text pushes past the 36-char field-line keyword budget (real DDS
 # has no field-level keyword continuation line — only record-level), so the

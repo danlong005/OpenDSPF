@@ -288,6 +288,19 @@ run_interactive_test \
     '\r' \
     "$EXPECTED/TEST17_SFLSELECT.out"
 
+# ── test18: SFLNXTCHG ─────────────────────────────────────────────────────
+# Pass 1: operator types '1' into row 1's OPTION only; the READC loop
+# finds it, "detects an error", and UPDATEs it with *IN50 (SFLNXTCHG's
+# conditioning indicator) on. Pass 2: operator presses Enter without
+# typing anything at all — the READC loop must still find row 1, proving
+# SFLNXTCHG resurfaced it purely from the program side. Row 2 was never
+# touched by anyone and must never appear in either pass.
+run_interactive_test \
+    "test18: SFLNXTCHG resurfaces a row via UPDATE, no operator input" \
+    "$TESTDIR/TEST18_SFLNXTCHG.dspf" "$TESTDIR/TEST18_SFLNXTCHG.rpgle" \
+    '1\r\r' \
+    "$EXPECTED/TEST18_SFLNXTCHG.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

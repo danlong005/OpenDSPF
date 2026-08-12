@@ -1,0 +1,23 @@
+**FREE
+
+// test18 — SFLNXTCHG: force-remark a subfile row as changed from the
+// program side (via UPDATE), independent of whether the operator typed
+// into it, so it resurfaces on READC the *next* time the subfile is
+// redisplayed — the real-world "reject a program-detected error and make
+// the operator look at it again" loop. See tests/run_interactive.sh.
+
+RECORD CUSTSFL4 SUBFILE
+  SFLNXTCHG(*IN50)
+  FIELD OPTION   CHAR(1)   INPUT   ROW(6)  COL(2)   VALUES('1' ' ')
+  FIELD CUSTNO   CHAR(8)   OUTPUT  ROW(6)  COL(5)
+END-RECORD
+
+RECORD CUSTCTL4
+  SFLCTL CUSTSFL4
+  SFLPAG(5)
+  SFLSIZ(20)
+  SCREEN SIZE(24 80)
+  TITLE 'SFLNXTCHG Test'
+
+  KEY F3   INDICATOR(03)
+END-RECORD
