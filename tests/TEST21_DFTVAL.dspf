@@ -1,0 +1,16 @@
+**FREE
+
+// test21 — DFTVAL('text'): the field's initial displayed value before
+// the program ever sets it, and INDTXT(ind 'text'): purely compile-time
+// documentation (no runtime effect even on real IBM i — just needs to
+// parse cleanly at both record and field level). See
+// tests/run_interactive.sh for DFTVAL's behavioral check.
+
+RECORD MYREC
+  SCREEN SIZE(24 80)
+  INDTXT(*IN50 'Record-level documentation only')
+
+  FIELD GREETING CHAR(10)   OUTPUT  ROW(1)  COL(2)  DFTVAL('Hello')
+  FIELD QTY      ZONED(3:0) OUTPUT  ROW(2)  COL(2)  DFTVAL('42')
+  FIELD SPARE1   CHAR(5)    OUTPUT  ROW(3)  COL(2)  INDTXT(*IN51 'Field-level documentation only')
+END-RECORD

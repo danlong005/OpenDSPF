@@ -1,0 +1,48 @@
+{
+  "name": "TEST21_DFTVAL",
+  "records": [
+    {
+      "name": "MYREC",
+      "type": "normal",
+      "title": "MYREC",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": ["INDTXT(*IN50 'Record-level documentation only')"],
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "GREETING",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "O",
+          "row": 1,
+          "col": 2,
+          "keywords": ["DFTVAL('Hello')"]
+        },
+        {
+          "name": "QTY",
+          "type": "S",
+          "len": 3,
+          "dec": 0,
+          "io": "O",
+          "row": 2,
+          "col": 2,
+          "keywords": ["DFTVAL('42')"]
+        },
+        {
+          "name": "SPARE1",
+          "type": "A",
+          "len": 5,
+          "dec": 0,
+          "io": "O",
+          "row": 3,
+          "col": 2,
+          "keywords": ["INDTXT(*IN51 'Field-level documentation only')"]
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

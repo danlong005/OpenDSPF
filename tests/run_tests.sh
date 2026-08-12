@@ -212,6 +212,9 @@ run_diag_test "test20b: field bounds check reports the right offender" \
     "$TESTDIR/test20_field_bounds_warning.dspf" 0 \
     "field OFFSCREEN row 30 is outside SCREEN SIZE(24 80)"
 
+run_test "test21: DFTVAL('text') and INDTXT(ind 'text') keywords" \
+    "$TESTDIR/TEST21_DFTVAL.dspf"            "$EXPECTED/TEST21_DFTVAL.dspfd"
+
 # test15b uses its own golden, not the parity pattern: BLANKS's optional
 # comment text pushes past the 36-char field-line keyword budget (real DDS
 # has no field-level keyword continuation line — only record-level), so the

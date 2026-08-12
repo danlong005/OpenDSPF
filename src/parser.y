@@ -40,7 +40,7 @@ static dspf::RecType    g_recType;
 %token KW_INPUT KW_OUTPUT KW_BOTH KW_HIDDEN
 %token KW_SUBFILE KW_SFLCTL KW_SFLPAG KW_SFLSIZ
 %token KW_OVERLAY KW_NOCLEAR KW_ALARM KW_NOINPUT KW_PROTECT KW_WINDOW KW_WDWBORDER
-%token KW_ERRSFL KW_SFLMSGRCD KW_CLRL KW_CHANGE KW_SFLNXTCHG
+%token KW_ERRSFL KW_SFLMSGRCD KW_CLRL KW_CHANGE KW_SFLNXTCHG KW_INDTXT
 %token KW_VALUES KW_RANGE KW_COMP
 %token KW_STAR_CHAR KW_STAR_COLOR KW_STAR_DSPATR
 %token LPAREN RPAREN COLON
@@ -202,6 +202,8 @@ field_keyword
       { g_keywords.push_back("CHANGE(" + take($3) + ")"); }
     | KW_CHANGE LPAREN INDICATOR_REF STRING RPAREN
       { g_keywords.push_back("CHANGE(" + take($3) + " '" + take($4) + "')"); }
+    | KW_INDTXT LPAREN INDICATOR_REF STRING RPAREN
+      { g_keywords.push_back("INDTXT(" + take($3) + " '" + take($4) + "')"); }
     | KW_VALUES LPAREN value_list RPAREN
       { g_keywords.push_back("VALUES(" + take($3) + ")"); }
     | KW_RANGE LPAREN value_item value_item RPAREN
@@ -297,6 +299,8 @@ rec_kw_clause
       { result->records.back().keywords.push_back("SFLNXTCHG"); }
     | KW_SFLNXTCHG LPAREN INDICATOR_REF RPAREN
       { result->records.back().keywords.push_back("SFLNXTCHG(" + take($3) + ")"); }
+    | KW_INDTXT LPAREN INDICATOR_REF STRING RPAREN
+      { result->records.back().keywords.push_back("INDTXT(" + take($3) + " '" + take($4) + "')"); }
     ;
 
 key_clause

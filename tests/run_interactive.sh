@@ -49,7 +49,7 @@ fi
 # 2-byte ESC sequences), then pulls out RESULT:name=value tokens.
 strip_and_extract() {
     perl -pe 's/\x1b\[[0-9;?]*[a-zA-Z=<>]//g; s/\x1b[()][0-9A-Za-z]//g; s/\x1b[=><]//g; s/\x0f//g' \
-        | grep -oE 'RESULT:[A-Za-z0-9_]+=[A-Za-z0-9-]*'
+        | grep -oE 'RESULT:[A-Za-z0-9_]+=[A-Za-z0-9.-]*'
 }
 
 # Pulls distinct terminal row numbers (1-based) that were cursor-positioned
@@ -300,6 +300,16 @@ run_interactive_test \
     "$TESTDIR/TEST18_SFLNXTCHG.dspf" "$TESTDIR/TEST18_SFLNXTCHG.rpgle" \
     '1\r\r' \
     "$EXPECTED/TEST18_SFLNXTCHG.out"
+
+# ── test21: DFTVAL ────────────────────────────────────────────────────────
+# Checks the flat RPG variables' values immediately, before ever calling
+# EXFMT/WRITE — proving DFTVAL seeded them at declaration time, not at
+# some later point. No keystrokes needed: the program never reads input.
+run_interactive_test \
+    "test21: DFTVAL seeds a field's initial value at declaration" \
+    "$TESTDIR/TEST21_DFTVAL.dspf" "$TESTDIR/TEST21_DFTVAL.rpgle" \
+    '' \
+    "$EXPECTED/TEST21_DFTVAL.out"
 
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""

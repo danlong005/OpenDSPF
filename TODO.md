@@ -189,14 +189,45 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] Display inline error on validation failure before returning to caller — status-line message on the terminal's extra row (`LINES > 24`), cursor returns to the offending field. Now enforced in the subfile control-record loop (`dspf__sflExfmt`) too, not just the main `dspf__inputLoop` — see "Subfiles" above.
 
 ### Miscellaneous DDS keywords
-- [ ] `PULLDOWN` / `PSHBTN` — menu bar and push-button widgets
-- [ ] `CMDKEY(text ind)` — command key with description
-- [ ] `HLPRCD(record file)` — link F1 to a help record
-- [ ] `SFLMSG` / `SFLMSGID` — subfile message line
-- [ ] `MSGCON` — message constant (looked up from message file)
-- [ ] `DFTVAL(value)` — default field value
-- [ ] `WRDWRAP` — word-wrap long text fields
-- [ ] `INDTXT(ind 'text')` — indicator text descriptions
+- [ ] `PULLDOWN` / `PSHBTN` — menu bar and push-button widgets.
+      **Deferred**: same reason as `CHCCTL` — real IBM i semantics tie
+      these to graphical-workstation widget rendering (pull-down menus,
+      multi-choice push-button fields), infrastructure this ncurses-based
+      compiler doesn't implement at all.
+- [ ] ~~`CMDKEY(text ind)` — command key with description~~ — **dropped**:
+      couldn't confirm this exists as a real DDS keyword under this name/
+      shape; likely an inaccurate leftover (possibly conflated with
+      `CFxx(ind)`/`CAxx(ind)`, which this compiler already implements via
+      `KEY Fn INDICATOR(nn)`).
+- [ ] `HLPRCD(record file)` — link F1 to a help record. **Deferred**: real
+      semantics live in DDS's separate Help-specification section (`H` in
+      column 17), an entirely different specification type this
+      compiler's parser doesn't handle at all — a bigger addition than
+      one keyword.
+- [ ] `SFLMSG` / `SFLMSGID` — subfile message line. **Deferred**: needs a
+      real IBM i message-file mechanism (program message queue, severity
+      levels, replacement variables) as a prerequisite — this project has
+      never built one (same gap noted under `ERRSFL`, which approximates
+      message *display* without a real message file underneath).
+- [ ] `MSGCON` — message constant (looked up from message file).
+      **Deferred**: same message-file prerequisite as `SFLMSG`/`SFLMSGID`.
+- [x] `DFTVAL('text')` — default field value. Implemented purely at
+      OpenRPG codegen time: the flat RPG variable for an OUTPUT/BOTH
+      field is initialized to `DFTVAL`'s value instead of blank/zero at
+      declaration, matching real semantics (the field's displayed content
+      before the program ever sets it) for free — no runtime changes
+      needed, and it works identically for a subfile row's fields too
+      (whatever the flat var holds at `WRITE` time becomes the row's
+      stored value).
+- [ ] `WRDWRAP` — word-wrap long text fields. **Deferred**: genuinely
+      requires `CNTFLD` (Continued Field — splitting one long field
+      across multiple physical display lines) as a prerequisite; without
+      it there's no "continuation" to word-wrap. Not implemented.
+- [x] `INDTXT(ind 'text')` — indicator text description. Purely compile-
+      time documentation even on real IBM i (no runtime effect at all) —
+      field-level already worked via generic keyword passthrough; added
+      record-level grammar (bare field-level form already covered
+      `*IN50`-style indicator refs, matching this dialect's convention).
 
 ### Free-format DSPF syntax additions
 - [ ] `COLOR(...)` on `LITERAL` lines

@@ -81,6 +81,7 @@ COMMENT  "//"[^\n]*
 "CLRL"          { return KW_CLRL; }
 "CHANGE"        { return KW_CHANGE; }
 "SFLNXTCHG"     { return KW_SFLNXTCHG; }
+"INDTXT"        { return KW_INDTXT; }
 "WINDOW"        { return KW_WINDOW; }
 "WDWBORDER"     { return KW_WDWBORDER; }
 "VALUES"        { return KW_VALUES; }
