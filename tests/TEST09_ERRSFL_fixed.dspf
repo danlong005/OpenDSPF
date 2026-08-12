@@ -1,0 +1,4 @@
+     A          R ERRTEST                   TEXT('ERRSFL Test')
+     A                                      ERRSFL SFLMSGRCD(20)
+     A                                  1  2'Enter code (A/B/C):'
+     A          CODE             1A  I  1 25VALUES('A' 'B' 'C')

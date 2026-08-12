@@ -1,0 +1,8 @@
+     A          R FIRST                     TEXT('CLRL Test - First')
+     A                                  1  1'TOPLINE'
+     A                                 10  1'MIDLINE'
+     A                                 20  1'BOTLINE'
+     A          R SECOND                    TEXT('CLRL Test - Second')
+     A                                      CLRL(15 20)
+     A                                 15  1'NEWLINE'
+     A          DUMMY            1A  I 15 30

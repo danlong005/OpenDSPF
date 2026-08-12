@@ -1,0 +1,40 @@
+{
+  "name": "TEST15_CHANGE_BLANKS_fixed",
+  "records": [
+    {
+      "name": "CHGBLKTEST",
+      "type": "normal",
+      "title": "CHANGE / BLANKS Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Name:", "keywords": [] },
+        { "row": 2, "col": 2, "text": "Qty:", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "FLDX",
+          "type": "A",
+          "len": 5,
+          "dec": 0,
+          "io": "I",
+          "row": 1,
+          "col": 10,
+          "keywords": ["CHANGE(*IN67 'FLDX was changed')"]
+        },
+        {
+          "name": "FLDQTY",
+          "type": "S",
+          "len": 5,
+          "dec": 0,
+          "io": "I",
+          "row": 2,
+          "col": 10,
+          "keywords": ["BLANKS(*IN01 'FLDQTY IS BLANK')"]
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

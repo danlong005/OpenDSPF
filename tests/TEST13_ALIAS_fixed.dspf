@@ -1,0 +1,3 @@
+     A          R ALIASTEST                 TEXT('Alias Test')
+     A                                  1  2'Cryptic field:'
+     A          CRYPTNM          8A  I  1 20ALIAS(CUSTOMERNAME)

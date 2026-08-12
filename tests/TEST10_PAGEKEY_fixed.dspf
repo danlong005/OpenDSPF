@@ -1,0 +1,4 @@
+     A          R PAGEKEYTST                TEXT('Page Key Test')
+     A                                      ROLLDOWN(21) ROLLUP(22)
+     A                                  1  2'Press PageUp or PageDown:'
+     A          DUMMY            1A  I  1 30

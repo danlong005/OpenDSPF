@@ -1,0 +1,7 @@
+     A          R AUTOTEST                  TEXT('Auto Advance Test')
+     A                                  1  2'Field 1 (AUTO):'
+     A          FLD1             3A  I  1 20AUTO
+     A                                  2  2'Field 2:'
+     A          FLD2             3A  I  2 20
+     A                                  3  2'Field 3:'
+     A          FLD3             3A  I  3 20

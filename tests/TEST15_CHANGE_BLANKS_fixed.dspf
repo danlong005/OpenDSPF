@@ -1,0 +1,5 @@
+     A          R CHGBLKTEST                TEXT('CHANGE / BLANKS Test')
+     A                                  1  2'Name:'
+     A          FLDX             5A  I  1 10CHANGE(*IN67 'FLDX was changed')
+     A                                  2  2'Qty:'
+     A          FLDQTY           5S 0I  2 10BLANKS(*IN01 'FLDQTY IS BLANK')
