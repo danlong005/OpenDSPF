@@ -1,0 +1,49 @@
+{
+  "name": "test20_field_bounds_warning",
+  "records": [
+    {
+      "name": "BADPOS",
+      "type": "normal",
+      "title": "BADPOS",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 1, "text": "Valid literal", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "OFFSCREEN",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "O",
+          "row": 30,
+          "col": 2,
+          "keywords": []
+        },
+        {
+          "name": "TOOWIDE",
+          "type": "A",
+          "len": 20,
+          "dec": 0,
+          "io": "O",
+          "row": 5,
+          "col": 70,
+          "keywords": []
+        },
+        {
+          "name": "VALID1",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "O",
+          "row": 10,
+          "col": 2,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

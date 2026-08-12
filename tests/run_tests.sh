@@ -90,6 +90,39 @@ run_fixed_parity_test() {
     fi
 }
 
+# Compiles a deliberately-invalid source file and checks dspfc's exit code
+# and stderr message, rather than any JSON output — for the SFLPAG/SFLSIZ
+# and off-screen-position sanity checks, where the diagnostic itself is
+# the thing under test.
+run_diag_test() {
+    local label="$1"
+    local src="$2"
+    local expect_exit="$3"    # 0 or 1
+    local expect_pattern="$4" # grep -F pattern that must appear in stderr
+
+    printf "%-45s " "$label"
+
+    local err rc
+    rc=0
+    err=$("$DSPFC" "$src" -o "$TMPDIR" 2>&1 >/dev/null) || rc=$?
+
+    if [ "$rc" != "$expect_exit" ]; then
+        echo -e "${RED}FAIL${NC} (expected exit $expect_exit, got $rc)"
+        echo "$err" | sed 's/^/    /'
+        FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  $label"
+        return
+    fi
+    if ! echo "$err" | grep -qF "$expect_pattern"; then
+        echo -e "${RED}FAIL${NC} (missing expected message)"
+        echo "    expected to contain: $expect_pattern"
+        echo "$err" | sed 's/^/    /'
+        FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  $label"
+        return
+    fi
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+}
+
 # ── Free-format .dspf tests ───────────────────────────────────────────────────
 run_test "test01: basic record (literals/fields/keys/color)" \
     "$TESTDIR/test01_basic.dspf"        "$EXPECTED/test01_basic.dspfd"
@@ -167,6 +200,17 @@ run_test "test17: subfile with no editable fields (HIDDEN SFLRCDNBR)" \
 
 run_test "test18: SFLNXTCHG (subfile next changed) keyword" \
     "$TESTDIR/TEST18_SFLNXTCHG.dspf"        "$EXPECTED/TEST18_SFLNXTCHG.dspfd"
+
+run_diag_test "test19: SFLPAG > SFLSIZ is a hard compile error" \
+    "$TESTDIR/test19_sflsiz_error.dspf" 1 \
+    "SFLPAG(20) exceeds SFLSIZ(10)"
+
+run_test "test20: field/literal outside SCREEN SIZE (warns, still compiles)" \
+    "$TESTDIR/test20_field_bounds_warning.dspf" "$EXPECTED/test20_field_bounds_warning.dspfd"
+
+run_diag_test "test20b: field bounds check reports the right offender" \
+    "$TESTDIR/test20_field_bounds_warning.dspf" 0 \
+    "field OFFSCREEN row 30 is outside SCREEN SIZE(24 80)"
 
 # test15b uses its own golden, not the parity pattern: BLANKS's optional
 # comment text pushes past the 36-char field-line keyword budget (real DDS

@@ -1,0 +1,17 @@
+**FREE
+
+// test19 — SFLPAG must not exceed SFLSIZ: a subfile can't display more
+// rows per page than it can ever hold. dspfc must reject this with a
+// hard error, not just a warning — it's a structurally broken spec, not
+// a stylistic issue.
+
+RECORD BADSFL SUBFILE
+  FIELD NAME1 CHAR(8) OUTPUT ROW(6) COL(2)
+END-RECORD
+
+RECORD BADCTL
+  SFLCTL BADSFL
+  SFLPAG(20)
+  SFLSIZ(10)
+  SCREEN SIZE(24 80)
+END-RECORD

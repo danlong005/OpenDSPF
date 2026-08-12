@@ -1,0 +1,15 @@
+**FREE
+
+// test20 — a field/literal positioned outside the record's declared
+// SCREEN SIZE must produce a warning (the runtime would silently render
+// it off-screen or not at all), but compilation must still succeed —
+// this is cosmetic, not structural, matching unrecognized-keyword
+// severity. VALID1 stays in bounds and must NOT be flagged.
+
+RECORD BADPOS
+  SCREEN SIZE(24 80)
+  FIELD OFFSCREEN CHAR(8)  OUTPUT ROW(30) COL(2)
+  FIELD TOOWIDE   CHAR(20) OUTPUT ROW(5)  COL(70)
+  FIELD VALID1    CHAR(8)  OUTPUT ROW(10) COL(2)
+  LITERAL ROW(1) COL(1) 'Valid literal'
+END-RECORD

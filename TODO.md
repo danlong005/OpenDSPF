@@ -213,6 +213,16 @@ Features are grouped by priority for real IBM i RPG migration work.
       support went missing from this reader for 2.5 months, unnoticed). Field- and literal-level
       keywords are intentionally left unwarned — both formats store them generically for the
       runtime to act on later, so an unrecognized one isn't a bug, just not wired up yet.
-- [ ] Validate `SFLPAG` ≤ `SFLSIZ`
-- [ ] Validate field row/col fits within declared `SCREEN SIZE`
-- [ ] Cross-record field reference checking for `REFFLD`
+- [x] Validate `SFLPAG` ≤ `SFLSIZ` — hard error (not a warning): a
+      structurally broken spec, unlike an unrecognized keyword. Runs on
+      the fully-parsed, format-agnostic AST in `main.cpp`, so free- and
+      fixed-format source both get it from the same code.
+- [x] Validate field/literal row/col fits within declared `SCREEN SIZE` —
+      a warning, matching unrecognized-keyword severity (cosmetic, not
+      structural; a developer should still be able to compile and iterate
+      with a temporarily-misplaced field). `HIDDEN` fields are exempt —
+      never rendered, so their position is irrelevant.
+- [x] ~~Cross-record field reference checking for `REFFLD`~~ — moot:
+      `REFFLD` itself is "not supported — skipped by design" (see
+      "REFFLD — reference field definitions" above), so there's nothing
+      to check references for.
