@@ -39,15 +39,30 @@ Features are grouped by priority for real IBM i RPG migration work.
       CUSTNO) are how the program identifies *which* row was touched.
       `%EOF(recordname)` reports when there are none left.
 - [ ] `SFLNXTCHG` — mark changed subfile records (low priority)
-- [ ] **Discovered gap, not yet fixed**: `HIDDEN` (`H`) usage fields never
-      get an RPG-visible flat variable at all (OpenRPG codegen skips them
-      entirely at DCL-F WORKSTN time) — conflating "not rendered on
-      screen" with "not readable by the program." Real DDS `H` only means
-      the former; the classic `SFLRCDNBR HIDDEN` pattern needs the
-      program to read it back after EXFMT to know which row was
-      selected, which doesn't work today. Found while backward-compat
-      testing the OPTION-field work above (test17 has to avoid reading
-      SFLRCDNBR for exactly this reason).
+- [x] `HIDDEN` (`H`) usage fields now carry a real value through the
+      buffer end-to-end — previously they were skipped at three separate
+      layers that all had to agree: the runtime's own
+      `dspf__extractFields`/`dspf__applyFields` never read/wrote an H
+      field's actual bytes (only advanced the pointer), OpenDSPF's
+      `_dspf.h` struct generation gave them no member at all, and
+      OpenRPG's codegen skipped them at DCL-F WORKSTN declaration and
+      every EXFMT/READ/WRITE/READC copy loop. Real DDS `H` only means
+      "not rendered," not "no data" — the classic `SFLRCDNBR HIDDEN`
+      pattern needs the program to read it back after EXFMT to know which
+      row was selected, which now works (test17).
+
+      Fixing it surfaced a second, unrelated, wider-reaching bug: OpenDSPF's
+      `cppFieldType()` special-cased zoned/packed fields with **zero**
+      decimal places as C++ `long`, while both OpenRPG's codegen and the
+      runtime's own buffer-walking code always assume `double` for those
+      types. The mismatch silently type-punned a double-encoded buffer
+      slot as a 64-bit integer wherever generated C++ read it directly —
+      not HIDDEN-specific; it affected *any* whole-number zoned/packed
+      WORKSTN field. Never caught before because no existing test read
+      such a field's value back (only its presence or an indicator it
+      set). Fixed by always using `double`, matching the rest of the
+      codebase's existing assumption; regenerated 5 golden `_dspf.h`
+      files whose struct layout silently changed as a result.
 
 ### Conditioning indicators ✅
 - [x] `COND(*INxx)` / `COND(N*INxx)` stored on fields and literals in AST / JSON

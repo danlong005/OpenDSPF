@@ -31,8 +31,16 @@ static std::string cppFieldType(const DspfField& f) {
         case 'F': return "double";
         case 'S': // zoned
         case 'P': // packed
-            if (f.dec > 0) return "double";
-            return "long";
+            // Always double, regardless of decimal places — matches the
+            // assumption both OpenRPG's codegen and this runtime's own
+            // buffer-walking code (dspf__extractFields/applyFields) make
+            // unconditionally. This used to special-case dec==0 as `long`,
+            // which silently type-punned a double-encoded buffer slot as
+            // an integer wherever generated C++ read it directly (e.g.
+            // `SFLRCDNBR = ctlBuf.SFLRCDNBR;`) — never caught before
+            // because no test read such a field's value back, only its
+            // presence/indicators.
+            return "double";
         default:  return "std::string";
     }
 }
@@ -163,7 +171,9 @@ std::string emitHeader(const DspfFile& file) {
         o << "struct " << rec.name << "_buf {\n";
         std::set<std::string> emitted;
         for (const DspfField& f : rec.fields) {
-            if (f.io == 'H') continue; // hidden fields are not in the buffer
+            // HIDDEN ("H") fields still get a struct member — "hidden" only
+            // means not rendered on screen, not "no data" (the classic
+            // SFLRCDNBR HIDDEN pattern needs a real place to store its value).
             if (!emitted.insert(f.name).second) continue; // duplicate display entry
             std::string ct = cppFieldType(f);
             if (ct == "std::string") {

@@ -10,6 +10,7 @@ struct CUSTSFL3_buf {
 };
 
 struct CUSTCTL3_buf {
+    double SFLRCDNBR = 0.0;
 };
 
 #endif // TEST17_SFLSELECT_DSPF_H

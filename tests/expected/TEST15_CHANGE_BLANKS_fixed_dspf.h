@@ -7,7 +7,7 @@
 
 struct CHGBLKTEST_buf {
     char FLDX[6] = {};
-    long FLDQTY = 0;
+    double FLDQTY = 0.0;
 };
 
 #endif // TEST15_CHANGE_BLANKS_FIXED_DSPF_H

@@ -7,8 +7,8 @@
 
 struct TESTREC_buf {
     char GENDER[2] = {};
-    long AGE = 0;
-    long SCORE = 0;
+    double AGE = 0.0;
+    double SCORE = 0.0;
 };
 
 #endif // TEST07_VALIDATE_DSPF_H
