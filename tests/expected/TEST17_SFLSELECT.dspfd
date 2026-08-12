@@ -1,0 +1,56 @@
+{
+  "name": "TEST17_SFLSELECT",
+  "records": [
+    {
+      "name": "CUSTSFL3",
+      "type": "sfl",
+      "title": "CUSTSFL3",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "CUSTNO",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "O",
+          "row": 6,
+          "col": 2,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    },
+    {
+      "name": "CUSTCTL3",
+      "type": "sflctl",
+      "sfl": "CUSTSFL3",
+      "sflpag": 5,
+      "sflsiz": 20,
+      "title": "Row Select Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Customers", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "SFLRCDNBR",
+          "type": "S",
+          "len": 4,
+          "dec": 0,
+          "io": "H",
+          "row": 1,
+          "col": 1,
+          "keywords": []
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

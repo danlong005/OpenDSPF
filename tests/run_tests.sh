@@ -159,6 +159,12 @@ run_fixed_parity_test "test14b: COLHDG (fixed-format == free-format output)" \
 run_test "test15: CHANGE / BLANKS keywords (record- and field-level)" \
     "$TESTDIR/TEST15_CHANGE_BLANKS.dspf"    "$EXPECTED/TEST15_CHANGE_BLANKS.dspfd"
 
+run_test "test16: subfile per-row OPTION field (VALUES on a SFL field)" \
+    "$TESTDIR/TEST16_SFLOPTION.dspf"        "$EXPECTED/TEST16_SFLOPTION.dspfd"
+
+run_test "test17: subfile with no editable fields (HIDDEN SFLRCDNBR)" \
+    "$TESTDIR/TEST17_SFLSELECT.dspf"        "$EXPECTED/TEST17_SFLSELECT.dspfd"
+
 # test15b uses its own golden, not the parity pattern: BLANKS's optional
 # comment text pushes past the 36-char field-line keyword budget (real DDS
 # has no field-level keyword continuation line — only record-level), so the

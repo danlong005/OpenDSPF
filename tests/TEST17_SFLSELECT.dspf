@@ -1,0 +1,26 @@
+**FREE
+
+// test17 — backward-compat check: a subfile with NO editable fields
+// anywhere (control record or rows), matching test02_subfile's original
+// shape. Proves dspf__sflExfmt's row-selection-only behavior (Up/Down to
+// move the highlight, Enter returns the selected row via SFLRCDNBR) still
+// works exactly as before the OPTION-field editing rewrite — the
+// `combined.empty()` fallback path this exercises. See
+// tests/run_interactive.sh.
+
+RECORD CUSTSFL3 SUBFILE
+  FIELD CUSTNO   CHAR(8)   OUTPUT  ROW(6)  COL(2)
+END-RECORD
+
+RECORD CUSTCTL3
+  SFLCTL CUSTSFL3
+  SFLPAG(5)
+  SFLSIZ(20)
+  SCREEN SIZE(24 80)
+  TITLE 'Row Select Test'
+
+  LITERAL  ROW(1)  COL(2)   'Customers'
+  FIELD SFLRCDNBR  ZONED(4:0)  HIDDEN  ROW(1) COL(1)
+
+  KEY F3   INDICATOR(03)
+END-RECORD

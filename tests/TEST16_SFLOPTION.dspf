@@ -1,0 +1,32 @@
+**FREE
+
+// test16 — subfile validation + READC: OPTION is a per-row input field
+// (the classic "type 1/2/4 next to a row" pattern). VALUES('1' '2' ' ')
+// means an invalid entry (e.g. '9') must be rejected via ERRSFL, same as a
+// normal record's field validation — this is the gap that was completely
+// missing before (dspf__sflExfmt had no field-editing at all). Blank has
+// to be in the allowed list explicitly: validation runs against every
+// visible row's OPTION on every Enter, not just the row(s) actually typed
+// into, and most rows are legitimately left blank (real DDS OPTION
+// columns always include blank for exactly this reason). Once a valid
+// OPTION is entered and the record submitted, the RPG driver reads it
+// back via READC — see tests/run_interactive.sh.
+
+RECORD CUSTSFL2 SUBFILE
+  FIELD OPTION   CHAR(1)   INPUT   ROW(6)  COL(2)   VALUES('1' '2' ' ')
+  FIELD CUSTNO   CHAR(8)   OUTPUT  ROW(6)  COL(5)
+END-RECORD
+
+RECORD CUSTCTL2
+  SFLCTL CUSTSFL2
+  SFLPAG(5)
+  SFLSIZ(20)
+  SCREEN SIZE(24 80)
+  TITLE 'Subfile Option Test'
+  ERRSFL
+  SFLMSGRCD(20)
+
+  LITERAL  ROW(1)  COL(2)   'Opt  Customer'
+
+  KEY F3   INDICATOR(03)
+END-RECORD

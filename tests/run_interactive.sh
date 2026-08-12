@@ -255,6 +255,39 @@ run_interactive_test \
     'ABC\t\b\r\t0\r' \
     "$EXPECTED/TEST15_CHANGE_BLANKS.out"
 
+# ── test16: subfile OPTION-field editing + validation + READC ───────────
+# dspf__sflExfmt previously had no field-editing at all — only row
+# selection via Up/Down + Enter/F-key. This drives the classic per-row
+# OPTION pattern end to end: types an invalid option ('9', rejected by
+# VALUES('1' '2' ' ') via ERRSFL — the same field-validation path a normal
+# record already had, now reachable from a subfile row for the first
+# time), corrects it to '2' on row 1 only, then confirms the RPG driver's
+# READC loop reads back exactly that one touched row (both the input
+# OPTION and the row's own OUTPUT field CUSTNO) and nothing else — rows 2
+# and 3 were never touched, so they must never surface via READC.
+run_interactive_test \
+    "test16: subfile OPTION field — validate, correct, READC" \
+    "$TESTDIR/TEST16_SFLOPTION.dspf" "$TESTDIR/TEST16_SFLOPTION.rpgle" \
+    '9\r\b2\r' \
+    "$EXPECTED/TEST16_SFLOPTION.out"
+
+# ── test17: backward-compat — subfile with no editable fields ───────────
+# Same shape as the pre-editing subfile pattern (test02/test04): nothing
+# in the control record or the SFL row is input-capable, so
+# dspf__sflExfmt's `combined` list is empty and it must fall back to the
+# original row-selection-only behavior untouched by the OPTION-field
+# rewrite. Only Enter is exercised here — raw arrow-key escape sequences
+# don't reliably reach getch() as KEY_UP/KEY_DOWN under this harness's
+# piped stdin (confirmed as a pre-existing, unrelated sandbox limitation:
+# the identical bytes against TEST08_AUTO, an already-proven code path,
+# show the same broken behavior — literal '[' 'B' characters typed instead
+# of a key event).
+run_interactive_test \
+    "test17: subfile with no editable fields renders and exits cleanly" \
+    "$TESTDIR/TEST17_SFLSELECT.dspf" "$TESTDIR/TEST17_SFLSELECT.rpgle" \
+    '\r' \
+    "$EXPECTED/TEST17_SFLSELECT.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

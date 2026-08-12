@@ -1,0 +1,56 @@
+{
+  "name": "TEST16_SFLOPTION",
+  "records": [
+    {
+      "name": "CUSTSFL2",
+      "type": "sfl",
+      "title": "CUSTSFL2",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "OPTION",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 6,
+          "col": 2,
+          "keywords": ["VALUES('1' '2' ' ')"]
+        },
+        {
+          "name": "CUSTNO",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "O",
+          "row": 6,
+          "col": 5,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    },
+    {
+      "name": "CUSTCTL2",
+      "type": "sflctl",
+      "sfl": "CUSTSFL2",
+      "sflpag": 5,
+      "sflsiz": 20,
+      "title": "Subfile Option Test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": ["ERRSFL", "SFLMSGRCD(20)"],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Opt  Customer", "keywords": [] }
+      ],
+      "fields": [
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

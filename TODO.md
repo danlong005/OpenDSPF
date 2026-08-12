@@ -14,7 +14,40 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] Runtime: `dspf_write` SFLCTL clears the associated subfile
 - [x] Runtime: `dspf_exfmt` SFLCTL renders scrollable table (Up/Down/PgUp/PgDn)
 - [x] Runtime: Enter / F-key exits with selected RRN written to SFLRCDNBR field
+- [x] Field editing in the SFLCTL control-record loop (`dspf__sflExfmt`) —
+      previously there was none at all: only Up/Down/PgUp/PgDn row
+      selection and Enter/F-key exit, no typing anywhere. Now supports
+      both the control record's own input-capable fields (e.g. a search
+      box) and per-row input fields (the classic OPTION-column pattern —
+      type 1/2/4 next to a row), navigated via Tab/Shift-Tab across a
+      combined list (control fields, then each visible row's fields).
+      Since every subfile row shares the same field template, either
+      every row has the same editable fields or none do.
+- [x] Field validation (`VALUES`/`RANGE`/`COMP`) and `ERRSFL` now enforced
+      in `dspf__sflExfmt`, not just the main `dspf__inputLoop` — this was
+      the actual gap tracked under "Field validation" below. Fixing it
+      surfaced a real pre-existing bug: `VALUES` comparison trimmed the
+      submitted value but not the allowed-list tokens, so an explicit
+      blank-allowed token (`VALUES('1' '2' ' ')` — needed since most
+      subfile rows are legitimately left untouched) could never match.
+- [x] `READC` (Read Changed) opcode (OpenRPG lexer/parser/codegen +
+      `dspf_readc()` runtime) — pops each subfile row the operator typed
+      into, ascending RRN, into the SFL record's own buffer, mirroring
+      real IBM i's per-row-OPTION processing loop. Unlike a normal
+      EXFMT/READ copy-back (input/both fields only), READC copies every
+      non-hidden field, since a row's OUTPUT fields (e.g. a key like
+      CUSTNO) are how the program identifies *which* row was touched.
+      `%EOF(recordname)` reports when there are none left.
 - [ ] `SFLNXTCHG` — mark changed subfile records (low priority)
+- [ ] **Discovered gap, not yet fixed**: `HIDDEN` (`H`) usage fields never
+      get an RPG-visible flat variable at all (OpenRPG codegen skips them
+      entirely at DCL-F WORKSTN time) — conflating "not rendered on
+      screen" with "not readable by the program." Real DDS `H` only means
+      the former; the classic `SFLRCDNBR HIDDEN` pattern needs the
+      program to read it back after EXFMT to know which row was
+      selected, which doesn't work today. Found while backward-compat
+      testing the OPTION-field work above (test17 has to avoid reading
+      SFLRCDNBR for exactly this reason).
 
 ### Conditioning indicators ✅
 - [x] `COND(*INxx)` / `COND(N*INxx)` stored on fields and literals in AST / JSON
@@ -125,7 +158,7 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] `VALUES(v1 v2 ...)` — reject input not in list
 - [x] `RANGE(lo hi)` — reject input outside range
 - [x] `COMP(op value)` — comparison check on submit
-- [x] Display inline error on validation failure before returning to caller — status-line message on the terminal's extra row (`LINES > 24`), cursor returns to the offending field; not enforced in the subfile control-record loop (`dspf__sflExfmt`), only the main `dspf__inputLoop`
+- [x] Display inline error on validation failure before returning to caller — status-line message on the terminal's extra row (`LINES > 24`), cursor returns to the offending field. Now enforced in the subfile control-record loop (`dspf__sflExfmt`) too, not just the main `dspf__inputLoop` — see "Subfiles" above.
 
 ### Miscellaneous DDS keywords
 - [ ] `PULLDOWN` / `PSHBTN` — menu bar and push-button widgets
