@@ -1,0 +1,30 @@
+{
+  "name": "TEST22_LITERAL_STYLE",
+  "records": [
+    {
+      "name": "MYREC",
+      "type": "normal",
+      "title": "MYREC",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Plain text", "keywords": [] },
+        { "row": 2, "col": 2, "text": "Styled text", "keywords": ["COLOR(RED)", "DSPATR(HI)"] }
+      ],
+      "fields": [
+        {
+          "name": "DUMMY",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 5,
+          "col": 1,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

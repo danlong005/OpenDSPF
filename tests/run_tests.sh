@@ -215,6 +215,9 @@ run_diag_test "test20b: field bounds check reports the right offender" \
 run_test "test21: DFTVAL('text') and INDTXT(ind 'text') keywords" \
     "$TESTDIR/TEST21_DFTVAL.dspf"            "$EXPECTED/TEST21_DFTVAL.dspfd"
 
+run_test "test22: COLOR/DSPATR on LITERAL lines (already parsed generically)" \
+    "$TESTDIR/TEST22_LITERAL_STYLE.dspf"     "$EXPECTED/TEST22_LITERAL_STYLE.dspfd"
+
 # test15b uses its own golden, not the parity pattern: BLANKS's optional
 # comment text pushes past the 36-char field-line keyword budget (real DDS
 # has no field-level keyword continuation line — only record-level), so the

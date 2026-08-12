@@ -311,6 +311,29 @@ run_interactive_test \
     '' \
     "$EXPECTED/TEST21_DFTVAL.out"
 
+# ── test22: COLOR/DSPATR on LITERAL lines ────────────────────────────────
+# These already parsed correctly (LITERAL reuses the same generic keyword
+# grammar as FIELD) but dspf__renderScreen's literal loop never applied
+# them — plain mvwprintw, no color/attr handling at all. Checked against
+# the raw captured terminal escapes directly (no DSPLY output could prove
+# this): the red SGR code (31m) must appear immediately before "Styled
+# text" and must NOT appear before "Plain text".
+run_interactive_test \
+    "test22: COLOR/DSPATR on LITERAL lines actually render" \
+    "$TESTDIR/TEST22_LITERAL_STYLE.dspf" "$TESTDIR/TEST22_LITERAL_STYLE.rpgle" \
+    '\r' \
+    "$EXPECTED/TEST22_LITERAL_STYLE.out"
+
+printf "%-55s " "test22b: styling applies only to the literal that declared it"
+raw22="$TMPDIR/TEST22_LITERAL_STYLE.raw"
+if grep -qaF '[31mStyled text' "$raw22" && ! grep -qaF '[31mPlain text' "$raw22"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (literal styling mismatch)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test22b: styling applies only to the literal that declared it"
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

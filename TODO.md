@@ -230,8 +230,15 @@ Features are grouped by priority for real IBM i RPG migration work.
       `*IN50`-style indicator refs, matching this dialect's convention).
 
 ### Free-format DSPF syntax additions
-- [ ] `COLOR(...)` on `LITERAL` lines
-- [ ] `DSPATR(...)` on `LITERAL` lines
+- [x] `COLOR(...)` / `DSPATR(...)` on `LITERAL` lines — these already
+      *parsed* correctly in both formats (`LITERAL` reuses the same
+      generic keyword grammar as `FIELD` free-format-side; fixed-format's
+      literal reader has never had an allowlist restriction either). The
+      actual gap was purely in `dspf__renderScreen`'s literal-rendering
+      loop, which called `mvwprintw` directly with no color/attribute
+      handling at all — `dspf__colorPair`/`dspf__fieldAttrs` already
+      existed and worked unmodified once pointed at a literal's JSON
+      (same "keywords" array shape as a field).
 - [x] Conditioning indicator syntax on `FIELD` and `LITERAL` lines (`COND(*IN03)`) — already implemented and tested (`test03_cond.dspf`); this line was just never checked off
 - [x] `SUBFILE` / `SFLCTL` block syntax — already implemented and tested (`test02_subfile.dspf`); same stale-checkbox situation
 

@@ -1,0 +1,17 @@
+**FREE
+
+// test22 — COLOR(...)/DSPATR(...) on LITERAL lines. These already parsed
+// correctly (LITERAL reuses the same generic keyword grammar as FIELD),
+// but dspf__renderScreen's literal loop never applied them — plain
+// mvwprintw with no color/attr handling at all. PLAIN has no styling
+// keywords and must render with the default color pair; STYLED must
+// render with the RED color pair and A_BOLD attribute set. See
+// tests/run_interactive.sh for the runtime rendering check.
+
+RECORD MYREC
+  SCREEN SIZE(24 80)
+  LITERAL  ROW(1)  COL(2)   'Plain text'
+  LITERAL  ROW(2)  COL(2)   'Styled text'  COLOR(RED) DSPATR(HI)
+
+  FIELD DUMMY   CHAR(1)   INPUT   ROW(5) COL(1)
+END-RECORD
