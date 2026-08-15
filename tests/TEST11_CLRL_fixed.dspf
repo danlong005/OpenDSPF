@@ -5,4 +5,4 @@
      A          R SECOND                    TEXT('CLRL Test - Second')
      A                                      CLRL(15 20)
      A                                 15  1'NEWLINE'
-     A          DUMMY            1A  I 15 30
+     A            DUMMY          1A  I 15 30

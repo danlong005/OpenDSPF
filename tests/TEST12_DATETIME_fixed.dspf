@@ -1,7 +1,7 @@
      A          R DTTEST                    TEXT('Date/Time Test')
      A                                  1  2'Date:'
-     A          FLDDATE           L  O  1 10
+     A            FLDDATE         L  O  1 10
      A                                  2  2'Time:'
-     A          FLDTIME           T  O  2 10
+     A            FLDTIME         T  O  2 10
      A                                  3  2'Timestamp:'
-     A          FLDTS             Z  O  3 10
+     A            FLDTS           Z  O  3 10

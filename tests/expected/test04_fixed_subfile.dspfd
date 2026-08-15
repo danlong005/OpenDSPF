@@ -57,7 +57,7 @@
       ],
       "fields": [
         {
-          "name": "SFLRCDNB",
+          "name": "SFLRCDNBR",
           "type": "S",
           "len": 4,
           "dec": 0,

@@ -1,5 +1,5 @@
      A          R COLHDGTEST                TEXT('COLHDG Test')
-     A          NAME1           10A  O  5 10COLHDG('Name Hdg')
+     A            NAME1         10A  O  5 10COLHDG('Name Hdg')
      A                                  7 10'Real Label'
-     A          NAME2           10A  O  8 10COLHDG('Should Not Show')
-     A          DUMMY            1A  I 15  1
+     A            NAME2         10A  O  8 10COLHDG('Should Not Show')
+     A            DUMMY          1A  I 15  1

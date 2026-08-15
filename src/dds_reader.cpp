@@ -311,7 +311,7 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                 }
             }
 
-            std::string fieldname = toUpper(trim(cols(line, 16, 26)));
+            std::string fieldname = toUpper(trim(cols(line, 18, 28)));
             std::string lenstr    = trim(cols(line, 29, 34));
             char dtype            = (char)toupper((unsigned char)line[34]);
             std::string decstr    = trim(cols(line, 35, 37));
