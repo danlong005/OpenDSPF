@@ -60,6 +60,15 @@ PASS=0
 FAIL=0
 FAILURES=""
 
+# Pin TERM. Every keystroke these tests send is a raw xterm-256color byte
+# sequence (F3 is \x1bOR, F12 \x1b[24~, PageUp \x1b[5~) and several assertions
+# match specific SGR codes in the captured output, so the terminal type is
+# part of the fixture, not the environment. Under a TERM ncurses maps
+# differently — TERM=dumb, or a CI runner with none set — the programs never
+# recognise the key and sit waiting for input, so the suite HANGS rather than
+# failing, and on a mac without gtimeout there is no timeout to stop it.
+export TERM=xterm-256color
+
 TIMEOUT_CMD="timeout 10"
 if ! command -v timeout >/dev/null 2>&1; then
     if command -v gtimeout >/dev/null 2>&1; then TIMEOUT_CMD="gtimeout 10"
