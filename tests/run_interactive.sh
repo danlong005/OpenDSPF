@@ -334,6 +334,36 @@ else
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test22b: styling applies only to the literal that declared it"
 fi
 
+# ── test24: INDARA / fixed-format through the runtime ────────────────────
+# The only interactive test whose display file is fixed-format DDS — every
+# other one is free-format, so the DDS reader's output had never actually
+# been executed, only diffed as JSON. *IN50 is set on before WRITE, so the
+# two conditioned literals resolve through dspf_set_indicators() with
+# "indara": true present in the descriptor: if the file-level keyword broke
+# the runtime's JSON reader or disturbed indicator passing, the wrong
+# literal (or neither) would render.
+run_interactive_test \
+    "test24: INDARA, fixed-format source, runs at all" \
+    "$TESTDIR/TEST24_INDARA.dspf" "$TESTDIR/TEST24_INDARA.rpgle" \
+    '' \
+    "$EXPECTED/TEST24_INDARA.out"
+
+# Which literal rendered is the actual assertion, and no DSPLY output can
+# carry it — checked against the raw capture the way test22b is. With *IN50
+# on, "IN50 IS ON" must be on screen and "IN50 IS OFF" must not. An earlier
+# draft of the fixture put the indicator one column right of positions 9-10
+# and neither literal was conditioned at all, so both rendered; a row-number
+# check would have passed that.
+printf "%-55s " "test24b: conditioning from fixed-format DDS selects one literal"
+raw24="$TMPDIR/TEST24_INDARA.raw"
+if grep -qaF 'IN50 IS ON' "$raw24" && ! grep -qaF 'IN50 IS OFF' "$raw24"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (wrong literal(s) rendered)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test24b: conditioning from fixed-format DDS selects one literal"
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

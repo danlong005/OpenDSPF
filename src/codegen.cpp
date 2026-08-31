@@ -51,6 +51,7 @@ std::string emitJSON(const DspfFile& file) {
     std::ostringstream o;
     o << "{\n";
     o << "  \"name\": " << jsonStr(file.name) << ",\n";
+    if (file.indara) o << "  \"indara\": true,\n";
     o << "  \"records\": [\n";
 
     for (size_t ri = 0; ri < file.records.size(); ri++) {

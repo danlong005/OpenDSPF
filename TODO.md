@@ -129,10 +129,8 @@ cost: 15 of its 19 fields are reference-defined.  It is kept, and pinned as a
 diagnostic test, precisely so the cost stays visible rather than becoming
 folklore.
 
-Still open, and unrelated to this decision: the file-level keywords `INDARA`,
-`PRINT` and `CHGINPDFT` are discarded because they appear before the first `R`
-line and nothing reads them there.  Those have referents off IBM i and are
-worth building.
+Unrelated to this decision, and now built: the file-level keyword area is
+read rather than skipped — see below.
 
 ### PROTECT — conditional write-protect ✅
 - [x] `PROTECT` keyword: write-protect all input/both fields (record-level)
@@ -173,6 +171,44 @@ worth building.
 ---
 
 ## DDS A-spec reader gaps
+
+### File-level keyword area ✅ (2026-08-31)
+
+Keyword lines before the first `R` record format are the file-level keyword
+area.  Every one of them was skipped outright — the reader bailed on
+`file.records.empty()` — so `INDARA`, `REF`, `PRINT` and `CHGINPDFT` all
+vanished without a word.  The area is now parsed, `INDARA` is honoured, and
+anything else is reported instead of dropped, which is what makes the
+remaining file-level work discoverable rather than folklore.
+
+- [x] `INDARA` — recorded on `DspfFile` and emitted as `"indara": true`.
+      It declares that indicators travel in a separate indicator area rather
+      than inside the record buffer, which is unconditionally what this
+      toolchain already does: the runtime keeps its own `g_dspf_indicators`
+      array, OpenRPG's codegen passes the whole array through
+      `dspf_set_indicators()` before every I/O, and the record buffer is a
+      generated struct of named fields with no indicator bytes in it.  So the
+      keyword agrees with the implementation and is a declaration, not a
+      switch.  Its *absence* is deliberately not diagnosed: the alternative
+      layout is a 5250 data-stream convention and nothing here emits a 5250
+      data stream, so there is nothing a warning could tell anyone to do.
+- [ ] `PRINT`, `CHGINPDFT` — warned, not implemented.  Deferred by decision,
+      not blocked.
+- [ ] File-level `CAnn`/`CFnn`.  Real DDS allows command keys at file level,
+      applying to every record format; they currently warn.  Worth doing —
+      unlike `REF` this has a plain referent here (copy the key into each
+      record's key list) — and it is the file-level entry most likely to
+      appear in shop source.
+
+Tests 24 (descriptor) and 24/24b (interactive).  Test 24 is also the first
+interactive test whose display file is fixed-format DDS: every other one
+compiles free-format source, so the DDS reader's output had never been
+executed, only diffed as JSON.  It sets `*IN50` on and checks that the
+conditioned literal for 50 renders and the `N50` one does not — asserted
+against the raw terminal capture, since no `DSPLY` output can carry it.  That
+assertion earned itself immediately: the first draft of the fixture put the
+indicator one column right of positions 9-10, nothing was conditioned at all,
+and both literals rendered.
 
 ### Column layout and continuation ✅ (2026-08-31)
 

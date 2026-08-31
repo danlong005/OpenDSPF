@@ -274,6 +274,10 @@ run_diag_test "sample: real shop DDS — REF fields refused by design" \
     "$TESTDIR/sample.dspf" 1 \
     "is defined by reference"
 
+# ── File-level keyword area ──────────────────────────────────────────────────
+run_test "test24: INDARA in the file-level keyword area" \
+    "$TESTDIR/TEST24_INDARA.dspf"       "$EXPECTED/TEST24_INDARA.dspfd"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

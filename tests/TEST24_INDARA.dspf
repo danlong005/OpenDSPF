@@ -1,0 +1,18 @@
+     A*  test24 — INDARA in the file-level keyword area, and the first
+     A*  fixed-format source driven all the way through the runtime.  Every
+     A*  other interactive test compiles free-format .dspf, so the DDS
+     A*  reader's output had never been executed, only diffed as JSON.
+     A*
+     A*  INDARA declares that indicators travel in a separate indicator area
+     A*  rather than inside the record buffer.  That is unconditionally what
+     A*  this runtime does (g_dspf_indicators is its own array; the record
+     A*  buffer is a generated struct of named fields with no indicator
+     A*  bytes in it), so the keyword agrees with the implementation and
+     A*  changes nothing.  What is under test is that it parses, reaches the
+     A*  descriptor, and leaves indicator handling working.
+     A                                      INDARA
+     A          R INDREC
+     A                                      TEXT('INDARA test')
+     A            GREETING      10A  O  1  2DFTVAL('Hello')
+     A  50                              3  2'IN50 IS ON'
+     A N50                              4  2'IN50 IS OFF'

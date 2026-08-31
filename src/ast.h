@@ -56,6 +56,11 @@ struct DspfRecord {
 
 struct DspfFile {
     std::string name;                  // file name (no extension)
+    // INDARA: the source declares that indicators travel in a separate
+    // indicator area rather than inside the record buffer. Recorded, not
+    // acted on — see dds_reader.h for why it cannot be anything but a
+    // declaration here.
+    bool indara = false;
     std::vector<DspfRecord> records;
 };
 

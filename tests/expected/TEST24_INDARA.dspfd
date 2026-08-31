@@ -1,0 +1,31 @@
+{
+  "name": "TEST24_INDARA",
+  "indara": true,
+  "records": [
+    {
+      "name": "INDREC",
+      "type": "normal",
+      "title": "INDARA test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 3, "col": 2, "text": "IN50 IS ON", "keywords": ["COND(*IN50)"] },
+        { "row": 4, "col": 2, "text": "IN50 IS OFF", "keywords": ["COND(N*IN50)"] }
+      ],
+      "fields": [
+        {
+          "name": "GREETING",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "O",
+          "row": 1,
+          "col": 2,
+          "keywords": ["DFTVAL('Hello')"]
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

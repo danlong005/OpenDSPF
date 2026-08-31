@@ -36,6 +36,17 @@ namespace dspf {
 // position continues the keyword list of the record's last field or constant,
 // or of the record itself before the first one.
 //
+// Keyword lines before the first record format are the file-level keyword
+// area. INDARA is honoured there; anything else is reported rather than
+// silently dropped. INDARA declares that indicators travel in a separate
+// indicator area instead of inside the record buffer, which is
+// unconditionally what this toolchain does — the runtime keeps its own
+// indicator array (g_dspf_indicators) and the record buffer is a generated
+// struct of named fields with no indicator bytes in it. So the keyword agrees
+// with the implementation and is recorded, not acted on. Its absence is not
+// diagnosed either: the alternative layout is a 5250 data-stream convention,
+// and nothing here emits a 5250 data stream.
+//
 // Returns a populated DspfFile on success.
 // Throws std::runtime_error on parse errors.
 //

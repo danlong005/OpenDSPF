@@ -315,6 +315,20 @@ static void applyRecordKeyword(DspfRecord& rec, const std::string& kw,
     }
 }
 
+// Apply one keyword appearing before the first record format — the file-level
+// keyword area. Every line there used to be skipped outright, so INDARA, REF,
+// PRINT and CHGINPDFT all vanished without a word.
+static void applyFileKeyword(DspfFile& file, const std::string& kw,
+                             const std::string& filename, int lineNum) {
+    if (kw == "INDARA") {
+        file.indara = true;
+        return;
+    }
+    std::cerr << "dspfc: warning: " << filename << ":" << lineNum
+              << ": unrecognized file-level keyword " << keywordName(kw)
+              << " — ignored\n";
+}
+
 DspfFile parseDDS(const std::string& filename, const std::string& basename) {
     std::ifstream in(filename);
     if (!in.is_open())
@@ -395,7 +409,13 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
             continue;
         }
 
-        if (file.records.empty()) { idx = lastLine; continue; }
+        // Before the first record format: the file-level keyword area.
+        if (file.records.empty()) {
+            for (auto& kw : parseKeywords(funcs))
+                applyFileKeyword(file, kw, filename, lineNum);
+            idx = lastLine;
+            continue;
+        }
         DspfRecord& rec = file.records.back();
 
         // Option indicator in positions 8-10 → COND keyword
