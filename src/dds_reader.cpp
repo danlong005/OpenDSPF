@@ -454,14 +454,20 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
 
         // Position 29 is the Reference column, its own entry immediately
         // before Length (30-34) — not the first digit of the length. It holds
-        // 'R' when the field takes its length and type from a referenced file
-        // (the file-level REF/REFFLD keywords). Nothing here resolves that
-        // reference yet, and guessing a length would put a field on screen at
-        // the wrong width, so it is refused outright.
+        // 'R' when the field takes its length and type from the file named by
+        // the file-level REF/REFFLD keywords.
+        //
+        // Resolving that is a deliberate non-goal, not a gap: the reference
+        // names an IBM i database *FILE object and reads the definitions out
+        // of the object itself. dspfc compiles one source file standalone,
+        // with no database, no catalog and no IBM i, so there is nothing for
+        // the reference to denote. Refused outright rather than guessed at —
+        // a guessed length puts the field on screen at the wrong width.
         if (refMark == 'R') {
             error(idx, "field " + fieldname + " is defined by reference ('R' in "
-                       "position 29) — REF/REFFLD is not supported yet; give the "
-                       "field an explicit length and data type");
+                       "position 29) — REF/REFFLD names an IBM i database file "
+                       "and is not supported; declare the field's length and "
+                       "data type here instead");
             idx = lastLine;
             continue;
         }

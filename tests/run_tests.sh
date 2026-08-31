@@ -262,14 +262,15 @@ run_diag_test "test23c: field defined by reference is refused" \
     "$TESTDIR/test23c_err_ref_field.dspf" 1 \
     "field CUST is defined by reference"
 
-# A real shop display file (a CUSMNT-style customer-maintenance screen),
-# kept verbatim as the yardstick for "does dspfc eat real DDS yet".  It does
-# not compile: 15 of its 19 fields are defined by reference, and REF/REFFLD
-# is not implemented.  Pinned here so the answer stays visible and honest —
-# before the column and continuation fixes this file exited 0 while silently
-# discarding 28 keywords and every one of those 15 fields.  When REF lands,
-# this becomes a run_test with a golden.
-run_diag_test "sample: real shop DDS — blocked on REF/REFFLD" \
+# A real shop display file (a CUSMNT-style customer-maintenance screen), kept
+# verbatim as the measure of what REF/REFFLD costs.  Supporting REF is a
+# decided non-goal — it names an IBM i database *FILE object, which does not
+# exist where dspfc runs — so this file will not compile as written: 15 of its
+# 19 fields are reference-defined.  Pinned here so that cost stays visible
+# instead of becoming folklore, and because the refusal itself is the fix.
+# Before the column and continuation work this file exited 0 while silently
+# discarding 28 keywords and every one of those 15 fields.
+run_diag_test "sample: real shop DDS — REF fields refused by design" \
     "$TESTDIR/sample.dspf" 1 \
     "is defined by reference"
 

@@ -103,18 +103,36 @@ Features are grouped by priority for real IBM i RPG migration work.
 - [x] `AUTO` keyword — advance is now conditional on the keyword being present
       (was previously unconditional for every field regardless of AUTO)
 
-### REFFLD — reference field definitions
-- (not supported — skipped by design)
-- [ ] `REF(file)` / `REFFLD(...)` — no longer *silently* skipped: an `R` in
-      position 29 (field defined by reference) is now a hard error naming the
-      keyword, instead of falling through to the constant branch and dropping
-      the field entirely.  This is the single blocker for `tests/sample.dspf`,
-      a real shop display file: 15 of its 19 fields are reference-defined, and
-      all 15 used to vanish without a word.  Real DDS leans on `REF` heavily —
-      it is how a display file avoids restating the database's field types —
-      so this is the next thing worth building here, together with the other
-      file-level keywords (`INDARA`, `PRINT`, `CHGINPDFT`) that are discarded
-      because they appear before the first `R` line.
+### REF / REFFLD — reference field definitions
+
+**DECISION (2026-08-31): not supported. A boundary, not a gap.**
+
+`REF(file)` and `REFFLD(...)` let a field take its length and data type from
+a field in another file, so a display file need not restate what the database
+already declares.  The reference names an IBM i database `*FILE` object and is
+resolved by reading the definitions out of the object itself.  `dspfc`
+compiles one source file standalone — no database, no catalog, no IBM i — so
+there is nothing for the reference to denote.  Same shape as OpenRPG's
+decision that database record formats are a platform divergence: the concept
+has no referent off the platform, and honouring it would mean inventing one.
+
+An `R` in position 29 is now a hard error naming the keyword.  That is the
+change worth having: it used to fall through to the constant branch and drop
+the field entirely, so a reference-defined field vanished without a word.
+Refusing beats guessing a length, which puts the field on screen at the wrong
+width.
+
+*Consequence, stated plainly:* real shop DDS leans on `REF` heavily, and such
+a file will not compile unmodified — each reference-defined field needs its
+length and data type written out.  `tests/sample.dspf` is the measure of that
+cost: 15 of its 19 fields are reference-defined.  It is kept, and pinned as a
+diagnostic test, precisely so the cost stays visible rather than becoming
+folklore.
+
+Still open, and unrelated to this decision: the file-level keywords `INDARA`,
+`PRINT` and `CHGINPDFT` are discarded because they appear before the first `R`
+line and nothing reads them there.  Those have referents off IBM i and are
+worth building.
 
 ### PROTECT — conditional write-protect ✅
 - [x] `PROTECT` keyword: write-protect all input/both fields (record-level)
