@@ -487,3 +487,28 @@ character (`SFLRCDNBR` -> `SFLRCDNB`).  Tests 23 / 23b / 23c.
       `REFFLD` itself is "not supported — skipped by design" (see
       "REFFLD — reference field definitions" above), so there's nothing
       to check references for.
+
+### CI actually runs the interactive tests ✅ (2026-08-31)
+
+The 22 interactive tests ran on nobody's machine but this one until now. CI
+reported `SKIP: rpgc not found` on every runner, because the harness looked
+for `../OpenRPG/rpgc` and this repo is checked out as `OpenDSPF/`. Fixing
+that lookup turned the skip into a run, and the run failed everywhere at
+once.
+
+The cause was not a missing dependency. `libncurses-dev` was already
+installed on the Ubuntu runners. `rpgc` was building its command as
+`... -lncurses -o prog prog.cpp`, and GNU ld resolves left to right — under
+`--as-needed` it discarded ncurses before reading the source that needed it.
+Apple's linker is order-independent, so a Mac never saw it. The same bug
+applied to `-lodbc`; `tests/run_tests.sh` had been sidestepping it for SQL
+tests by compiling those by hand with the flags appended last, with a
+comment explaining the ordering, but `rpgc` itself was never given the same
+treatment. Fixed in OpenRPG's `src/main.cpp`.
+
+Linux x86_64, Linux ARM64 and macOS now run all 22. Windows sets
+`SKIP_DSPF_RUNTIME=1`: MSYS2's pdcurses is not the wincon build the
+installer ships, it hides `curses.h` under `include/pdcurses/`, and its
+default wingui port paints a window rather than stdout, so the captures
+these tests diff would be empty even once it linked. Windows display-file
+behaviour is untested, and the workflows say so.
