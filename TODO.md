@@ -192,8 +192,41 @@ remaining file-level work discoverable rather than folklore.
       switch.  Its *absence* is deliberately not diagnosed: the alternative
       layout is a 5250 data-stream convention and nothing here emits a 5250
       data stream, so there is nothing a warning could tell anyone to do.
-- [ ] `PRINT`, `CHGINPDFT` — warned, not implemented.  Deferred by decision,
-      not blocked.
+- [ ] `PRINT` — **DECISION (2026-08-31): not supported.**  It enables the
+      Print key, so the operator can print the current screen image:
+      `PRINT` spools it to `QSYSPRT`, `PRINT(printer-file)` to a named
+      printer file.  Neither has a referent here — this toolchain has no
+      printer output at all, for any file type, so honouring it would mean
+      inventing a screen-dump convention rather than implementing DDS.  The
+      third form, `PRINT(response-indicator)`, hands the Print key to the
+      program instead of printing, and *is* mechanically identical to `CFnn`
+      — but the keyboards this runs on have no Print key to bind, so it would
+      need an invented binding too.  Ignored with a warning rather than
+      refused: an unhonoured Print key is a missing convenience, not wrong
+      output, and erroring would reject real DDS over it.
+- [ ] `CHGINPDFT` — **undecided.**  "Change input default": it alters the
+      defaults for *input-capable* fields in scope (file, record or field
+      level).  Bare, it removes IBM i's default underline on input fields;
+      with parameters it sets display attributes (`HI`/`BL`/`CS`/`ND`/`PC`/
+      `PR`/`RI`/`UL`) and/or `LC` (allow lowercase) and/or `FE` (field exit
+      required).  `tests/sample.dspf` carries `CHGINPDFT(CS)` — every input
+      field gets column separators.
+
+      Unlike `PRINT` this has a plain referent: it is a default for
+      attributes the field level already carries.  **But see the attribute
+      gap below — implementing it first would faithfully propagate an
+      attribute that then does nothing.**  The useful order is attributes
+      first, defaulting second.
+
+**Found while reading this — the runtime implements four DSPATR attributes,
+not eight.** `dspf__fieldAttrs` maps `HI`/`BL`/`RI`/`UL` onto ncurses
+attributes and nothing else, so `DSPATR(CS)`, `(ND)`, `(PR)` and `(PC)` parse,
+reach the descriptor, and are then silently skipped at render time —
+`tests/sample.dspf`'s `DSPATR(CS)` and `DSPATR(PR)` already draw as plain text
+today.  Of the four, `ND` (nondisplay) and `PR` (protect) are worth the most:
+they change *behaviour*, not just appearance, and `PR` overlaps the
+record-level `PROTECT` keyword that is already implemented.  This is the
+prerequisite for a useful `CHGINPDFT`.
 - [x] File-level `CAnn`/`CFnn` (and `ROLLUP`/`ROLLDOWN`, which reach the same
       `DspfKey` through the same two-function test — splitting them would have
       been an arbitrary boundary).  They apply to every record format in the

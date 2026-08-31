@@ -335,9 +335,34 @@ static void applyFileKeyword(DspfFile& file, std::vector<DspfKey>& fileKeys,
         fileKeys.push_back(std::move(k));
         return;
     }
+
+    // Say which kind of "no" this is. A keyword this compiler knows and has
+    // decided against is a different fact from one it does not recognize,
+    // and reporting both as "unrecognized" invites someone to go looking for
+    // the switch that turns it on.
+    struct KnownKw { const char* name; const char* why; };
+    static const KnownKw known[] = {
+        { "REF",       "names an IBM i database file, which does not exist where "
+                       "dspfc runs; write the field definitions out (see TODO.md)" },
+        { "REFFLD",    "names an IBM i database file, which does not exist where "
+                       "dspfc runs; write the field definitions out (see TODO.md)" },
+        { "PRINT",     "enables the Print key, which prints the screen to a printer "
+                       "file; this toolchain has no printer output at all" },
+        { "CHGINPDFT", "sets default display attributes for input-capable fields; "
+                       "recognized, not yet implemented" },
+        { nullptr, nullptr }
+    };
+    std::string name = keywordName(kw);
+    for (int i = 0; known[i].name; i++) {
+        if (name == known[i].name) {
+            std::cerr << "dspfc: warning: " << filename << ":" << lineNum
+                      << ": file-level " << name << " is not supported — "
+                      << known[i].why << "; ignored\n";
+            return;
+        }
+    }
     std::cerr << "dspfc: warning: " << filename << ":" << lineNum
-              << ": unrecognized file-level keyword " << keywordName(kw)
-              << " — ignored\n";
+              << ": unrecognized file-level keyword " << name << " — ignored\n";
 }
 
 DspfFile parseDDS(const std::string& filename, const std::string& basename) {

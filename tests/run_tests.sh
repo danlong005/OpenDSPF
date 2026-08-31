@@ -281,6 +281,15 @@ run_test "test24: INDARA in the file-level keyword area" \
 run_test "test25: file-level CAnn/CFnn keys merge into every record" \
     "$TESTDIR/TEST25_FILEKEYS.dspf"     "$EXPECTED/TEST25_FILEKEYS.dspfd"
 
+# A keyword this compiler knows and has decided against is a different fact
+# from one it does not recognize; reporting both as "unrecognized" invites
+# someone to go hunting for the switch that turns it on. sample.dspf carries
+# PRINT (decided against), CHGINPDFT (recognized, undecided) and REF (decided
+# against) in its file-level area, so it pins all three wordings at once.
+run_diag_test "sample: decided-against file-level keywords say so" \
+    "$TESTDIR/sample.dspf" 1 \
+    "file-level PRINT is not supported"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
