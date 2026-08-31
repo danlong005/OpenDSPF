@@ -281,6 +281,9 @@ run_test "test24: INDARA in the file-level keyword area" \
 run_test "test25: file-level CAnn/CFnn keys merge into every record" \
     "$TESTDIR/TEST25_FILEKEYS.dspf"     "$EXPECTED/TEST25_FILEKEYS.dspfd"
 
+run_test "test26: subfile control keywords take their option indicator" \
+    "$TESTDIR/TEST26_SFLCTL.dspf"       "$EXPECTED/TEST26_SFLCTL.dspfd"
+
 # A keyword this compiler knows and has decided against is a different fact
 # from one it does not recognize; reporting both as "unrecognized" invites
 # someone to go hunting for the switch that turns it on. sample.dspf carries

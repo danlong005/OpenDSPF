@@ -52,7 +52,7 @@
       "sflsiz": 200,
       "title": "Employee List",
       "screen": { "rows": 24, "cols": 80 },
-      "keywords": [],
+      "keywords": ["SFLDSP(*IN01)", "SFLDSPCTL"],
       "literals": [
       ],
       "fields": [

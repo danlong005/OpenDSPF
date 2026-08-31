@@ -301,7 +301,9 @@ static void applyRecordKeyword(DspfRecord& rec, const std::string& kw,
         }
         static const char* const recRtKws[] = {
             "PROTECT", "OVERLAY", "NOCLEAR", "ALARM", "NOINPUT",
-            "ERRSFL", "SFLMSGRCD", "CLRL", "CHANGE", "SFLNXTCHG", "INDTXT", nullptr
+            "ERRSFL", "SFLMSGRCD", "CLRL", "CHANGE", "SFLNXTCHG", "INDTXT",
+            // Subfile control, all on the SFLCTL record
+            "SFLDSP", "SFLDSPCTL", "SFLCLR", "SFLEND", nullptr
         };
         for (int ri = 0; recRtKws[ri]; ri++) {
             size_t klen = strlen(recRtKws[ri]);
@@ -459,7 +461,7 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
         DspfRecord& rec = file.records.back();
 
         // Option indicator in positions 8-10 → COND keyword
-        std::string condKw;
+        std::string condKw, condInner;
         {
             std::string opt = trim(cols(line, 7, 10));
             if (!opt.empty() && (isdigit((unsigned char)opt[0]) ||
@@ -467,8 +469,8 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
                 bool neg = (opt[0]=='N' || opt[0]=='n');
                 std::string digits = trim(neg ? opt.substr(1) : opt);
                 if (digits.size() >= 2 && isdigit((unsigned char)digits[0])) {
-                    condKw = std::string(neg ? "COND(N*IN" : "COND(*IN")
-                             + digits.substr(0,2) + ")";
+                    condInner = std::string(neg ? "N*IN" : "*IN") + digits.substr(0,2);
+                    condKw    = "COND(" + condInner + ")";
                 }
             }
         }
@@ -491,22 +493,44 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
             else if (lastDef == LastDef::LITERAL && !rec.literals.empty())
                 target = &rec.literals.back().keywords;
 
-            // A conditioning indicator here conditions the individual
-            // keywords on this line. Conditions are modelled per entry (a
-            // COND() in the field's or constant's own keyword list), not per
-            // keyword, so applying it would condition the whole entry — a
-            // different thing. Reported rather than silently taken either way.
-            if (!condKw.empty()) {
-                std::cerr << "dspfc: warning: " << filename << ":" << lineNum
-                          << ": record " << rec.name << ": option indicator on a "
-                          << "keyword line conditions those keywords individually, "
-                          << "which is not modelled — keywords kept, "
-                          << condKw << " dropped\n";
-            }
-
+            // A conditioning indicator here conditions the individual keywords
+            // on this line, which is how real DDS conditions a record-level
+            // keyword — SFLCLR, SFLDSP and friends are conditioned this way in
+            // essentially every subfile program.
+            //
+            // A bare keyword takes the condition into its own text
+            // (SFLCLR -> SFLCLR(*IN90)), the shape this compiler already used
+            // for PROTECT(*INxx)/SFLNXTCHG(*INxx) and which the runtime reads
+            // through dspf__recKwActive. A keyword that already has parameters
+            // has nowhere to put it, and a field's or constant's conditions are
+            // modelled per entry rather than per keyword, so those still say so
+            // rather than dropping it silently.
             for (auto& kw : parseKeywords(funcs)) {
-                if (target) target->push_back(kw);
-                else        applyRecordKeyword(rec, kw, filename, lineNum);
+                if (target) {
+                    if (!condKw.empty()) {
+                        std::cerr << "dspfc: warning: " << filename << ":" << lineNum
+                                  << ": record " << rec.name << ": option indicator on a "
+                                  << "keyword line for " << keywordName(kw)
+                                  << " conditions that keyword individually, which is "
+                                  << "modelled per entry here — keyword kept, "
+                                  << condKw << " dropped\n";
+                    }
+                    target->push_back(kw);
+                    continue;
+                }
+                if (!condKw.empty()) {
+                    if (kw.find('(') == std::string::npos) {
+                        applyRecordKeyword(rec, kw + "(" + condInner + ")",
+                                           filename, lineNum);
+                        continue;
+                    }
+                    std::cerr << "dspfc: warning: " << filename << ":" << lineNum
+                              << ": record " << rec.name << ": " << keywordName(kw)
+                              << " already takes parameters, so its option indicator "
+                              << "has nowhere to go — keyword kept, "
+                              << condKw << " dropped\n";
+                }
+                applyRecordKeyword(rec, kw, filename, lineNum);
             }
             idx = lastLine;
             continue;

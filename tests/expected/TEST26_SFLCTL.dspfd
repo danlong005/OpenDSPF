@@ -1,0 +1,46 @@
+{
+  "name": "TEST26_SFLCTL",
+  "records": [
+    {
+      "name": "ROWSFL",
+      "type": "sfl",
+      "title": "ROWSFL",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "ITEM",
+          "type": "A",
+          "len": 8,
+          "dec": 0,
+          "io": "O",
+          "row": 6,
+          "col": 2,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    },
+    {
+      "name": "ROWCTL",
+      "type": "sflctl",
+      "sfl": "ROWSFL",
+      "sflpag": 5,
+      "sflsiz": 20,
+      "title": "ROWCTL",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": ["SFLCLR(*IN90)", "SFLDSP(*IN91)", "SFLDSPCTL(*IN91)", "SFLEND"],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Items", "keywords": [] }
+      ],
+      "fields": [
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

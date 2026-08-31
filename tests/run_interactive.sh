@@ -19,6 +19,28 @@ set -e
 
 DSPFC="${DSPFC:-./dspfc}"
 RPGC="${RPGC:-$([ -x ../OpenRPG/rpgc ] && echo ../OpenRPG/rpgc || which rpgc 2>/dev/null || echo ../OpenRPG/rpgc)}"
+
+# rpgc compiles the driver programs against ITS OWN runtime directory, which
+# holds a mirror of runtime/rpg_dspf_runtime.h — not this repo's copy. So a
+# change to the runtime here is invisible to these tests until the mirror is
+# updated, and the suite will report green on runtime code it never executed.
+# That is exactly what happened while writing test26: four subfile keywords
+# were implemented, every test passed, and none of the new code had run.
+#
+# Refuse to run rather than sync automatically: someone may be editing the
+# display runtime from the OpenRPG side, and clobbering that silently would
+# be worse than stopping.
+RPGC_RUNTIME_DIR="$(dirname "$RPGC")/runtime"
+MIRROR="$RPGC_RUNTIME_DIR/rpg_dspf_runtime.h"
+if [ -f "$MIRROR" ] && ! diff -q runtime/rpg_dspf_runtime.h "$MIRROR" > /dev/null 2>&1; then
+    echo "ERROR: the display runtime rpgc compiles against is out of date."
+    echo "  this repo: runtime/rpg_dspf_runtime.h"
+    echo "  rpgc uses: $MIRROR"
+    echo "These tests would exercise the second file, so a runtime change here"
+    echo "would go untested while the suite reported success. Sync them first:"
+    echo "    cp runtime/rpg_dspf_runtime.h $MIRROR"
+    exit 1
+fi
 TESTDIR="tests"
 EXPECTED="$TESTDIR/expected_interactive"
 TMPDIR="/tmp/dspfc_interactive_test"
@@ -387,6 +409,32 @@ run_interactive_test \
     "$TESTDIR/TEST25_FILEKEYS.dspf" "$TESTDIR/TEST25_FILEKEYS.rpgle" \
     '\x1bOR' \
     "$EXPECTED/TEST25_FILEKEYS_f3.out"
+
+# ── test26: SFLCLR / SFLDSP / SFLDSPCTL / SFLEND ─────────────────────────
+# The load-then-display idiom writes the control record twice — once with
+# SFLCLR's indicator on to clear, once after loading with it off. That second
+# write must keep the rows. dspf_write used to clear the subfile on EVERY
+# control-record write regardless of SFLCLR, so this exact sequence, which is
+# how essentially every real subfile program is written, came back empty.
+run_interactive_test \
+    "test26: SFLCLR conditioned off keeps the loaded rows" \
+    "$TESTDIR/TEST26_SFLCTL.dspf" "$TESTDIR/TEST26_SFLCTL.rpgle" \
+    '\r' \
+    "$EXPECTED/TEST26_SFLCTL.out"
+
+# The rows and the SFLEND marker are the actual assertion and no DSPLY output
+# can carry them, so they are checked against the raw capture. Three rows fit
+# in SFLPAG(5), so SFLEND shows Bottom rather than More...
+printf "%-55s " "test26b: rows survive, and SFLEND marks the end"
+raw26="$TMPDIR/TEST26_SFLCTL.raw"
+if grep -qaF 'ITEM0001' "$raw26" && grep -qaF 'ITEM0003' "$raw26" \
+   && grep -qaF 'Bottom' "$raw26"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (subfile rows or SFLEND marker missing)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test26b: rows survive, and SFLEND marks the end"
+fi
 
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""

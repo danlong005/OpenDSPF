@@ -13,7 +13,7 @@
      A                                        CF06(06)
      A                                        CF12(12)
      A  01                                    SFLDSP
-     A                                        SFLDSPC
+     A                                        SFLDSPCTL
      A            SFLRCDNBR      4S 0  H
      A                                   1 30'EMPLOYEE LIST'
      A                                   3  2'Number'

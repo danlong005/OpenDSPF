@@ -1,0 +1,25 @@
+     A*  test26 — the subfile control keywords, written the way real DDS
+     A*  writes them: conditioned from the option-indicator columns.
+     A*
+     A*    SFLCLR    (90)  clear the subfile
+     A*    SFLDSP    (91)  display it
+     A*    SFLDSPCTL (91)  display the control record
+     A*    SFLEND          show More.../Bottom
+     A*
+     A*  The load-then-display idiom writes the control record TWICE: once
+     A*  with *IN90 on to clear, and again after loading with *IN90 off.
+     A*  That second write must keep the rows.  It used to wipe them —
+     A*  dspf_write cleared the subfile on every control-record write,
+     A*  regardless of SFLCLR.
+     A          R ROWSFL
+     A                                      SFL
+     A            ITEM           8A  O  6  2
+     A          R ROWCTL
+     A                                      SFLCTL(ROWSFL)
+     A                                      SFLPAG(5) SFLSIZ(20)
+     A  90                                  SFLCLR
+     A  91                                  SFLDSP
+     A  91                                  SFLDSPCTL
+     A                                      SFLEND
+     A                                      CF03(03)
+     A                                  1  2'Items'

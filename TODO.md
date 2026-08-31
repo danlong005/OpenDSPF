@@ -6,7 +6,7 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ## Critical — breaks real programs
 
-### Subfiles ✅
+### Subfiles — mostly ✅, see the control keywords below
 - [x] `SUBFILE` / `SFLCTL` record type in lexer, parser, AST
 - [x] `SFLPAG` / `SFLSIZ` keywords (free-format and DDS A-spec)
 - [x] Codegen: emit `"type"`, `"sfl"`, `"sflpag"`, `"sflsiz"` to `.dspfd` JSON
@@ -76,6 +76,59 @@ Features are grouped by priority for real IBM i RPG migration work.
       set). Fixed by always using `double`, matching the rest of the
       codebase's existing assumption; regenerated 5 golden `_dspf.h`
       files whose struct layout silently changed as a result.
+
+### Subfile control keywords — SFLDSP / SFLDSPCTL / SFLCLR / SFLEND ✅ (2026-08-31)
+
+These decide whether a subfile is displayed, whether its control record is
+displayed, and whether writing the control record clears it.  Real DDS
+conditions them from the option-indicator columns, and essentially every
+subfile program uses them; none were recognized, so all three behaviours were
+unconditional.
+
+The one that broke correct programs is `SFLCLR`.  `dspf_write` cleared the
+subfile on *every* control-record write, but the ordinary load-then-display
+idiom writes it twice — once with SFLCLR's indicator on to clear, then again
+after loading rows with it off.  That second write wiped the rows.
+
+**Compatibility rule: presence decides.**  Declare one of these and it is
+honoured exactly, indicator condition included; omit it and the old
+unconditional behaviour stands.  Display files written against this compiler
+say none of them and keep working, while real DDS behaves the way its author
+meant.  A divergence from IBM, where the keywords are required, and a
+deliberate one.
+
+Two things had to exist first:
+
+- **Record-level keywords could not be conditioned from fixed-format DDS at
+  all.**  The reader warned that an option indicator on a keyword line was
+  dropped.  A bare keyword now takes the condition into its own text
+  (`SFLCLR` -> `SFLCLR(*IN90)`), which is the shape `PROTECT(*INxx)` and
+  `SFLNXTCHG(*INxx)` already used.  A keyword that already has parameters has
+  nowhere to put it and still says so.
+- **`dspf__hasRecKw` is a prefix test**, so it reports `SFLDSPCTL` as
+  `SFLDSP`.  The new `dspf__recKwActive`/`dspf__hasRecKwExact` require an
+  exact name or a following `(`.  `dspf__isProtected` and
+  `dspf__sflNxtChgActive` were two copies of the same indicator parser and are
+  now one line each.
+
+`SFLEND` renders the `*MORE` wording (`More...`/`Bottom`) for every parameter
+form, since `*SCRBAR` has no scroll bar to draw here and `*PLUS` is a 5250
+convention.
+
+Still absent, and unranked: `SFLINZ`, `SFLRNA`, `SFLDROP`, `SFLFOLD`,
+`SFLMODE`, `SFLLIN`, `SFLCSRRRN`, `SFLSCROLL`, `SFLROLVAL`, `SFLENTER`,
+`SFLPGMQ`, `SFLRTNSEL`, `SFLSNGCHC`, `SFLMLTCHC`.
+
+**Found while testing this, and worse than the bug it hid.** `rpgc` compiles
+the interactive drivers against **its own** runtime directory, which holds a
+*mirror* of `runtime/rpg_dspf_runtime.h` — byte-identical at HEAD, and updated
+by hand.  So a runtime change in this repo is invisible to this repo's own
+interactive tests until the mirror is copied across.  All four keywords were
+implemented, the whole suite passed, and none of the new runtime code had ever
+executed.  `tests/run_interactive.sh` now diffs the two and refuses to run
+when they differ, printing the `cp` that fixes it.  It does not sync
+automatically: someone may be editing the display runtime from the OpenRPG
+side, and clobbering that silently would be worse than stopping.
 
 ### Conditioning indicators ✅
 - [x] `COND(*INxx)` / `COND(N*INxx)` stored on fields and literals in AST / JSON
