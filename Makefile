@@ -109,7 +109,7 @@ uninstall:
 # ability to find rpg_runtime.h and friends when invoked from here. The
 # sibling checkout's own runtime/ dir doesn't have this false-positive
 # problem, so prefer it whenever present.
-RPGC ?= $(shell [ -x ../OpenRPG/rpgc ] && echo ../OpenRPG/rpgc || which rpgc 2>/dev/null || echo ../OpenRPG/rpgc)
+RPGC ?= $(shell [ -x ../rpgc ] && echo ../rpgc || { [ -x ../OpenRPG/rpgc ] && echo ../OpenRPG/rpgc; } || which rpgc 2>/dev/null || echo ../rpgc)
 
 test: $(TARGET)
 	@DSPFC=./$(TARGET) bash tests/run_tests.sh
