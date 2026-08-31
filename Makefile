@@ -111,10 +111,18 @@ uninstall:
 # problem, so prefer it whenever present.
 RPGC ?= $(shell [ -x ../rpgc ] && echo ../rpgc || { [ -x ../OpenRPG/rpgc ] && echo ../OpenRPG/rpgc; } || which rpgc 2>/dev/null || echo ../rpgc)
 
+# SKIP_DSPF_RUNTIME=1 drops the two stages below that need a curses library
+# to be installed for the C++ compiler rpgc shells out to — the RPG
+# integration compile and the interactive suite. The JSON compiler tests
+# above still run. Set it only where curses genuinely is not available;
+# the point of these stages is to execute the display runtime, so skipping
+# them where it could have run would report green on untested code.
 test: $(TARGET)
 	@DSPFC=./$(TARGET) bash tests/run_tests.sh
 	@echo "--- RPG integration: compile test_exfmt.rpgle ---"
-	@if [ -x "$(RPGC)" ]; then \
+	@if [ "$(SKIP_DSPF_RUNTIME)" = "1" ]; then \
+	    echo "SKIP: SKIP_DSPF_RUNTIME=1 (no curses library for the target compiler)"; \
+	elif [ -x "$(RPGC)" ]; then \
 	    $(RPGC) tests/test_exfmt.rpgle -o /tmp/test_exfmt && \
 	    echo "OK: RPG compile succeeded (run /tmp/test_exfmt to test interactively)"; \
 	else \

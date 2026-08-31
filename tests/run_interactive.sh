@@ -83,6 +83,20 @@ else
     GREEN=''; RED=''; NC=''
 fi
 
+# Every test here compiles a driver program that links a curses library, so
+# without one installed for the C++ compiler rpgc shells out to there is
+# nothing to run. Windows CI is the case in point: MSYS2's pdcurses package
+# installs its header under include/pdcurses/ and defaults to the wingui
+# port, which paints a GUI window rather than stdout — so the captures these
+# tests diff would come back empty even once it linked. Skip explicitly
+# there rather than probing, so a skip is always a decision someone made and
+# can see in the workflow file, not something the environment decided
+# quietly.
+if [ "$SKIP_DSPF_RUNTIME" = "1" ]; then
+    echo "SKIP: SKIP_DSPF_RUNTIME=1 (no curses library for the target compiler)"
+    exit 0
+fi
+
 if [ ! -x "$RPGC" ]; then
     echo "SKIP: rpgc not found (set RPGC=/path/to/rpgc). Interactive tests need it to compile the driver .rpgle programs."
     exit 0
