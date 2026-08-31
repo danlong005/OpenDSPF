@@ -1,0 +1,6 @@
+     A*  test23b — a field name starting in position 17 instead of 19.
+     A*  Positions 17-18 are the name type and a reserved column; a name
+     A*  written there used to parse until it grew past eight characters
+     A*  and was silently truncated.  Refused now, rather than guessed at.
+     A          R BADCOLS
+     A          FLD1             3A  I  1 20

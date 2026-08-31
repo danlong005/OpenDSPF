@@ -105,6 +105,16 @@ Features are grouped by priority for real IBM i RPG migration work.
 
 ### REFFLD — reference field definitions
 - (not supported — skipped by design)
+- [ ] `REF(file)` / `REFFLD(...)` — no longer *silently* skipped: an `R` in
+      position 29 (field defined by reference) is now a hard error naming the
+      keyword, instead of falling through to the constant branch and dropping
+      the field entirely.  This is the single blocker for `tests/sample.dspf`,
+      a real shop display file: 15 of its 19 fields are reference-defined, and
+      all 15 used to vanish without a word.  Real DDS leans on `REF` heavily —
+      it is how a display file avoids restating the database's field types —
+      so this is the next thing worth building here, together with the other
+      file-level keywords (`INDARA`, `PRINT`, `CHGINPDFT`) that are discarded
+      because they appear before the first `R` line.
 
 ### PROTECT — conditional write-protect ✅
 - [x] `PROTECT` keyword: write-protect all input/both fields (record-level)
@@ -145,6 +155,58 @@ Features are grouped by priority for real IBM i RPG migration work.
 ---
 
 ## DDS A-spec reader gaps
+
+### Column layout and continuation ✅ (2026-08-31)
+
+Three defects found by running a real shop display file (`tests/sample.dspf`,
+a `CUSMNT`-style customer-maintenance screen) through `dspfc`.  It "compiled"
+— exit 0 — while silently discarding 28 keywords and 15 fields.
+
+- [x] **Positions 17-18 are validated, not guessed at.** Position 17 must be
+      `R` or blank and position 18 must be blank, so a misaligned line is
+      refused instead of quietly becoming a different kind of entry — which is
+      how the field-name column bug (fixed separately in 2a8026a: the name was
+      read from 17-26 instead of 19-28, silently truncating anything past
+      eight characters) stayed invisible for so long.  Position 29 is also
+      read as its own entry now, the Reference column, rather than as the
+      first digit of Length at 30-34.
+- [x] **Keyword lines were always record-level.** A line with no name and no
+      position continues the keyword list of the record's last field or
+      constant; only before the first one is it record-level.  Every one of
+      them went to the record, where `DSPATR`/`EDTCDE`/`CHECK` are not
+      record-level keywords and were reported as unrecognized and dropped —
+      21 `DSPATR`, 4 `EDTCDE`, 2 `ERRMSG`, 1 `CHECK` in the sample alone.
+      The two copies of the record-keyword dispatch (one for the `R` line, one
+      for keyword lines) have been folded into `applyRecordKeyword()`; they had
+      already drifted apart, with `TEXT()` honoured on the `R` line and
+      reported as unrecognized on a following line.
+- [x] **No `+`/`-` entry continuation.** A `+` or `-` in the last non-blank
+      position of the functions area continues the entry on the next
+      specification line (`+` resumes at its first non-blank position, `-` at
+      position 45 exactly).  Without it, `ERRMSG('CUSTOMER ALREADY ON +` /
+      `FILE' 51)` parsed as the two garbage tokens `FILE'` and `51)`.  Text
+      before the continuation character is kept verbatim, trailing blanks
+      included — that is what makes the join read `ALREADY ON FILE` rather
+      than `ALREADY ONFILE`.
+
+Two more silent drops became diagnostics rather than nothing:
+a positioned line yielding no quoted text (DDS's `DATE`/`TIME`/`USER`/
+`SYSNAME`/`MSGCON` constants — none supported) now warns instead of vanishing,
+and an option indicator on a keyword line warns that it conditions those
+keywords individually, which this compiler models per entry, not per keyword.
+
+The test fixtures were themselves written in the old columns and were moved by
+a throwaway script, not by hand.  It is deliberately not kept: the reader now
+*enforces* what it was migrating toward, so a misaligned line is caught at
+compile time with a message naming the right columns, and re-running the script
+over `tests/*.dspf` would silently "fix" test23b, whose whole purpose is to be
+misaligned.  Two hazards it did surface are worth remembering.  Position 6
+means nothing in a free-format source, so a prose comment whose sixth character
+happens to be `a` looks exactly like an A-spec — an unguarded first run
+shredded four free-format fixtures.  And a blanket rewrite cannot assume the
+old layout: applied to a line already in standard columns it re-slices a
+ten-character name out of the nine-column old window and drops the last
+character (`SFLRCDNBR` -> `SFLRCDNB`).  Tests 23 / 23b / 23c.
 
 - [x] `L`, `T`, `Z` date/time/timestamp field types (columns 34–35)
 - [x] `COLHDG('text')` — column heading (use as field label when no LITERAL)

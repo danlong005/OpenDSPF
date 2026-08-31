@@ -1,0 +1,7 @@
+     A*  test23c — a field defined by reference ('R' in position 29), which
+     A*  needs the file-level REF/REFFLD keyword to resolve.  Not supported
+     A*  yet; refused rather than given a guessed length, which would put
+     A*  the field on screen at the wrong width.
+     A                                      REF(CUSMSTL1)
+     A          R REFTEST
+     A            CUST      R        I 10 25

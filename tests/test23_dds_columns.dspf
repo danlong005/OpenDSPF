@@ -1,0 +1,17 @@
+     A*  test23 — real DDS column layout, keyword continuation lines and
+     A*  '+'/'-' entry continuation.  Every entry sits in the positions the
+     A*  IBM DDS reference specifies: name 19-28, length 29-34, type 35,
+     A*  decimals 36-37, usage 38, line 39-41, position 42-44, functions 45-80.
+     A          R COLTEST
+     A                                      TEXT('Column layout test')
+     A                                      CF03(03)
+     A            CUSTOMERNO    10A  O  3  2DSPATR(HI)
+     A                                      DSPATR(UL)
+     A                                      COLOR(BLU)
+     A                                  5  2'Customer:'
+     A                                      DSPATR(RI)
+     A            MSGLINE       40A  O  7  2DFTVAL('CUSTOMER ALREADY ON +
+     A                                      FILE')
+     A            DASHCONT      20A  O  9  2DFTVAL('LEFT-
+     A                                      RIGHT')
+     A            CODE           1A  I 11  2VALUES('A' 'B')

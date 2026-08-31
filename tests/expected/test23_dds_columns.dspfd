@@ -1,0 +1,60 @@
+{
+  "name": "test23_dds_columns",
+  "records": [
+    {
+      "name": "COLTEST",
+      "type": "normal",
+      "title": "Column layout test",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 5, "col": 2, "text": "Customer:", "keywords": ["DSPATR(RI)"] }
+      ],
+      "fields": [
+        {
+          "name": "CUSTOMERNO",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "O",
+          "row": 3,
+          "col": 2,
+          "keywords": ["DSPATR(HI)", "DSPATR(UL)", "COLOR(BLU)"]
+        },
+        {
+          "name": "MSGLINE",
+          "type": "A",
+          "len": 40,
+          "dec": 0,
+          "io": "O",
+          "row": 7,
+          "col": 2,
+          "keywords": ["DFTVAL('CUSTOMER ALREADY ON FILE')"]
+        },
+        {
+          "name": "DASHCONT",
+          "type": "A",
+          "len": 20,
+          "dec": 0,
+          "io": "O",
+          "row": 9,
+          "col": 2,
+          "keywords": ["DFTVAL('LEFTRIGHT')"]
+        },
+        {
+          "name": "CODE",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 11,
+          "col": 2,
+          "keywords": ["VALUES('A' 'B')"]
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

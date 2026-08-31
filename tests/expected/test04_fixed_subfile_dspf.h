@@ -12,7 +12,7 @@ struct EMPSFL_buf {
 };
 
 struct EMPCTL_buf {
-    double SFLRCDNB = 0.0;
+    double SFLRCDNBR = 0.0;
 };
 
 #endif // TEST04_FIXED_SUBFILE_DSPF_H

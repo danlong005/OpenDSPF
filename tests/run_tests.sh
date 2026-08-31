@@ -250,6 +250,29 @@ else
     FAILURES="$FAILURES\n  test05: CUSTMENU format parity"
 fi
 
+# ── Real DDS column layout / continuation ────────────────────────────────────
+run_test "test23: real DDS columns, keyword + entry continuation" \
+    "$TESTDIR/test23_dds_columns.dspf"  "$EXPECTED/test23_dds_columns.dspfd"
+
+run_diag_test "test23b: name in position 17 is refused" \
+    "$TESTDIR/test23b_err_name_column.dspf" 1 \
+    "position 17 (name type) is 'F'"
+
+run_diag_test "test23c: field defined by reference is refused" \
+    "$TESTDIR/test23c_err_ref_field.dspf" 1 \
+    "field CUST is defined by reference"
+
+# A real shop display file (a CUSMNT-style customer-maintenance screen),
+# kept verbatim as the yardstick for "does dspfc eat real DDS yet".  It does
+# not compile: 15 of its 19 fields are defined by reference, and REF/REFFLD
+# is not implemented.  Pinned here so the answer stays visible and honest —
+# before the column and continuation fixes this file exited 0 while silently
+# discarding 28 keywords and every one of those 15 fields.  When REF lands,
+# this becomes a run_test with a golden.
+run_diag_test "sample: real shop DDS — blocked on REF/REFFLD" \
+    "$TESTDIR/sample.dspf" 1 \
+    "is defined by reference"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

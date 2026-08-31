@@ -1,0 +1,102 @@
+     A*****************************************************************
+     A*     FILE NAME:  MNTMENU                                       *
+     A*  RELATED PGMS:  CUSMNT                                        *
+     A* RELATED FILES:  CUSMSTL1   (LOGICAL FILE)                     *
+     A*   DESCRIPTION:  THIS IS THE DISPLAY FILE MNTMENU. IT HAS 3    *
+     A*                 RECORD FORMATS.                               *
+     A*****************************************************************
+     A                                      REF(CUSMSTL1)
+     A                                      CHGINPDFT(CS)
+     A                                      PRINT(QSYSPRT)
+     A                                      INDARA
+     A          R HDRSCN
+     A                                      TEXT('PROMPT FOR CUST NUMBER')
+     A                                      CA03(03 'END MAINTENANCE')
+     A                                      CF05(05 'ADD MODE')
+     A                                      CF06(06 'UPDATE MODE')
+     A                                      CF07(07 'DELETE MODE')
+     A                                      CF08(08 'DISPLAY MODE')
+     A            MODE           8A  O  1  4DSPATR(HI)
+     A                                  1 13'MODE'
+     A                                      DSPATR(HI)
+     A                                  2  4TIME
+     A                                      DSPATR(HI)
+     A                                  2 28'CUSTOMER FILE MAINTENANCE'
+     A                                      DSPATR(HI RI)
+     A                                  2 70DATE
+     A                                      EDTCDE(Y)
+     A                                      DSPATR(HI)
+     A            CUST      R     Y  I 10 25DSPATR(CS)
+     A                                      CHECK(RZ)
+     A  51                                  ERRMSG('CUSTOMER ALREADY ON +
+     A                                      FILE' 51)
+     A  52                                  ERRMSG('CUSTOMER NOT ON FILE' +
+     A                                      52)
+     A                                 10 33'<--Enter Customer Number'
+     A                                      DSPATR(HI)
+     A                                 23  4'F3 End Job'
+     A                                 23 21'F5 Add'
+     A                                 23 34'F6 Update'
+     A                                 23 50'F7 Delete'
+     A                                 23 66'F8 Display'
+
+
+     A          R CSTINQ
+     A                                      TEXT('DISPLAY CUST INFO')
+     A                                      CA12(12 'PREVIOUS SCREEN')
+     A            MODE           8A  O  1  4DSPATR(HI)
+     A                                  1 13'MODE'
+     A                                      DSPATR(HI)
+     A                                  2  4TIME
+     A                                      DSPATR(HI)
+     A                                  2 28'CUSTOMER FILE MAINTENANCE'
+     A                                      DSPATR(HI)
+     A                                      DSPATR(RI)
+     A                                  2 70DATE
+     A                                      EDTCDE(Y)
+     A                                      DSPATR(HI)
+     A                                  4 14'Customer:'
+     A                                      DSPATR(HI)
+     A                                      DSPATR(UL)
+     A            CUST      R        O  4 25DSPATR(HI)
+     A            NAME      R        B  6 25DSPATR(CS)
+     A  04                                  DSPATR(PR)
+     A            ADDR1     R        B  7 25DSPATR(CS)
+     A  04                                  DSPATR(PR)
+     A            ADDR2     R        B  8 25DSPATR(CS)
+     A  04                                  DSPATR(PR)
+     A            CITY      R        B  9 25DSPATR(CS)
+     A  04                                  DSPATR(PR)
+     A            STATE     R        B 10 25DSPATR(CS)
+     A  04                                  DSPATR(PR)
+     A            ZIP       R        B 10 40DSPATR(CS)
+     A                                      EDTCDE(Z)
+     A  04                                  DSPATR(PR)
+     A                                 23  2'F12 Cancel'
+     A            MODE1          8   O 23 13
+     A          R CSTBLD                    TEXT('ADD CUST RECORD')
+     A                                      CA12(12 'PREVIOUS SCREEN')
+     A            MODE           8   O  1  4DSPATR(HI)
+     A                                  1 13'MODE'     DSPATR(HI)
+     A                                  2  4TIME
+     A                                      DSPATR(HI)
+     A                                  2 28'CUSTOMER FILE MAINTENANCE'
+     A                                      DSPATR(HI RI)
+     A                                  2 70DATE
+     A                                      EDTCDE(Y)
+     A                                      DSPATR(HI)
+     A                                  4 14'Customer:' DSPATR(HI UL)
+     A            CUST      R        O  4 25DSPATR(HI)
+     A                                  6 20'Name'     DSPATR(HI)
+     A            NAME      R        I  6 25
+     A                                  7 17'Address'  DSPATR(HI)
+     A            ADDR1     R        I  7 25
+     A                                  8 17'Address'  DSPATR(HI)
+     A            ADDR2     R        I  8 25
+     A                                  9 20'City'     DSPATR(HI)
+     A            CITY      R        I  9 25
+     A                                 10 19'State'    DSPATR(HI)
+     A            STATE     R        I 10 25
+     A                                 10 36'Zip'      DSPATR(HI)
+     A            ZIP       R     Y  I 10 40
+     A                                 23  2'F12 Cancel Addition'

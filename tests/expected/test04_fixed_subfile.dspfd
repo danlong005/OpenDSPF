@@ -50,7 +50,7 @@
       "sfl": "EMPSFL",
       "sflpag": 15,
       "sflsiz": 200,
-      "title": "EMPCTL",
+      "title": "Employee List",
       "screen": { "rows": 24, "cols": 80 },
       "keywords": [],
       "literals": [
