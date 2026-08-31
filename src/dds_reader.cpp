@@ -318,10 +318,21 @@ static void applyRecordKeyword(DspfRecord& rec, const std::string& kw,
 // Apply one keyword appearing before the first record format — the file-level
 // keyword area. Every line there used to be skipped outright, so INDARA, REF,
 // PRINT and CHGINPDFT all vanished without a word.
-static void applyFileKeyword(DspfFile& file, const std::string& kw,
+//
+// Command and page keys collect into `fileKeys` rather than being applied
+// here: they belong to every record format in the file, and no record has
+// been read yet at this point. They are merged in once parsing is done.
+static void applyFileKeyword(DspfFile& file, std::vector<DspfKey>& fileKeys,
+                             const std::string& kw,
                              const std::string& filename, int lineNum) {
     if (kw == "INDARA") {
         file.indara = true;
+        return;
+    }
+    std::string keyName; int ind;
+    if (parseCFCA(kw, keyName, ind) || parseRollKw(kw, keyName, ind)) {
+        DspfKey k; k.key = keyName; k.indicator = ind;
+        fileKeys.push_back(std::move(k));
         return;
     }
     std::cerr << "dspfc: warning: " << filename << ":" << lineNum
@@ -353,6 +364,10 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
     DspfFile file;
     file.name = basename;
     int errors = 0;
+
+    // Command and page keys from the file-level keyword area, applied to
+    // every record format once they are all read.
+    std::vector<DspfKey> fileKeys;
 
     auto error = [&](size_t idx, const std::string& msg) {
         std::cerr << "dspfc: error: " << filename << ":" << (idx + 1)
@@ -412,7 +427,7 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
         // Before the first record format: the file-level keyword area.
         if (file.records.empty()) {
             for (auto& kw : parseKeywords(funcs))
-                applyFileKeyword(file, kw, filename, lineNum);
+                applyFileKeyword(file, fileKeys, kw, filename, lineNum);
             idx = lastLine;
             continue;
         }
@@ -550,6 +565,22 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
         }
 
         idx = lastLine;
+    }
+
+    // File-level command and page keys apply to every record format in the
+    // file. A record that declares the same key names its own indicator for
+    // it and wins, so merge only the keys a record has not spoken for —
+    // matching DDS, where a record-level keyword overrides the file-level one
+    // of the same name. Merged after the whole source is read, since a
+    // record's own keys arrive on lines following its R line and are not all
+    // present when the record is first pushed.
+    for (auto& rec : file.records) {
+        for (const auto& fk : fileKeys) {
+            bool declared = false;
+            for (const auto& rk : rec.keys)
+                if (rk.key == fk.key) { declared = true; break; }
+            if (!declared) rec.keys.push_back(fk);
+        }
     }
 
     if (errors > 0)

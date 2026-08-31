@@ -364,6 +364,30 @@ else
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test24b: conditioning from fixed-format DDS selects one literal"
 fi
 
+# ── test25: file-level command keys at runtime ───────────────────────────
+# \x1bOR and \x1b[24~ are xterm-256color's raw sequences for F3 and F12.
+# The record EXFMT'd here declares its own CF03(99) and inherits CA12(45)
+# from the file-level keyword area, so one screen covers both directions.
+#
+# CA12's indicator is 45 rather than 12 on purpose. The runtime exits on ANY
+# function key and falls back to returning the key's own number as the
+# indicator, so a file-level key whose indicator equals its key number is
+# indistinguishable from that fallback: the first version of test25a used
+# CA12(12) and passed with the file-level merge disabled. Verified both ways
+# now — 25a fails without the merge, 25b passes with or without it, since the
+# override rule is about the record's own key and does not need the merge.
+run_interactive_test \
+    "test25a: file-level key is inherited by a record" \
+    "$TESTDIR/TEST25_FILEKEYS.dspf" "$TESTDIR/TEST25_FILEKEYS.rpgle" \
+    '\x1b[24~' \
+    "$EXPECTED/TEST25_FILEKEYS_f12.out"
+
+run_interactive_test \
+    "test25b: record-level key overrides the file-level one" \
+    "$TESTDIR/TEST25_FILEKEYS.dspf" "$TESTDIR/TEST25_FILEKEYS.rpgle" \
+    '\x1bOR' \
+    "$EXPECTED/TEST25_FILEKEYS_f3.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

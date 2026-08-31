@@ -1,0 +1,58 @@
+{
+  "name": "TEST25_FILEKEYS",
+  "records": [
+    {
+      "name": "INHERITS",
+      "type": "normal",
+      "title": "Takes every file-level key",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "FLDA",
+          "type": "A",
+          "len": 5,
+          "dec": 0,
+          "io": "I",
+          "row": 1,
+          "col": 2,
+          "keywords": []
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 },
+        { "key": "F12", "indicator": 45 },
+        { "key": "PAGEDOWN", "indicator": 22 }
+      ]
+    },
+    {
+      "name": "OVERRIDE",
+      "type": "normal",
+      "title": "Overrides F3, adds F6",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+      ],
+      "fields": [
+        {
+          "name": "FLDB",
+          "type": "A",
+          "len": 5,
+          "dec": 0,
+          "io": "I",
+          "row": 1,
+          "col": 2,
+          "keywords": []
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 99 },
+        { "key": "F6", "indicator": 6 },
+        { "key": "F12", "indicator": 45 },
+        { "key": "PAGEDOWN", "indicator": 22 }
+      ]
+    }
+  ]
+}

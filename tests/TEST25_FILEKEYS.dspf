@@ -1,0 +1,20 @@
+     A*  test25 — command and page keys in the file-level keyword area.
+     A*  They apply to every record format in the file; a record that names
+     A*  the same key declares its own indicator for it and wins, matching
+     A*  DDS, where a record-level keyword overrides the file-level one of
+     A*  the same name.
+     A*
+     A*  CA12's indicator is deliberately 45, not 12.  The runtime exits on
+     A*  ANY function key and falls back to returning the key's own number as
+     A*  the indicator, so a file-level key whose indicator equals its key
+     A*  number cannot be told apart from that fallback — an earlier version
+     A*  of this test used CA12(12) and passed with the merge disabled.
+     A                                      CF03(03) CA12(45)
+     A                                      ROLLUP(22)
+     A          R INHERITS
+     A                                      TEXT('Takes every file-level key')
+     A            FLDA           5A  I  1  2
+     A          R OVERRIDE
+     A                                      TEXT('Overrides F3, adds F6')
+     A                                      CF03(99) CF06(06)
+     A            FLDB           5A  I  1  2

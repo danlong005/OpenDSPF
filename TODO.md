@@ -194,11 +194,32 @@ remaining file-level work discoverable rather than folklore.
       data stream, so there is nothing a warning could tell anyone to do.
 - [ ] `PRINT`, `CHGINPDFT` — warned, not implemented.  Deferred by decision,
       not blocked.
-- [ ] File-level `CAnn`/`CFnn`.  Real DDS allows command keys at file level,
-      applying to every record format; they currently warn.  Worth doing —
-      unlike `REF` this has a plain referent here (copy the key into each
-      record's key list) — and it is the file-level entry most likely to
-      appear in shop source.
+- [x] File-level `CAnn`/`CFnn` (and `ROLLUP`/`ROLLDOWN`, which reach the same
+      `DspfKey` through the same two-function test — splitting them would have
+      been an arbitrary boundary).  They apply to every record format in the
+      file.  A record declaring the same key names its own indicator for it
+      and wins, matching DDS, where a record-level keyword overrides the
+      file-level one of the same name.  The merge runs after the whole source
+      is read, not when each record is pushed: a record's own keys arrive on
+      lines *following* its `R` line, so at push time it does not yet know
+      what it has spoken for.  Tests 25 (descriptor), 25a/25b (interactive).
+
+**Found while testing this — not fixed, and not caused by it.** The runtime
+exits on *any* function key: `dspf__inputLoop` and `dspf__sflExfmt` both look
+the pressed key up in the record's `keys[]` and, failing to find it, `return
+fnum` — the key's own number as the indicator.  On real IBM i a function key
+the record format does not declare is invalid; the workstation rejects it and
+the keyboard locks.  So an undeclared F6 here quietly sets `*IN06` and exits,
+where a real 5250 would refuse.
+
+This matters beyond fidelity because it silently weakens tests.  Test 25a's
+first version had the file-level key as `CA12(12)`, and *IN12 gets set either
+way — by inheritance, or by the fallback — so it passed with the merge
+disabled.  It now uses `CA12(45)`, an indicator deliberately different from
+the key number, and the driver reports `*IN12` as a distinct
+`F12-UNDECLARED` result rather than folding it into the failure branch.
+**Any test asserting on a function key's indicator has to keep the two
+numbers different, or it proves nothing.**
 
 Tests 24 (descriptor) and 24/24b (interactive).  Test 24 is also the first
 interactive test whose display file is fixed-format DDS: every other one
