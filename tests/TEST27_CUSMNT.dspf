@@ -1,0 +1,64 @@
+     A*****************************************************************
+     A*     FILE NAME:  TEST27_CUSMNT                                 *
+     A*  RELATED PGMS:  CUSMNT                                        *
+     A*   DESCRIPTION:  CUSTOMER FILE MAINTENANCE.  SUBFILE SELECT    *
+     A*                 LIST WITH 2=CHANGE, 4=DELETE, 5=DISPLAY,      *
+     A*                 AND A DETAIL SCREEN FOR THE SELECTED CUST.    *
+     A*****************************************************************
+     A                                      INDARA
+     A*
+     A*  THE SELECTION SUBFILE.
+     A          R CUSSFL
+     A                                      SFL
+     A            OPT            1A  B  9  4VALUES(' ' '2' '4' '5')
+     A            SCUST          6A  O  9  8
+     A            SNAME         20A  O  9 17
+     A            SBAL           9S 2O  9 40EDTCDE(J)
+     A*
+     A*  THE SUBFILE CONTROL RECORD.  90 CLEARS, 91 DISPLAYS -- THE
+     A*  LOAD-THEN-DISPLAY IDIOM EVERY REAL SUBFILE PROGRAM USES.
+     A          R CUSCTL
+     A                                      SFLCTL(CUSSFL)
+     A                                      SFLPAG(5) SFLSIZ(20)
+     A  90                                  SFLCLR
+     A  91                                  SFLDSP
+     A  91                                  SFLDSPCTL
+     A                                      SFLEND
+     A                                      CA03(03 'END OF JOB')
+     A                                      CA05(05 'REFRESH')
+     A                                  1  2'CUSMNT'
+     A                                  1 28'CUSTOMER FILE MAINTENANCE'
+     A                                      DSPATR(HI)
+     A                                  7  4'OPT'
+     A                                      DSPATR(HI UL)
+     A                                  7  8'CUST'
+     A                                      DSPATR(HI UL)
+     A                                  7 17'NAME'
+     A                                      DSPATR(HI UL)
+     A                                  7 42'BALANCE'
+     A                                      DSPATR(HI UL)
+     A                                 23  2'F3=Exit   F5=Refresh'
+     A                                 23 30'2=Change  4=Delete  5=Display'
+     A*
+     A*  DETAIL SCREEN.  DSPATR(PR) ON 04 PROTECTS EVERY INPUT FIELD
+     A*  SO 5=DISPLAY REUSES THE SAME FORMAT AS 2=CHANGE.
+     A          R CUSDTL
+     A                                      CA12(12 'PREVIOUS SCREEN')
+     A  04                                  PROTECT
+     A            DMODE          8A  O  1  2DSPATR(HI)
+     A                                  1 28'CUSTOMER FILE MAINTENANCE'
+     A                                      DSPATR(HI)
+     A                                  4 10'Customer:'
+     A                                      DSPATR(HI)
+     A            DCUST          6A  O  4 21DSPATR(HI)
+     A                                  6 14'Name:'
+     A            DNAME         20A  B  6 21
+     A                                  7 11'Address:'
+     A            DADDR         20A  B  7 21
+     A                                  8 14'City:'
+     A            DCITY         15A  B  8 21
+     A                                  8 40'State:'
+     A            DSTATE         2A  B  8 48
+     A                                  9 11'Balance:'
+     A            DBAL           9S 2B  9 21EDTCDE(J)
+     A                                 23  2'F12=Cancel'

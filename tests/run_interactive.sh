@@ -471,6 +471,46 @@ else
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test26b: rows survive, and SFLEND marks the end"
 fi
 
+# ── test27: CUSMNT, a full subfile maintenance program ───────────────────
+# Not a keyword probe: the whole load / display / READC / act loop a real
+# maintenance program is built from, driven end to end. One pass each of
+# 2=Change, 5=Display and 4=Delete against a 6-row master, then F3.
+#
+# Keystrokes, in order:
+#   2 \r          option 2 on subfile row 1 (customer 100010)
+#   \t            Tab off DNAME onto DADDR. DNAME is pre-filled by the
+#                 program and a written-to input field does not currently
+#                 accept operator input (see TODO.md), so the operator
+#                 fills the address, which the master leaves blank. When
+#                 that is fixed this test should also retype the name.
+#   ELMSTREET \r  the new address
+#   5 \r          option 5 on row 1, then \r to leave the display screen
+#   4 \r          option 4 on row 1 — deletes it
+#   ESC O R       F3, end of job
+#
+# The final RESULT:Mn lines are the point: they pin what the maintenance
+# loop actually did to the master, not merely what reached the screen.
+# 100010 is absent from them because 4=Delete removed it.
+run_interactive_test \
+    "test27: CUSMNT change/display/delete maintenance loop" \
+    "$TESTDIR/TEST27_CUSMNT.dspf" "$TESTDIR/TEST27_CUSMNT.rpgle" \
+    '2\r\tELMSTREET\r5\r\r4\r\x1bOR' \
+    "$EXPECTED/TEST27_CUSMNT.out"
+
+# The subfile rows themselves carry no DSPLY output, so they are checked
+# against the raw capture: the loaded rows must render, and with 6 rows in
+# SFLPAG(5) the first page must show More... rather than Bottom.
+printf "%-55s " "test27b: subfile rows render and page with More..."
+raw27="$TMPDIR/TEST27_CUSMNT.raw"
+if grep -qaF 'ACME SUPPLY CO' "$raw27" && grep -qaF 'FARMERS COOP' "$raw27" \
+   && grep -qaF 'More' "$raw27"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (subfile rows or More... marker missing)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test27b: subfile rows render and page with More..."
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

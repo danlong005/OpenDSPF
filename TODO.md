@@ -512,3 +512,48 @@ installer ships, it hides `curses.h` under `include/pdcurses/`, and its
 default wingui port paints a window rather than stdout, so the captures
 these tests diff would be empty even once it linked. Windows display-file
 behaviour is untested, and the workflows say so.
+
+### Found by TEST27_CUSMNT, the first full-size interactive program (2026-09-01)
+
+Every interactive test before this one was a single-keyword probe of 18-43
+lines. `TEST27_CUSMNT` is a real maintenance program — load / display /
+READC / act, with 2=Change, 5=Display and 4=Delete against a 6-row master —
+and it turned up three defects on the first run.
+
+**A written-to input field ignores operator input.** This is the big one.
+A field with usage `B` that the program assigns before `EXFMT` comes back
+holding its original value no matter what the operator types; blank the
+field first and the same keystrokes land correctly. That round trip — write
+the current value out, let the operator change it, read it back — is the
+entire definition of a both-field and the basis of every change screen ever
+written in RPG. In practice `B` currently behaves as output-only whenever
+the program has put anything in the field. Isolated to two runs of the same
+program differing only in whether `DNAME` was pre-filled; test27 works
+around it by having the operator fill `DADDR`, which the master leaves
+blank, and should retype the name once this is fixed.
+
+**A field-level keyword's option indicator is dropped.** Real DDS conditions
+`DSPATR` from the indicator columns constantly — `tests/sample.dspf` uses
+`04 DSPATR(PR)` on five fields to make one format serve both change and
+display mode. dspfc warns and keeps the keyword *unconditionally*, so the
+fields are protected in both modes rather than only in display. The warning
+is honest, but the effect is a screen that behaves the opposite of what the
+source says. Record-level `PROTECT(*IN04)` does condition correctly, which
+is what test27 uses instead.
+
+**Numeric fields render as `.00`.** Every balance on both the subfile and
+the detail screen shows `.00` — value zero, all significant digits gone —
+while the program's field verifiably holds the right number immediately
+before `WRITE` (proved by DSPLY'ing it there). Narrowed a fair way without
+finding it: not the field metadata (byte-identical JSON to a case that
+renders correctly), not the `S`/`P` data type, not fixed- vs free-format DDS
+(a minimal fixed-format numeric field renders `1,250.00`), and not the
+DS-subfield source (a literal assignment renders `.00` too). What TEST27 has
+that the working minimal cases do not is several record formats in one file
+each carrying numeric fields, and a numeric field inside a subfile. That is
+where to look next.
+
+Also seen, minor: a `PACKED(9:2)` output field with no edit code renders
+`0001250.0` — zero-filled to the field width counting the decimal point, so
+the point lands one position left of where the declared scale puts it.
+`EDTCDE(J)` on the same field is correct.
