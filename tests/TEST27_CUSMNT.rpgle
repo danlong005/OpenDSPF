@@ -108,6 +108,29 @@ BEGSR LoadSfl;
   WRITE CUSCTL;
 ENDSR;
 
+// ─────────────────────────────────────────────────────────────────────
+//  READC returns only the rows the operator actually changed, which is
+//  what makes a select list workable at all — the alternative is
+//  re-reading every SFLSIZ row looking for a non-blank option.
+// ─────────────────────────────────────────────────────────────────────
+BEGSR DoOpts;
+  READC CUSSFL;
+  DOW NOT %EOF(CUSSFL);
+    EXSR FindCus;
+    IF sel > 0;
+      SELECT;
+        WHEN OPT = '2';
+          EXSR ChgCus;
+        WHEN OPT = '4';
+          EXSR DltCus;
+        WHEN OPT = '5';
+          EXSR DspCus;
+      ENDSL;
+    ENDIF;
+    READC CUSSFL;
+  ENDDO;
+ENDSR;
+
 BEGSR FindCus;
   sel = 0;
   FOR k = 1 TO MaxCust;
@@ -161,29 +184,6 @@ ENDSR;
 BEGSR DltCus;
   master(sel).gone = 'D';
   DSPLY ('RESULT:DELETED=' + %TRIM(master(sel).cust));
-ENDSR;
-
-// ─────────────────────────────────────────────────────────────────────
-//  READC returns only the rows the operator actually changed, which is
-//  what makes a select list workable at all — the alternative is
-//  re-reading every SFLSIZ row looking for a non-blank option.
-// ─────────────────────────────────────────────────────────────────────
-BEGSR DoOpts;
-  READC CUSSFL;
-  DOW NOT %EOF(CUSSFL);
-    EXSR FindCus;
-    IF sel > 0;
-      SELECT;
-        WHEN OPT = '2';
-          EXSR ChgCus;
-        WHEN OPT = '4';
-          EXSR DltCus;
-        WHEN OPT = '5';
-          EXSR DspCus;
-      ENDSL;
-    ENDIF;
-    READC CUSSFL;
-  ENDDO;
 ENDSR;
 
 // Final state of the master, so the golden pins what the maintenance
