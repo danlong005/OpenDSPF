@@ -12,12 +12,13 @@
 //  and subfile machinery, not record-level access, which has its own
 //  tests on the OpenRPG side.
 //
-//  Written with subroutines rather than subprocedures, which is both
-//  what shop code of this vintage looks like and what this compiler can
-//  currently run: rpgc emits every global as a local of main(), so a
-//  subprocedure cannot see one (see TODO.md). A WORKSTN program is
-//  nothing but globals — EXFMT and READC move data through the record
-//  format's fields — so subprocedures are not usable here at all yet.
+//  Written with subroutines rather than subprocedures, which is what shop
+//  code of this vintage looks like. It was originally written that way for
+//  a second reason that no longer applies: rpgc emitted every global as a
+//  local of main(), so a subprocedure could not see one, and a WORKSTN
+//  program is nothing but globals — EXFMT and READC move data through the
+//  record format's fields. That is fixed (OpenRPG test227); the subroutine
+//  form is kept here because it is the authentic shape, not a workaround.
 // ─────────────────────────────────────────────────────────────────────
 
 DCL-F TEST27_CUSMNT WORKSTN;
