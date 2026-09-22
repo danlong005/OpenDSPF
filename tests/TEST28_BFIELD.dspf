@@ -1,0 +1,14 @@
+     A*****************************************************************
+     A*     FILE NAME:  TEST28_BFIELD                                 *
+     A*   DESCRIPTION:  BOTH-FIELD ROUND TRIP.  A PRE-FILLED INPUT    *
+     A*                 FIELD, A NUMERIC FIELD THE STRUCT PADS, AND   *
+     A*                 A FIELD-LEVEL 04 DSPATR(PR).                  *
+     A*****************************************************************
+     A          R DTL
+     A                                  1  2'HEADING'
+     A                                      DSPATR(HI UL)
+     A            FNAME         10A  B  2 10
+     A            FCODE          3A  B  3 10
+     A  04                                  DSPATR(PR)
+     A            FAMT           7S 2B  4 10
+     A            FOUT           9S 2O  5 10

@@ -148,8 +148,10 @@ side, and clobbering that silently would be worse than stopping.
 
 ### Numeric field display
 - [x] Right-align numeric field values (`S`, `P`, `B`, `F` types) on output
-- [x] Zero-pad to declared field length (no EDTCDE/EDTWRD) — IBM i style `001234.56`
-- [x] Decimal point at correct position when no edit code is applied
+- [x] Zero-pad to declared field length (no EDTCDE/EDTWRD) — the stored
+      digits with the decimal implied, as a 5250 shows it: a 9S 2 holding
+      1250.00 is `000125000` (2026-09-22). This used to insert a point,
+      which needs len+1 columns, so the last digit was cut off on screen.
 
 ### Auto-advance on field fill ✅
 - [x] Cursor automatically moves to next field when current field is full
@@ -513,47 +515,57 @@ default wingui port paints a window rather than stdout, so the captures
 these tests diff would be empty even once it linked. Windows display-file
 behaviour is untested, and the workflows say so.
 
-### Found by TEST27_CUSMNT, the first full-size interactive program (2026-09-01)
+### Found by TEST27_CUSMNT, the first full-size interactive program ✅ (fixed 2026-09-22)
 
 Every interactive test before this one was a single-keyword probe of 18-43
-lines. `TEST27_CUSMNT` is a real maintenance program — load / display /
-READC / act, with 2=Change, 5=Display and 4=Delete against a 6-row master —
-and it turned up three defects on the first run.
+lines. `TEST27_CUSMNT` is a real maintenance program, and it turned up
+three defects on its first run. All are fixed, and TEST28_BFIELD pins them.
 
-**A written-to input field ignores operator input.** This is the big one.
-A field with usage `B` that the program assigns before `EXFMT` comes back
-holding its original value no matter what the operator types; blank the
-field first and the same keystrokes land correctly. That round trip — write
-the current value out, let the operator change it, read it back — is the
-entire definition of a both-field and the basis of every change screen ever
-written in RPG. In practice `B` currently behaves as output-only whenever
-the program has put anything in the field. Isolated to two runs of the same
-program differing only in whether `DNAME` was pre-filled; test27 works
-around it by having the operator fill `DADDR`, which the master leaves
-blank, and should retype the name once this is fixed.
+**Numeric fields read and written at the wrong offset — the `.00` bug, and
+half of the both-field bug.** The record buffer is the plain C++ struct in
+`<FILE>_dspf.h`, so a `double` after a `char[len+1]` is padded up to an
+8-byte boundary. `dspf__extractFields`/`dspf__applyFields` walked it by
+summing sizes, so they missed the member whenever the char bytes before it
+weren't a multiple of 8. CUSSFL's `SBAL` lives at 32 but was read at 30. The
+value read was garbage (usually zero, hence `.00`), and operator input was
+written into padding, so a numeric both-field never returned what was
+typed. Minimal cases passed only because their offsets happened to align.
+Both walkers now round up to the member's alignment (`dspf__alignSlot`).
 
-**A field-level keyword's option indicator is dropped.** Real DDS conditions
-`DSPATR` from the indicator columns constantly — `tests/sample.dspf` uses
-`04 DSPATR(PR)` on five fields to make one format serve both change and
-display mode. dspfc warns and keeps the keyword *unconditionally*, so the
-fields are protected in both modes rather than only in display. The warning
-is honest, but the effect is a screen that behaves the opposite of what the
-source says. Record-level `PROTECT(*IN04)` does condition correctly, which
-is what test27 uses instead.
+**A pre-filled both-field appended instead of replacing.** The cursor
+started after the program's value and keys were appended, so `OLDVAL` +
+`NEW` came back `OLDVALNEW`, and a nearly-full field kept only the last few
+keystrokes. Now the first printable key into a field the operator hasn't
+touched on this screen replaces its value. Backspace-first still edits in
+place. This is not 5250 overtype (which would give `NEWVAL` and needs
+Field Exit), but it is chosen deliberately: it is what terminal-emulator
+users expect, and it kept every existing keystroke script valid. It
+applies to plain records and subfile screens alike.
 
-**Numeric fields render as `.00`.** Every balance on both the subfile and
-the detail screen shows `.00` — value zero, all significant digits gone —
-while the program's field verifiably holds the right number immediately
-before `WRITE` (proved by DSPLY'ing it there). Narrowed a fair way without
-finding it: not the field metadata (byte-identical JSON to a case that
-renders correctly), not the `S`/`P` data type, not fixed- vs free-format DDS
-(a minimal fixed-format numeric field renders `1,250.00`), and not the
-DS-subfield source (a literal assignment renders `.00` too). What TEST27 has
-that the working minimal cases do not is several record formats in one file
-each carrying numeric fields, and a numeric field inside a subfile. That is
-where to look next.
+**A field-level keyword's option indicator was dropped.** dspfc warned and
+kept `04 DSPATR(PR)` unconditionally. The TODO claimed this left the fields
+protected in both modes, but the runtime never implemented field-level
+`DSPATR(PR)` at all, so they were protected in neither. Now:
+- The reader stores a conditioned field or constant keyword as
+  `"*IN04?DSPATR(PR)"`. A field's `COND(...)` conditions the whole entry,
+  so it can't carry a per-keyword indicator.
+- On every I/O operation, `dspf_set_indicators` rebuilds the effective
+  descriptor from the parsed source (`dspf__resolveDescriptor`). A
+  satisfied conditioned keyword is kept, bare; any other is dropped. So no
+  keyword reader needs indicator logic.
+- A field with an active `DSPATR(PR)` has its usage demoted to `O` for that
+  operation. It renders as output and takes no input.
 
-Also seen, minor: a `PACKED(9:2)` output field with no edit code renders
-`0001250.0` — zero-filled to the field width counting the decimal point, so
-the point lands one position left of where the declared scale puts it.
-`EDTCDE(J)` on the same field is correct.
+Found alongside: `DSPATR(HI UL)` — any DSPATR naming more than one
+attribute — set nothing, because `dspf__fieldAttrs` matched whole keyword
+text against `"DSPATR(HI)"`. It now splits the codes. Every CUSMNT column
+heading was affected.
+
+Still open, same area:
+- A conditioned keyword on a **subfile row** is resolved against the
+  indicators at display time, not at the `WRITE` of that row. This is the
+  same limitation the existing per-field `COND` already has. Real DDS
+  captures a row's indicators when it is written.
+- Only positions 7-10 (one indicator) are read. DDS allows three ANDed
+  indicators in 8-16.
+- `DSPATR(ND)`, `(PC)`, `(CS)` and `(MDT)` are parsed but not applied.

@@ -478,12 +478,12 @@ fi
 #
 # Keystrokes, in order:
 #   2 \r          option 2 on subfile row 1 (customer 100010)
-#   \t            Tab off DNAME onto DADDR. DNAME is pre-filled by the
-#                 program and a written-to input field does not currently
-#                 accept operator input (see TODO.md), so the operator
-#                 fills the address, which the master leaves blank. When
-#                 that is fixed this test should also retype the name.
-#   ELMSTREET \r  the new address
+#   ACMEINC \t    retype the pre-filled name. The first key replaces the
+#                 program's value rather than appending to it.
+#   ELMSTREET     the new address, into the field the master leaves blank
+#   \t\t\t 99 \r  Tab past city and state to the balance and key 99 —
+#                 a numeric both-field the buffer struct pads, so it only
+#                 comes back if the runtime walks the struct's real layout
 #   5 \r          option 5 on row 1, then \r to leave the display screen
 #   4 \r          option 4 on row 1 — deletes it
 #   ESC O R       F3, end of job
@@ -494,7 +494,7 @@ fi
 run_interactive_test \
     "test27: CUSMNT change/display/delete maintenance loop" \
     "$TESTDIR/TEST27_CUSMNT.dspf" "$TESTDIR/TEST27_CUSMNT.rpgle" \
-    '2\r\tELMSTREET\r5\r\r4\r\x1bOR' \
+    '2\rACMEINC\tELMSTREET\t\t\t99\r5\r\r4\r\x1bOR' \
     "$EXPECTED/TEST27_CUSMNT.out"
 
 # The subfile rows themselves carry no DSPLY output, so they are checked
@@ -509,6 +509,33 @@ if grep -qaF 'ACME SUPPLY CO' "$raw27" && grep -qaF 'FARMERS COOP' "$raw27" \
 else
     echo -e "${RED}FAIL${NC} (subfile rows or More... marker missing)"
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test27b: subfile rows render and page with More..."
+fi
+
+# ── test28: both-fields round trip, field-level DSPATR(PR) ──────────────
+# Pass 1 (*IN04 off) types over FNAME's pre-filled 'OLDVAL', then FCODE
+# and FAMT; pass 2 (*IN04 on) protects FCODE via `04 DSPATR(PR)`, so the
+# second field Tab reaches is FAMT. See the .rpgle header for what each
+# RESULT line guards against.
+run_interactive_test \
+    "test28: both-fields take input; 04 DSPATR(PR) protects" \
+    "$TESTDIR/TEST28_BFIELD.dspf" "$TESTDIR/TEST28_BFIELD.rpgle" \
+    'NEW\tXYZ\t9\rQ\t5\r' \
+    "$EXPECTED/TEST28_BFIELD.out"
+
+# Screen-only properties of the same run, checked against the raw capture:
+# DSPATR(HI UL) must set bold AND underline (SGR 1;4) — the runtime used
+# to match whole keyword text, so any combined DSPATR set nothing — and an
+# unedited 9S 2 holding 1250.00 shows as 000125000, its stored digits
+# with the decimal implied, not 0001250.0 cut off at the field width.
+printf "%-55s " "test28b: DSPATR(HI UL) and unedited numeric render"
+raw28="$TMPDIR/TEST28_BFIELD.raw"
+if grep -qaF $'\x1b[0;1;4m\x1b[32mHEADING' "$raw28" \
+   && grep -qaF '000125000' "$raw28" && ! grep -qaF '0001250.0' "$raw28"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (combined DSPATR or unedited numeric wrong)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test28b: DSPATR(HI UL) and unedited numeric render"
 fi
 
 # ── Summary ─────────────────────────────────────────────────────────────

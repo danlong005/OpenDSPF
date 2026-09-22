@@ -498,24 +498,22 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
             // keyword — SFLCLR, SFLDSP and friends are conditioned this way in
             // essentially every subfile program.
             //
-            // A bare keyword takes the condition into its own text
+            // A bare record keyword takes the condition into its own text
             // (SFLCLR -> SFLCLR(*IN90)), the shape this compiler already used
             // for PROTECT(*INxx)/SFLNXTCHG(*INxx) and which the runtime reads
-            // through dspf__recKwActive. A keyword that already has parameters
-            // has nowhere to put it, and a field's or constant's conditions are
-            // modelled per entry rather than per keyword, so those still say so
-            // rather than dropping it silently.
+            // through dspf__recKwActive. A record keyword that already has
+            // parameters has nowhere to put it, so that still says so rather
+            // than dropping it silently.
+            //
+            // A field's or constant's keyword can't use COND(...) — that
+            // conditions the whole entry — so it is prefixed instead:
+            // `04 DSPATR(PR)` becomes "*IN04?DSPATR(PR)", which the runtime
+            // resolves against the indicators of each I/O operation
+            // (dspf__resolveDescriptor). This is how one format serves both
+            // change and display mode in real DDS.
             for (auto& kw : parseKeywords(funcs)) {
                 if (target) {
-                    if (!condKw.empty()) {
-                        std::cerr << "dspfc: warning: " << filename << ":" << lineNum
-                                  << ": record " << rec.name << ": option indicator on a "
-                                  << "keyword line for " << keywordName(kw)
-                                  << " conditions that keyword individually, which is "
-                                  << "modelled per entry here — keyword kept, "
-                                  << condKw << " dropped\n";
-                    }
-                    target->push_back(kw);
+                    target->push_back(condKw.empty() ? kw : condInner + "?" + kw);
                     continue;
                 }
                 if (!condKw.empty()) {

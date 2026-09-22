@@ -165,7 +165,9 @@ BEGSR ChgCus;
     master(sel).state = DSTATE;
     master(sel).bal   = DBAL;
     DSPLY ('RESULT:CHANGED=' + %TRIM(master(sel).cust));
+    DSPLY ('RESULT:NEWNAME=' + %TRIM(master(sel).name));
     DSPLY ('RESULT:NEWADDR=' + %TRIM(master(sel).addr));
+    DSPLY ('RESULT:NEWBAL=' + %TRIM(%CHAR(%INT(DBAL * 100))));
   ENDIF;
 ENDSR;
 

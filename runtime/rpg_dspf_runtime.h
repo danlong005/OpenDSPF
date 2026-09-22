@@ -146,6 +146,19 @@ static bool dspf__isCharType(const std::string& type) {
     return type == "A" || type == "L" || type == "T" || type == "Z";
 }
 
+// The buffer is the plain C++ struct dspfc emits (<FILE>_dspf.h), so its
+// numeric members sit where the compiler put them: a long or double after
+// a char[len+1] is padded up to its own alignment. Walking it by summing
+// sizes alone lands the numeric slot short of the real member whenever
+// len+1 isn't a multiple of 8 — a 9S 2 after three char fields of 2+7+21
+// bytes is read from offset 30, not 32 — so the value read is garbage and
+// the value written back never reaches the program. Round up first.
+static const char* dspf__alignSlot(const void* base, const char* p, size_t align) {
+    size_t off = (size_t)(p - (const char*)base);
+    off = (off + align - 1) / align * align;
+    return (const char*)base + off;
+}
+
 static std::map<std::string,std::string>
 dspf__extractFields(const DspfJVal& rec, const void* buf) {
     std::map<std::string,std::string> m;
@@ -171,11 +184,15 @@ dspf__extractFields(const DspfJVal& rec, const void* buf) {
             m[name] = val;
             p += (len + 1);
         } else if (type == "B") {
-            m[name] = std::to_string(*(const long*)p);
+            p = dspf__alignSlot(buf, p, alignof(long));
+            long lv; memcpy(&lv, p, sizeof lv);
+            m[name] = std::to_string(lv);
             p += sizeof(long);
         } else {
+            p = dspf__alignSlot(buf, p, alignof(double));
+            double dv; memcpy(&dv, p, sizeof dv);
             char tmp[64];
-            snprintf(tmp, sizeof(tmp), "%.*f", dec, *(const double*)p);
+            snprintf(tmp, sizeof(tmp), "%.*f", dec, dv);
             m[name] = tmp;
             p += sizeof(double);
         }
@@ -207,12 +224,14 @@ static void dspf__applyFields(const DspfJVal& rec,
             }
             p += (len + 1);
         } else if (type == "B") {
+            p = (char*)dspf__alignSlot(buf, p, alignof(long));
             auto it = vals.find(name);
-            if (it != vals.end()) try { *(long*)p = std::stol(it->second); } catch (...) {}
+            if (it != vals.end()) try { long lv = std::stol(it->second); memcpy(p, &lv, sizeof lv); } catch (...) {}
             p += sizeof(long);
         } else {
+            p = (char*)dspf__alignSlot(buf, p, alignof(double));
             auto it = vals.find(name);
-            if (it != vals.end()) try { *(double*)p = std::stod(it->second); } catch (...) {}
+            if (it != vals.end()) try { double dv = std::stod(it->second); memcpy(p, &dv, sizeof dv); } catch (...) {}
             p += sizeof(double);
         }
     }
@@ -224,9 +243,17 @@ static void dspf__applyFields(const DspfJVal& rec,
 
 static bool g_dspf_indicators[100] = {};
 
+// g_dspfSource is the descriptor exactly as parsed. g_dspfDescriptor, which
+// everything else reads, is that source resolved against the indicators
+// in effect for the current I/O operation — see dspf__resolveDescriptor.
+static DspfJVal g_dspfSource;
+static DspfJVal g_dspfDescriptor;
+static void dspf__resolveDescriptor();
+
 inline void dspf_set_indicators(const bool* inds, int count) {
     int n = (count < 100) ? count : 100;
     for (int i = 0; i < n; i++) g_dspf_indicators[i] = inds[i];
+    dspf__resolveDescriptor();
 }
 
 // Returns true if the item's COND keywords are satisfied (or absent).
@@ -250,6 +277,83 @@ static bool dspf__condPass(const DspfJVal& item) {
         }
     }
     return true;
+}
+
+// Splits a DSPATR(...) keyword into its attribute codes: "DSPATR(HI UL)"
+// -> {"HI","UL"}. DDS lets one DSPATR name several attributes, so matching
+// the whole keyword text against "DSPATR(HI)" misses every combined form.
+static std::vector<std::string> dspf__dspatrCodes(const std::string& kw) {
+    std::vector<std::string> codes;
+    if (kw.rfind("DSPATR(", 0) != 0 || kw.back() != ')') return codes;
+    std::string inner = kw.substr(7, kw.size() - 8), tok;
+    for (char c : inner + " ") {
+        if (c == ' ') { if (!tok.empty()) codes.push_back(tok); tok.clear(); }
+        else tok += (char)toupper((unsigned char)c);
+    }
+    return codes;
+}
+
+static bool dspf__hasDspatr(const DspfJVal& field, const std::string& code) {
+    const DspfJVal& kw = field["keywords"];
+    for (size_t i = 0; i < kw.size(); i++)
+        for (const auto& c : dspf__dspatrCodes(kw[i].str()))
+            if (c == code) return true;
+    return false;
+}
+
+// A field or constant keyword conditioned by its own option indicator —
+// the DDS keyword line `  04   DSPATR(PR)` — reaches the descriptor as
+// "*IN04?DSPATR(PR)" ("N*IN04?..." for an N indicator), since a field's
+// COND(...) conditions the whole entry, not one keyword. Returns false when
+// `kw` carries no such prefix; otherwise sets `bare` and `active`.
+static bool dspf__splitCondKw(const std::string& kw, std::string& bare, bool& active) {
+    size_t q = kw.find('?');
+    size_t paren = kw.find('(');
+    if (q == std::string::npos || (paren != std::string::npos && paren < q)) return false;
+    std::string cond = kw.substr(0, q);
+    bool neg = !cond.empty() && (cond[0] == 'N' || cond[0] == 'n');
+    if (neg) cond = cond.substr(1);
+    if (cond.rfind("*IN", 0) != 0) return false;
+    int ind = -1;
+    try { ind = std::stoi(cond.substr(3)); } catch (...) { return false; }
+    bool on = ind >= 0 && ind < 100 && g_dspf_indicators[ind];
+    bare   = kw.substr(q + 1);
+    active = neg ? !on : on;
+    return true;
+}
+
+// Rebuilds g_dspfDescriptor from g_dspfSource for the current indicators:
+// a conditioned keyword is kept, bare, when its indicator is satisfied and
+// dropped otherwise, so every reader of "keywords" sees plain keyword text
+// and needs no indicator logic of its own. A field whose effective
+// keywords include DSPATR(PR) is protected for this operation — it is
+// shown but takes no input — which is expressed by demoting its usage to
+// "O"; nothing that walks the buffer depends on usage, only the renderer
+// and the input loops, which is exactly where protection has to apply.
+static void dspf__resolveDescriptor() {
+    g_dspfDescriptor = g_dspfSource;
+    for (auto& rec : g_dspfDescriptor.obj["records"].arr) {
+        for (const char* part : {"fields", "literals"}) {
+            auto it = rec.obj.find(part);
+            if (it == rec.obj.end()) continue;
+            for (auto& item : it->second.arr) {
+                auto& kws = item.obj["keywords"].arr;
+                std::vector<DspfJVal> kept;
+                for (auto& kw : kws) {
+                    std::string bare; bool active = false;
+                    if (!dspf__splitCondKw(kw.s, bare, active)) { kept.push_back(kw); continue; }
+                    if (!active) continue;
+                    DspfJVal v; v.kind = DspfJVal::Str; v.s = bare;
+                    kept.push_back(v);
+                }
+                kws = kept;
+                if (std::string(part) == "fields" && dspf__hasDspatr(item, "PR")) {
+                    std::string& io = item.obj["io"].s;
+                    if (io == "I" || io == "B") io = "O";
+                }
+            }
+        }
+    }
 }
 
 // Check if a record has any keyword whose text starts with `prefix`.
@@ -704,11 +808,12 @@ static attr_t dspf__fieldAttrs(const DspfJVal& field) {
     attr_t a = A_NORMAL;
     const DspfJVal& kw = field["keywords"];
     for (size_t i = 0; i < kw.size(); i++) {
-        const std::string& k = kw[i].str();
-        if (k == "DSPATR(HI)") a |= A_BOLD;
-        if (k == "DSPATR(BL)") a |= A_BLINK;
-        if (k == "DSPATR(RI)") a |= A_REVERSE;
-        if (k == "DSPATR(UL)") a |= A_UNDERLINE;
+        for (const auto& c : dspf__dspatrCodes(kw[i].str())) {
+            if (c == "HI") a |= A_BOLD;
+            if (c == "BL") a |= A_BLINK;
+            if (c == "RI") a |= A_REVERSE;
+            if (c == "UL") a |= A_UNDERLINE;
+        }
     }
     return a;
 }
@@ -734,15 +839,19 @@ static std::string dspf__formatField(const DspfJVal& field, const std::string& r
             return dspf__applyEditWord(numVal, len, dec, mask);
         }
     }
-    // No edit code: format with zero-fill, decimal point at correct position.
-    // A ZONED/PACKED len=9 dec=2 field occupies 10 display chars (9 digits + '.').
+    // No edit code: the field's digits exactly as stored — zero-filled to
+    // its declared length, with no decimal point, as a 5250 shows an
+    // unedited numeric field (a 9S 2 holding 1250.00 is 000125000). The
+    // decimal position is implied, as it is in the zoned data itself.
+    // Inserting a point needs len+1 columns the field doesn't have, which
+    // is why the old form lost its last digit on screen. A negative value
+    // takes a leading '-' in place of its top digit position.
+    double scaled = std::round(std::fabs(numVal) * std::pow(10.0, dec));
     char buf[64];
-    if (dec > 0) {
-        snprintf(buf, sizeof(buf), "%0*.*f", len + 1, dec, numVal);
-    } else {
-        snprintf(buf, sizeof(buf), "%0*.*f", len, 0, numVal);
-    }
-    return std::string(buf);
+    snprintf(buf, sizeof(buf), "%0*.0f", numVal < 0 ? len - 1 : len, scaled);
+    std::string out(buf);
+    if (numVal < 0) out = "-" + out;
+    return out;
 }
 
 // =============================================================================
@@ -1133,7 +1242,14 @@ static int dspf__inputLoop(const DspfJVal& rec,
             continue;
         }
 
-        if (isprint(ch) && (int)f.val.size() < f.len) {
+        // The first character keyed into a field the operator hasn't
+        // touched yet on this screen replaces what the program wrote there,
+        // rather than appending after it: a pre-filled both-field is the
+        // basis of every change screen, and appending made one unusable —
+        // a nearly-full value left room for only the last few keystrokes.
+        // Backspace first still edits the existing value in place.
+        if (isprint(ch) && (!f.touched || (int)f.val.size() < f.len)) {
+            if (!f.touched) f.val.clear();
             f.val += (char)ch;
             f.touched = true;
             int pair = dspf__colorPair(fields[f.recIdx]);
@@ -1153,7 +1269,6 @@ static int dspf__inputLoop(const DspfJVal& rec,
 // Global descriptor (forward-declared here; defined in Public API section)
 // =============================================================================
 
-static DspfJVal g_dspfDescriptor;
 static bool     g_dspfActive = false;
 
 // =============================================================================
@@ -1509,7 +1624,10 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
                 if (!e.val.empty()) { e.val.pop_back(); e.touched = true; redrawFocused(); }
                 continue;
             }
-            if (isprint(ch) && (int)e.val.size() < e.len) {
+            // First key into an untouched field replaces its value — see
+            // the matching note in dspf__inputLoop.
+            if (isprint(ch) && (!e.touched || (int)e.val.size() < e.len)) {
+                if (!e.touched) e.val.clear();
                 e.val += (char)ch; e.touched = true; redrawFocused();
                 continue;
             }
@@ -1581,7 +1699,8 @@ inline void dspf_init(const char* descriptor_path) {
     fseek(f, 0, SEEK_END); long sz = ftell(f); fseek(f, 0, SEEK_SET);
     std::string json(sz, '\0');
     fread(&json[0], 1, sz, f); fclose(f);
-    g_dspfDescriptor = dspf__parseJSON(json);
+    g_dspfSource = dspf__parseJSON(json);
+    dspf__resolveDescriptor();
 
     initscr();
     cbreak();
