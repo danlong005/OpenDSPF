@@ -194,12 +194,9 @@ BEGSR RptMast;
   FOR k = 1 TO MaxCust;
     IF master(k).gone <> 'D';
       // Value is extracted as [A-Za-z0-9.-]*, so no colons or spaces.
-      // Balance goes out as whole cents: %CHAR on a PACKED *subfield of a
-      // DS* prints 1250.000000, because a subfield's declared scale is
-      // lost in codegen (see TODO.md) — reporting cents pins the same
-      // number without asserting the broken path.
+      // %CHAR on the PACKED(9:2) subfield prints at its declared scale.
       DSPLY ('RESULT:M' + %CHAR(k) + '=' + %TRIM(master(k).cust) + '-'
-             + %TRIM(%CHAR(%INT(master(k).bal * 100))));
+             + %TRIM(%CHAR(master(k).bal)));
     ENDIF;
   ENDFOR;
 ENDSR;
