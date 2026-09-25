@@ -41,28 +41,40 @@ DCL-S sel      INT(5);
 DCL-S done     IND;
 
 // ── Master table ────────────────────────────────────────────────────
-master(1).cust = '100010'; master(1).name = 'ACME SUPPLY CO';
-master(1).city = 'CEDAR RAPIDS';  master(1).state = 'IA';
+master(1).cust = '100010';
+master(1).name = 'ACME SUPPLY CO';
+master(1).city = 'CEDAR RAPIDS';
+master(1).state = 'IA';
 master(1).bal  = 1250.00;
 
-master(2).cust = '100020'; master(2).name = 'BRIDGEPORT TOOL';
-master(2).city = 'BRIDGEPORT';    master(2).state = 'CT';
+master(2).cust = '100020';
+master(2).name = 'BRIDGEPORT TOOL';
+master(2).city = 'BRIDGEPORT';
+master(2).state = 'CT';
 master(2).bal  = 87.45;
 
-master(3).cust = '100030'; master(3).name = 'CENTRAL FOODS INC';
-master(3).city = 'OMAHA';         master(3).state = 'NE';
+master(3).cust = '100030';
+master(3).name = 'CENTRAL FOODS INC';
+master(3).city = 'OMAHA';
+master(3).state = 'NE';
 master(3).bal  = 0.00;
 
-master(4).cust = '100040'; master(4).name = 'DELTA MACHINE WKS';
-master(4).city = 'MEMPHIS';       master(4).state = 'TN';
+master(4).cust = '100040';
+master(4).name = 'DELTA MACHINE WKS';
+master(4).city = 'MEMPHIS';
+master(4).state = 'TN';
 master(4).bal  = 45900.99;
 
-master(5).cust = '100050'; master(5).name = 'EASTERN FREIGHT';
-master(5).city = 'NEWARK';        master(5).state = 'NJ';
+master(5).cust = '100050';
+master(5).name = 'EASTERN FREIGHT';
+master(5).city = 'NEWARK';
+master(5).state = 'NJ';
 master(5).bal  = 312.08;
 
-master(6).cust = '100060'; master(6).name = 'FARMERS COOP';
-master(6).city = 'SIOUX FALLS';   master(6).state = 'SD';
+master(6).cust = '100060';
+master(6).name = 'FARMERS COOP';
+master(6).city = 'SIOUX FALLS';
+master(6).state = 'SD';
 master(6).bal  = 7734.20;
 
 // ── Main loop ───────────────────────────────────────────────────────
