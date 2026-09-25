@@ -405,6 +405,15 @@ character (`SFLRCDNBR` -> `SFLRCDNB`).  Tests 23 / 23b / 23c.
 ### Window and overlay records
 - [x] `WINDOW(row col height width)` keyword — parsed by compiler, emitted to `.dspfd` JSON
 - [x] Runtime: render record in a bordered ncurses subwindow at specified position
+- [x] Window layout as on IBM i (2026-09-25): positions in a window record
+      count from the window's inside (line 1 pos 1 = screen line+1, pos+2),
+      the border adds 1 line and 2 positions each side, and the last inside
+      line is the message line. They were absolute screen positions.
+      `dspfc` checks the geometry with IBM's IDs (CPD7830, CPD8186, CPD8182,
+      CPD8173), all probed with CRTDSPF on PUB400. Test 29.
+- [x] COLOR takes DDS's three-letter codes (BLU GRN PNK RED TRQ WHT YLW);
+      GREEN, BLUE and the like are errors (CPD7494). The runtime matched
+      only the long names, so COLOR(BLU) rendered in the default color.
 - [x] `OVERLAY` — write record without clearing the screen first (see Runtime behaviour gaps above)
 
 ### Field validation ✅

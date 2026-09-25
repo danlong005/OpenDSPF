@@ -30,8 +30,10 @@
      A                                      OVERLAY
      A                                      WINDOW(9 21 7 40)
      A                                      WDWBORDER((*CHAR '        '))
-     A                                      WDWBORDER((*COLOR GREEN))
-     A                                 10 28'--- Delete Customer ---'
-     A                                 12 23'Are you sure? (Y/N) :'
-     A            ANSWER         1A  I 12 45
-     A                                 14 23'Enter=Yes   F12=Cancel'
+     A                                      WDWBORDER((*COLOR GRN))
+     A*  Positions count from the window's inside (line 1 pos 1 =
+     A*  screen line 10, position 23), as on IBM i.
+     A                                  1  6'--- Delete Customer ---'
+     A                                  3  1'Are you sure? (Y/N) :'
+     A            ANSWER         1A  I  3 23
+     A                                  5  1'Enter=Yes   F12=Cancel'

@@ -15,12 +15,13 @@ OpenDSPF compiles IBM i display file source into portable artifacts that run on 
 7. [Literals](#literals)
 8. [Function Keys](#function-keys)
 9. [Subfiles](#subfiles)
-10. [Conditioning Indicators](#conditioning-indicators)
-11. [Numeric Formatting — EDTCDE and EDTWRD](#numeric-formatting--edtcde-and-edtwrd)
-12. [Generated Outputs](#generated-outputs)
-13. [Runtime API](#runtime-api)
-14. [Integration with OpenRPG](#integration-with-openrpg)
-15. [Testing](#testing)
+10. [Window Records](#window-records)
+11. [Conditioning Indicators](#conditioning-indicators)
+12. [Numeric Formatting — EDTCDE and EDTWRD](#numeric-formatting--edtcde-and-edtwrd)
+13. [Generated Outputs](#generated-outputs)
+14. [Runtime API](#runtime-api)
+15. [Integration with OpenRPG](#integration-with-openrpg)
+16. [Testing](#testing)
 
 ---
 
@@ -367,7 +368,7 @@ Every record has a `"type"` field in the JSON descriptor:
 
 | Keyword | Description |
 |---------|-------------|
-| `COLOR(color)` | Display color: `RED`, `GREEN`, `BLUE`, `WHITE`, `TURQ`, `YELLOW`, `PINK` |
+| `COLOR(color)` | Display color, one of DDS's codes: `BLU`, `GRN`, `PNK`, `RED`, `TRQ`, `WHT`, `YLW`. Anything else, such as `GREEN`, is an error, as on IBM i (CPD7494) |
 | `DSPATR(attr)` | Display attribute: `HI` (bright), `BL` (blink), `UL` (underline), `RI` (reverse) |
 | `EDTCDE(code)` | Edit code for numeric formatting (see [Numeric Formatting](#numeric-formatting--edtcde-and-edtwrd)) |
 | `EDTWRD('mask')` | Edit word for numeric formatting |
@@ -510,6 +511,42 @@ ENDIF;
 ```
 
 ---
+
+## Window Records
+
+A record with `WINDOW(line pos lines positions)` is shown in a bordered window
+over the screen, laid out as on IBM i:
+
+- The border's top-left corner is at screen line `line`, position `pos`. The
+  window's inside is `lines` by `positions`: line 1, position 1 inside is
+  screen line `line + 1`, position `pos + 2` (a border character, then an
+  attribute byte). With its border the window is `lines + 2` by
+  `positions + 4`.
+- A window record's fields and literals are placed **relative to the
+  window's inside**, not to the screen. Its last line is the message line, so
+  they go on lines 1 to `lines - 1` (IBM: CPD7830), and each must fit within
+  `positions` (CPD8186).
+- The window must fit the display with its border: `line + lines` at most one
+  less than the screen's lines, `pos + positions` at most three less than its
+  positions (CPD8182), and it cannot start at line 1, position 1 (CPD8173).
+
+`dspfc` checks all of these, with IBM's message IDs.
+
+`WDWBORDER((*CHAR 'xxxxxxxx') (*COLOR c) (*DSPATR a))` sets the border: eight
+characters in the order top-left, top, top-right, left, right, bottom-left,
+bottom, bottom-right, a DDS color code, and a display attribute.
+
+```
+     A          R CONFIRM
+     A                                      WINDOW(9 21 7 40)
+     A                                      WDWBORDER((*COLOR GRN))
+     A                                  1  6'--- Delete Customer ---'
+     A                                  3  1'Are you sure? (Y/N) :'
+     A            ANSWER         1A  I  3 23
+```
+
+Here `--- Delete Customer ---` is at screen line 10, position 28, and
+`ANSWER` at screen line 12, position 45.
 
 ## Conditioning Indicators
 

@@ -79,8 +79,78 @@ static bool validateSflSizes(const std::string& infile, const dspf::DspfFile& fi
 // at all). A warning, not an error — matches unrecognized-keyword
 // severity, and a developer should still be able to compile and iterate
 // with a temporarily-misplaced field.
+// IBM i's rules for a WINDOW record and for COLOR values, checked when the
+// display file compiles, as CRTDSPF does (each probed on PUB400).
+//   - WINDOW(line pos lines positions) puts the border's top-left corner at
+//     (line, pos); line 1 position 1 is not allowed (CPD8173). The border
+//     takes a line above and below, and a border plus attribute byte on
+//     each side, so line + lines <= screen lines - 1 and pos + positions <=
+//     screen positions - 3 (CPD8182).
+//   - A window record's fields and literals are placed relative to the
+//     window's inside. Its last line is the message line, so they go on
+//     lines 1 to lines - 1 (CPD7830), and within positions (CPD8186).
+//   - A color is one of the three-letter codes BLU GRN PNK RED TRQ WHT YLW
+//     (CPD7494 for GREEN, BLUE, ...).
+static bool validateWindowsAndColors(const std::string& infile, const dspf::DspfFile& file) {
+    bool ok = true;
+    auto fail = [&](const std::string& rec, const std::string& msg) {
+        std::cerr << "dspfc: error: " << infile << ": record " << rec << ": " << msg << "\n";
+        ok = false;
+    };
+    static const char* const codes[] = {"BLU", "GRN", "PNK", "RED", "TRQ", "WHT", "YLW", nullptr};
+    auto validColor = [](const std::string& c) {
+        for (const char* const* k = codes; *k; k++) if (c == *k) return true;
+        return false;
+    };
+    auto checkColors = [&](const std::string& rec, const std::vector<std::string>& kws) {
+        for (const auto& k : kws) {
+            if (k.rfind("COLOR(", 0) != 0 || k.back() != ')') continue;
+            std::string c = k.substr(6, k.size() - 7);
+            if (!validColor(c))
+                fail(rec, "COLOR(" + c + ") is not a DDS color; use BLU, GRN, PNK, RED, TRQ, "
+                     "WHT or YLW (IBM: CPD7494)");
+        }
+    };
+    for (const auto& rec : file.records) {
+        checkColors(rec.name, rec.keywords);
+        for (const auto& f : rec.fields) checkColors(rec.name, f.keywords);
+        for (const auto& l : rec.literals) checkColors(rec.name, l.keywords);
+        if (!rec.wdwBorderColor.empty() && !validColor(rec.wdwBorderColor))
+            fail(rec.name, "WDWBORDER color " + rec.wdwBorderColor + " is not a DDS color; use "
+                 "BLU, GRN, PNK, RED, TRQ, WHT or YLW (IBM: CPD7494)");
+        if (rec.winHeight <= 0) continue;
+        std::string w = "WINDOW(" + std::to_string(rec.winRow) + " " + std::to_string(rec.winCol) +
+                        " " + std::to_string(rec.winHeight) + " " + std::to_string(rec.winWidth) + ")";
+        if (rec.winRow == 1 && rec.winCol == 1)
+            fail(rec.name, w + ": a window cannot start at line 1, position 1 (IBM: CPD8173)");
+        if (rec.winRow < 1 || rec.winCol < 1 ||
+            rec.winRow + rec.winHeight > rec.screenRows - 1 ||
+            rec.winCol + rec.winWidth > rec.screenCols - 3)
+            fail(rec.name, w + " does not fit the " + std::to_string(rec.screenRows) + "x" +
+                 std::to_string(rec.screenCols) + " display: its border takes a line above and "
+                 "below and two positions each side (IBM: CPD8182)");
+        auto inWindow = [&](const std::string& what, int row, int col, int len) {
+            if (row < 1 || row > rec.winHeight - 1)
+                fail(rec.name, what + " is on line " + std::to_string(row) + " of the window; "
+                     "positions in a window record count from its inside, and its last line (" +
+                     std::to_string(rec.winHeight) + ") is the message line, so lines 1-" +
+                     std::to_string(rec.winHeight - 1) + " are available (IBM: CPD7830)");
+            else if (col < 1 || col + len - 1 > rec.winWidth)
+                fail(rec.name, what + " at position " + std::to_string(col) + ", length " +
+                     std::to_string(len) + ", extends outside the window's " +
+                     std::to_string(rec.winWidth) + " positions (IBM: CPD8186)");
+        };
+        for (const auto& f : rec.fields)
+            if (f.io != 'H') inWindow("field " + f.name, f.row, f.col, f.len);
+        for (const auto& l : rec.literals)
+            inWindow("literal '" + l.text.substr(0, 20) + "'", l.row, l.col, (int)l.text.size());
+    }
+    return ok;
+}
+
 static void validateFieldBounds(const std::string& infile, const dspf::DspfFile& file) {
     for (const auto& rec : file.records) {
+        if (rec.winHeight > 0) continue;   // window positions: validateWindowsAndColors
         auto checkPos = [&](const std::string& what, const std::string& name,
                              int row, int col, int len) {
             if (row < 1 || row > rec.screenRows) {
@@ -179,6 +249,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     validateFieldBounds(infile, fileAst);
+    if (!validateWindowsAndColors(infile, fileAst)) return 1;
 
     std::cout << "dspfc: " << fileAst.records.size() << " record format(s) found\n";
 

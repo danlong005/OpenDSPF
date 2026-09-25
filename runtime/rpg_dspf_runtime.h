@@ -788,18 +788,21 @@ enum {
     DSPF_PAIR_BG_MAGENTA = 12,
     DSPF_PAIR_BG_CYAN    = 13,
     DSPF_PAIR_BG_WHITE   = 14,
+    DSPF_PAIR_WHITE      = 15,
 };
 
 static int dspf__colorPair(const DspfJVal& field) {
     const DspfJVal& kw = field["keywords"];
     for (size_t i = 0; i < kw.size(); i++) {
         const std::string& k = kw[i].str();
+        // DDS colors are three-letter codes: BLU GRN PNK RED TRQ WHT YLW.
         if (k == "COLOR(RED)")    return DSPF_PAIR_RED;
-        if (k == "COLOR(BLUE)")   return DSPF_PAIR_BLUE;
-        if (k == "COLOR(GREEN)")  return DSPF_PAIR_GREEN;
-        if (k == "COLOR(YELLOW)") return DSPF_PAIR_YELLOW;
-        if (k == "COLOR(PINK)")   return DSPF_PAIR_MAGENTA;
-        if (k == "COLOR(TURQ)")   return DSPF_PAIR_CYAN;
+        if (k == "COLOR(BLU)")    return DSPF_PAIR_BLUE;
+        if (k == "COLOR(GRN)")    return DSPF_PAIR_GREEN;
+        if (k == "COLOR(YLW)")    return DSPF_PAIR_YELLOW;
+        if (k == "COLOR(PNK)")    return DSPF_PAIR_MAGENTA;
+        if (k == "COLOR(TRQ)")    return DSPF_PAIR_CYAN;
+        if (k == "COLOR(WHT)")    return DSPF_PAIR_WHITE;
     }
     return DSPF_PAIR_NORMAL;
 }
@@ -871,13 +874,13 @@ static void dspf__drawWindowBorder(WINDOW* win, const DspfJVal& rec) {
 
     // Map color name to background color pair
     int pair = 0;
-    if      (color == "RED")    pair = DSPF_PAIR_BG_RED;
-    else if (color == "BLUE")   pair = DSPF_PAIR_BG_BLUE;
-    else if (color == "GREEN")  pair = DSPF_PAIR_BG_GREEN;
-    else if (color == "YELLOW") pair = DSPF_PAIR_BG_YELLOW;
-    else if (color == "PINK")   pair = DSPF_PAIR_BG_MAGENTA;
-    else if (color == "TURQ")   pair = DSPF_PAIR_BG_CYAN;
-    else if (color == "WHITE")  pair = DSPF_PAIR_BG_WHITE;
+    if      (color == "RED") pair = DSPF_PAIR_BG_RED;
+    else if (color == "BLU") pair = DSPF_PAIR_BG_BLUE;
+    else if (color == "GRN") pair = DSPF_PAIR_BG_GREEN;
+    else if (color == "YLW") pair = DSPF_PAIR_BG_YELLOW;
+    else if (color == "PNK") pair = DSPF_PAIR_BG_MAGENTA;
+    else if (color == "TRQ") pair = DSPF_PAIR_BG_CYAN;
+    else if (color == "WHT") pair = DSPF_PAIR_BG_WHITE;
 
     // Map display attribute
     attr_t attrs = A_NORMAL;
@@ -1723,6 +1726,7 @@ inline void dspf_init(const char* descriptor_path) {
         init_pair(DSPF_PAIR_BG_MAGENTA, COLOR_BLACK, COLOR_MAGENTA);
         init_pair(DSPF_PAIR_BG_CYAN,    COLOR_BLACK, COLOR_CYAN);
         init_pair(DSPF_PAIR_BG_WHITE,   COLOR_BLACK, COLOR_WHITE);
+        init_pair(DSPF_PAIR_WHITE,      COLOR_WHITE, -1);
     }
     g_dspfActive = true;
 }
@@ -1739,10 +1743,16 @@ inline int dspf_exfmt(const char* recname, void* recbuf) {
     WINDOW* win  = stdscr;
     int rowOff = 0, colOff = 0;
     if (isWin) {
-        win = newwin(winH, winW, winRow - 1, winCol - 1);
+        // WINDOW(line pos lines positions), as on IBM i: the border's top
+        // left corner is at (line, pos), and the window holds `lines` by
+        // `positions` inside it. Each side has the border and, on the left
+        // and right, an attribute byte: line 1 position 1 inside is screen
+        // line+1, position pos+2, and the whole is lines+2 by positions+4.
+        // Field and literal positions in a window record count from there.
+        win = newwin(winH + 2, winW + 4, winRow - 1, winCol - 1);
         keypad(win, TRUE);
-        rowOff = winRow - 1;
-        colOff = winCol - 1;
+        rowOff = -1;   // record line r -> window row r (row 0 is the border)
+        colOff = -2;   // record position c -> window column c + 1
     }
 
     auto vals = dspf__extractFields(*rec, recbuf);

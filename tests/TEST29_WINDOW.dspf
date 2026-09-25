@@ -1,0 +1,15 @@
+     A*****************************************************************
+     A*     FILE NAME:  TEST29_WINDOW                                 *
+     A*   DESCRIPTION:  A WINDOW RECORD, LAID OUT AS ON IBM I.        *
+     A*                 WINDOW(9 21 7 40) PUTS THE BORDER'S CORNER AT *
+     A*                 LINE 9, POSITION 21; LINE 1 POSITION 1 INSIDE *
+     A*                 IS SCREEN LINE 10, POSITION 23. A WINDOW      *
+     A*                 RECORD'S POSITIONS COUNT FROM THERE.          *
+     A*****************************************************************
+     A          R ASK
+     A                                      WINDOW(9 21 7 40)
+     A                                      WDWBORDER((*CHAR '+-+||+-+'))
+     A                                  1  1'WINTOP'
+     A                                      COLOR(GRN)
+     A                                  3  1'Answer:'
+     A            ANSWER         1A  I  3 10

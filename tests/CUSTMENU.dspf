@@ -41,13 +41,15 @@ END-RECORD
 RECORD CONFIRM
   SCREEN SIZE(24 80)
   WINDOW(9 21 7 40)
-  WDWBORDER((*CHAR '        ') (*COLOR GREEN))
+  WDWBORDER((*CHAR '        ') (*COLOR GRN))
   OVERLAY
 
-  LITERAL  ROW(10) COL(28)  '--- Delete Customer ---'
-  LITERAL  ROW(12) COL(23)  'Are you sure? (Y/N) :'
-  FIELD ANSWER  CHAR(1)  INPUT  ROW(12) COL(45)
+  // Positions count from the window's inside: line 1 position 1 is
+  // screen line 10, position 23 (IBM i's WINDOW layout).
+  LITERAL  ROW(1) COL(6)  '--- Delete Customer ---'
+  LITERAL  ROW(3) COL(1)  'Are you sure? (Y/N) :'
+  FIELD ANSWER  CHAR(1)  INPUT  ROW(3) COL(23)
 
-  LITERAL  ROW(14) COL(23)  'Enter=Yes   F12=Cancel'
+  LITERAL  ROW(5) COL(1)  'Enter=Yes   F12=Cancel'
   KEY F12  INDICATOR(12)
 END-RECORD

@@ -538,6 +538,30 @@ else
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test28b: DSPATR(HI UL) and unedited numeric render"
 fi
 
+# ── test29: a WINDOW record laid out as on IBM i ────────────────────────
+# WINDOW(9 21 7 40) puts the border's corner at line 9, position 21. The
+# record's positions count from the window's inside: the border, then an
+# attribute byte, then line 1 position 1 at screen line 10, position 23.
+# The window is 7+2 lines by 40+4 positions with its border, so the right
+# border is at position 64 and the bottom at line 17.
+run_interactive_test \
+    "test29: WINDOW record takes input" \
+    "$TESTDIR/TEST29_WINDOW.dspf" "$TESTDIR/TEST29_WINDOW.rpgle" \
+    'Y\r' \
+    "$EXPECTED/TEST29_WINDOW.out"
+
+printf "%-55s " "test29b: window positions count from its inside"
+raw29="$TMPDIR/TEST29_WINDOW.raw"
+if grep -qaF $'\x1b[9;21H+' "$raw29" \
+   && grep -qaF $'\x1b[10;21H| \x1b[32mWINTOP' "$raw29" \
+   && grep -qaF $'\x1b[10;64H' "$raw29" && grep -qaF $'\x1b[17;21H+' "$raw29"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (window border or inside positions wrong)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test29b: window positions count from its inside"
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
