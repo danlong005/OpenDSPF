@@ -28,6 +28,7 @@
 #include <cctype>
 #include <climits>
 #include <cmath>
+#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -153,6 +154,31 @@ static bool dspf__isCharType(const std::string& type) {
 // len+1 isn't a multiple of 8 — a 9S 2 after three char fields of 2+7+21
 // bytes is read from offset 30, not 32 — so the value read is garbage and
 // the value written back never reaches the program. Round up first.
+
+// printf-style formatting into a string sized to fit. A fixed buffer can
+// cut the text short, and GCC warns about every snprintf whose width or
+// precision is a variable (-Wformat-truncation, on by default on Ubuntu;
+// OpenRPG issue #19). The format attribute keeps arguments type-checked.
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((format(printf, 1, 2)))
+#endif
+inline std::string dspf__sprintf(const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    va_list ap2;
+    va_copy(ap2, ap);
+    int n = std::vsnprintf(nullptr, 0, fmt, ap);
+    va_end(ap);
+    std::string s;
+    if (n > 0) {
+        s.resize(static_cast<size_t>(n) + 1);
+        std::vsnprintf(&s[0], s.size(), fmt, ap2);
+        s.resize(static_cast<size_t>(n));
+    }
+    va_end(ap2);
+    return s;
+}
+
 static const char* dspf__alignSlot(const void* base, const char* p, size_t align) {
     size_t off = (size_t)(p - (const char*)base);
     off = (off + align - 1) / align * align;
@@ -191,9 +217,7 @@ dspf__extractFields(const DspfJVal& rec, const void* buf) {
         } else {
             p = dspf__alignSlot(buf, p, alignof(double));
             double dv; memcpy(&dv, p, sizeof dv);
-            char tmp[64];
-            snprintf(tmp, sizeof(tmp), "%.*f", dec, dv);
-            m[name] = tmp;
+            m[name] = dspf__sprintf("%.*f", dec, dv);
             p += sizeof(double);
         }
     }
@@ -642,9 +666,7 @@ static std::string dspf__applyEditCode(double val, int /*len*/, int dec, char co
     double absval = std::fabs(val);
 
     // Raw formatted number
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%.*f", dec, absval);
-    std::string raw(buf);
+    std::string raw = dspf__sprintf("%.*f", dec, absval);
 
     // Split integer / decimal
     std::string intPart, decPart;
@@ -739,10 +761,8 @@ static std::string dspf__applyEditWord(double val, int /*len*/, int dec,
     for (char c : body) if (c == ' ') slots++;
 
     // Build digit string with appropriate decimal places
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%0*.*f", slots, dec, absval);
     std::string digits;
-    for (char c : std::string(buf)) if (isdigit((unsigned char)c)) digits += c;
+    for (char c : dspf__sprintf("%0*.*f", slots, dec, absval)) if (isdigit((unsigned char)c)) digits += c;
     while ((int)digits.size() < slots) digits = "0" + digits;
     if ((int)digits.size() > slots) digits = digits.substr(digits.size() - slots);
 
@@ -850,9 +870,7 @@ static std::string dspf__formatField(const DspfJVal& field, const std::string& r
     // is why the old form lost its last digit on screen. A negative value
     // takes a leading '-' in place of its top digit position.
     double scaled = std::round(std::fabs(numVal) * std::pow(10.0, dec));
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%0*.0f", numVal < 0 ? len - 1 : len, scaled);
-    std::string out(buf);
+    std::string out = dspf__sprintf("%0*.0f", numVal < 0 ? len - 1 : len, scaled);
     if (numVal < 0) out = "-" + out;
     return out;
 }
