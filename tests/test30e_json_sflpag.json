@@ -1,0 +1,5 @@
+{
+  "records": [
+    { "name": "R1", "type": "sflctl", "sfl": "S1", "sflpag": 20, "sflsiz": 10 }
+  ]
+}

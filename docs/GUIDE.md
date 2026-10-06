@@ -10,18 +10,19 @@ OpenDSPF compiles IBM i display file source into portable artifacts that run on 
 2. [CLI Reference](#cli-reference)
 3. [Free-Format Syntax](#free-format-syntax)
 4. [Fixed-Format Syntax](#fixed-format-syntax)
-5. [Record Types](#record-types)
-6. [Fields](#fields)
-7. [Literals](#literals)
-8. [Function Keys](#function-keys)
-9. [Subfiles](#subfiles)
-10. [Window Records](#window-records)
-11. [Conditioning Indicators](#conditioning-indicators)
-12. [Numeric Formatting — EDTCDE and EDTWRD](#numeric-formatting--edtcde-and-edtwrd)
-13. [Generated Outputs](#generated-outputs)
-14. [Runtime API](#runtime-api)
-15. [Integration with OpenRPG](#integration-with-openrpg)
-16. [Testing](#testing)
+5. [JSON Source](#json-source)
+6. [Record Types](#record-types)
+7. [Fields](#fields)
+8. [Literals](#literals)
+9. [Function Keys](#function-keys)
+10. [Subfiles](#subfiles)
+11. [Window Records](#window-records)
+12. [Conditioning Indicators](#conditioning-indicators)
+13. [Numeric Formatting — EDTCDE and EDTWRD](#numeric-formatting--edtcde-and-edtwrd)
+14. [Generated Outputs](#generated-outputs)
+15. [Runtime API](#runtime-api)
+16. [Integration with OpenRPG](#integration-with-openrpg)
+17. [Testing](#testing)
 
 ---
 
@@ -62,7 +63,7 @@ This installs:
 ## CLI Reference
 
 ```
-dspfc <file.dspf> [-o outdir] [-v]
+dspfc <file.dspf|file.json> [-o outdir] [-v]
 ```
 
 | Flag | Description |
@@ -73,6 +74,7 @@ dspfc <file.dspf> [-o outdir] [-v]
 `dspfc` detects the source format from the file content — no flags needed:
 - First non-blank line is `**FREE` → free-format syntax
 - Column 5 of the first non-blank line is `A` → fixed-format (DDS A-spec columns)
+- The file starts with `{` → a display file defined in JSON (see [JSON Source](#json-source))
 
 ```bash
 dspfc custmenu.dspf              # **FREE header → free-format
@@ -335,6 +337,61 @@ Columns 7–9 (0-based) of a field or literal line hold an option indicator numb
      A                                   4 14'Name'
      A                                   4 46'Balance'
 ```
+
+---
+
+## JSON Source
+
+A display file can also be written in JSON — useful when another program
+generates the screens, or a team would rather keep them in a format every
+editor and language already reads. The shape is that of the `.dspfd`
+descriptor `dspfc` writes (see [Generated Outputs](#generated-outputs)), so a
+descriptor is itself valid source, and compiling it again gives back the same
+descriptor and header. IBM i has no equivalent: this is an OpenDSPF extension.
+
+```json
+{
+  "records": [
+    {
+      "name": "MAINMENU",
+      "title": "Main Menu",
+      "literals": [
+        { "row": 1, "col": 30, "text": "MAIN MENU" },
+        { "row": 23, "col": 2, "text": "F3=Exit" }
+      ],
+      "fields": [
+        { "name": "OPTION", "len": 1, "io": "I", "row": 3, "col": 10 },
+        { "name": "ERRMSG", "len": 78, "row": 24, "col": 2, "keywords": ["COLOR(RED)"] }
+      ],
+      "keys": [ { "key": "F3", "indicator": 3 } ]
+    }
+  ]
+}
+```
+
+```bash
+dspfc mainmenu.json      # writes mainmenu.dspfd and mainmenu_dspf.h
+```
+
+The file's name comes from the source file's name, as for DDS. Members with a
+default may be left out:
+
+| Member | Default |
+|--------|---------|
+| record `type` | `"normal"` (or `"sfl"`, `"sflctl"`; a `"sflctl"` record needs `"sfl"`, `"sflpag"` and `"sflsiz"`) |
+| record `title` | the record's name |
+| record `screen` | `{ "rows": 24, "cols": 80 }` |
+| `keywords`, `literals`, `fields`, `keys` | empty |
+| field `type` | `"A"` (or `S`, `P`, `B`, `F`, `L`, `T`, `Z`) |
+| field `dec` | `0` |
+| field `io` | `"O"` (or `I`, `B`, `H`); a hidden (`H`) field needs no `row` or `col` |
+| key `indicator` | `0`, none |
+
+Keywords are written as they are in DDS, one string each: `"COLOR(RED)"`,
+`"DSPATR(HI UL)"`, `"COND(*IN03)"`. A member `dspfc` does not know is an error
+rather than being ignored, so a misspelling is caught, and every error names
+the line. JSON source gets every check DDS source does — SFLPAG against
+SFLSIZ, window bounds, colors.
 
 ---
 

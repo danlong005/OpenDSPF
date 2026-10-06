@@ -62,8 +62,8 @@ run_fixed_parity_test() {
 
     printf "%-45s " "$label"
 
-    local free_base; free_base=$(basename "$free_src" .dspf)
-    local fixed_base; fixed_base=$(basename "$fixed_src" .dspf)
+    local free_base; free_base=$(basename "$free_src"); free_base=${free_base%.*}
+    local fixed_base; fixed_base=$(basename "$fixed_src"); fixed_base=${fixed_base%.*}
     local err1 err2
     if ! err1=$("$DSPFC" "$free_src" -o "$TMPDIR" 2>&1 >/dev/null); then
         echo -e "${RED}FAIL${NC} (dspfc error, free-format)"
@@ -292,6 +292,47 @@ run_test "test26: subfile control keywords take their option indicator" \
 run_diag_test "sample: decided-against file-level keywords say so" \
     "$TESTDIR/sample.dspf" 1 \
     "file-level PRINT is not supported"
+
+# ── Display files defined in JSON ────────────────────────────────────────────
+# dspfc also reads a display file written in JSON, in the shape of the .dspfd
+# descriptor it writes. test30 is test01 by hand, leaving out every member
+# that has a default; it must describe exactly the same screen.
+run_fixed_parity_test "test30: JSON source matches the same screen in DDS" \
+    "$TESTDIR/test01_basic.dspf"        "$TESTDIR/test30_json.json"
+
+run_diag_test "test30b: a misspelled JSON member is an error" \
+    "$TESTDIR/test30b_json_unknown_member.json" 1 \
+    "test30b_json_unknown_member.json:3: \"colour\" is not a member of field F"
+run_diag_test "test30c: a JSON value out of its set is an error" \
+    "$TESTDIR/test30c_json_bad_io.json" 1 \
+    "\"io\" must be I, O, B or H, not \"X\""
+run_diag_test "test30d: bad JSON syntax names its line" \
+    "$TESTDIR/test30d_json_syntax.json" 1 \
+    "test30d_json_syntax.json:3: expected a member name in quotes"
+run_diag_test "test30e: JSON source gets the same checks as DDS" \
+    "$TESTDIR/test30e_json_sflpag.json" 1 \
+    "SFLPAG(20) exceeds SFLSIZ(10)"
+
+# Every descriptor in expected/ is itself valid JSON source, and compiling it
+# again changes nothing: the descriptor and the header come back the same.
+printf "%-45s " "test30f: every descriptor round-trips"
+rt_bad=""
+mkdir -p "$TMPDIR/roundtrip"
+for d in "$EXPECTED"/*.dspfd; do
+    b=$(basename "$d" .dspfd)
+    if ! "$DSPFC" "$d" -o "$TMPDIR/roundtrip" >/dev/null 2>&1 ||
+       ! diff -q --strip-trailing-cr "$d" "$TMPDIR/roundtrip/$b.dspfd" >/dev/null 2>&1 ||
+       { [ -f "$EXPECTED/${b}_dspf.h" ] &&
+         ! diff -q --strip-trailing-cr "$EXPECTED/${b}_dspf.h" "$TMPDIR/roundtrip/${b}_dspf.h" >/dev/null 2>&1; }; then
+        rt_bad="$rt_bad $b"
+    fi
+done
+if [ -z "$rt_bad" ]; then
+    echo -e "${GREEN}PASS${NC}"; PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (changed:$rt_bad)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test30f: every descriptor round-trips"
+fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""

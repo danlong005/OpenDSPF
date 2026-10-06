@@ -1,0 +1,21 @@
+{
+  "records": [
+    {
+      "name": "MAINMENU",
+      "title": "Main Menu",
+      "literals": [
+        { "row": 1, "col": 25, "text": "MAIN MENU" },
+        { "row": 3, "col": 2, "text": "Select an option:" },
+        { "row": 5, "col": 4, "text": "1. Option One" },
+        { "row": 6, "col": 4, "text": "2. Option Two" },
+        { "row": 9, "col": 2, "text": "Option:" },
+        { "row": 23, "col": 2, "text": "F3=Exit" }
+      ],
+      "fields": [
+        { "name": "OPTION", "len": 1, "io": "I", "row": 9, "col": 10 },
+        { "name": "ERRMSG", "len": 78, "row": 24, "col": 2, "keywords": ["COLOR(RED)"] }
+      ],
+      "keys": [ { "key": "F3", "indicator": 3 } ]
+    }
+  ]
+}

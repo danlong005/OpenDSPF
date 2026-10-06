@@ -1,0 +1,6 @@
+{
+  "records": [
+    { "name": "R1",
+      "fields": [ { "name": "F", "len": 1, "io": "X", "row": 1, "col": 1 } ] }
+  ]
+}

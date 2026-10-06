@@ -6,6 +6,7 @@
 #include "ast.h"
 #include "codegen.h"
 #include "dds_reader.h"
+#include "json_reader.h"
 
 #ifndef DSPFC_VERSION
 #define DSPFC_VERSION "dev"
@@ -34,7 +35,8 @@ static std::string    dirof(const std::string& path) {
 // Detect format: peek at col 5 (0-based) of first non-blank line.
 // If it's 'A' → DDS column-based source.
 // If line starts with "**DSPF" → free-format.
-enum class SrcFormat { FREE, DDS, UNKNOWN };
+// If it starts with '{' → a display file defined in JSON (json_reader.h).
+enum class SrcFormat { FREE, DDS, JSON, UNKNOWN };
 
 static SrcFormat detectFormat(const std::string& filename) {
     std::ifstream in(filename);
@@ -45,6 +47,7 @@ static SrcFormat detectFormat(const std::string& filename) {
         std::string tl = line;
         while (!tl.empty() && (tl.front() == ' ' || tl.front() == '\t')) tl.erase(tl.begin());
         if (tl.empty()) continue;
+        if (tl[0] == '{') return SrcFormat::JSON;
         if (tl.rfind("**FREE", 0) == 0 || tl.rfind("**free", 0) == 0 ||
             tl.rfind("**DSPF", 0) == 0 || tl.rfind("**dspf", 0) == 0) return SrcFormat::FREE;
         if (line.size() > 5 && (line[5] == 'A' || line[5] == 'a')) return SrcFormat::DDS;
@@ -196,7 +199,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (argc < 2) {
-        std::cerr << "Usage: dspfc <file.dspf|file.dds> [-o outdir]\n";
+        std::cerr << "Usage: dspfc <file.dspf|file.dds|file.json> [-o outdir]\n";
         std::cerr << "  -v, --version  Print version and exit\n";
         return 1;
     }
@@ -212,7 +215,7 @@ int main(int argc, char* argv[]) {
 
     SrcFormat fmt = detectFormat(infile);
     if (fmt == SrcFormat::UNKNOWN) {
-        std::cerr << "dspfc: cannot determine source format (expected **FREE header or fixed-format A-specs)\n";
+        std::cerr << "dspfc: cannot determine source format (expected **FREE header, fixed-format A-specs, or a JSON object)\n";
         return 1;
     }
 
@@ -226,6 +229,14 @@ int main(int argc, char* argv[]) {
             fileAst = dspf::parseDDS(infile, base);
         } catch (const std::exception& e) {
             std::cerr << "dspfc: " << e.what() << "\n";
+            return 1;
+        }
+    } else if (fmt == SrcFormat::JSON) {
+        std::cout << "dspfc: reading JSON display file: " << infile << "\n";
+        try {
+            fileAst = dspf::parseJSONSource(infile, base);
+        } catch (const std::exception& e) {
+            std::cerr << "dspfc: error: " << e.what() << "\n";
             return 1;
         }
     } else {

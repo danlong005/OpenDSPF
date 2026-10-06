@@ -35,12 +35,14 @@ TARGET   := dspfc
 SRCS := $(BUILDDIR)/lexer.cpp \
         $(BUILDDIR)/parser.cpp \
         $(SRCDIR)/dds_reader.cpp \
+        $(SRCDIR)/json_reader.cpp \
         $(SRCDIR)/codegen.cpp \
         $(SRCDIR)/main.cpp
 
 OBJS := $(BUILDDIR)/lexer.o \
         $(BUILDDIR)/parser.o \
         $(BUILDDIR)/dds_reader.o \
+        $(BUILDDIR)/json_reader.o \
         $(BUILDDIR)/codegen.o \
         $(BUILDDIR)/main.o
 
@@ -79,10 +81,13 @@ $(BUILDDIR)/parser.o: $(BUILDDIR)/parser.cpp $(SRCDIR)/ast.h
 $(BUILDDIR)/dds_reader.o: $(SRCDIR)/dds_reader.cpp $(SRCDIR)/dds_reader.h $(SRCDIR)/ast.h
 	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -I$(BUILDDIR) -c -o $@ $<
 
+$(BUILDDIR)/json_reader.o: $(SRCDIR)/json_reader.cpp $(SRCDIR)/json_reader.h $(SRCDIR)/ast.h
+	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -I$(BUILDDIR) -c -o $@ $<
+
 $(BUILDDIR)/codegen.o: $(SRCDIR)/codegen.cpp $(SRCDIR)/codegen.h $(SRCDIR)/ast.h
 	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -I$(BUILDDIR) -c -o $@ $<
 
-$(BUILDDIR)/main.o: $(SRCDIR)/main.cpp $(SRCDIR)/ast.h $(SRCDIR)/codegen.h $(SRCDIR)/dds_reader.h
+$(BUILDDIR)/main.o: $(SRCDIR)/main.cpp $(SRCDIR)/ast.h $(SRCDIR)/codegen.h $(SRCDIR)/dds_reader.h $(SRCDIR)/json_reader.h
 	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -I$(BUILDDIR) -c -o $@ $<
 
 $(TARGET): $(OBJS)

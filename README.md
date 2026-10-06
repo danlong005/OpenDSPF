@@ -4,6 +4,8 @@ OpenDSPF is an open-source compiler for IBM i display file source. The `dspfc` b
 
 Both source formats use the `.dspf` extension. A `**FREE` header at the top of the file selects free-format syntax; files without it are interpreted as fixed-format (IBM i DDS A-spec column layout).
 
+A display file can also be defined in JSON, in the same shape as the `.dspfd` descriptor `dspfc` writes — handy when another tool generates the screens. IBM i has no such format; see [JSON Source](docs/GUIDE.md#json-source).
+
 ---
 
 ## Quick Start — Free-Format
@@ -90,7 +92,7 @@ Both formats produce the same `.dspfd` JSON descriptor and `_dspf.h` header — 
 ## Usage
 
 ```
-dspfc <file.dspf> [-o outdir] [-v]
+dspfc <file.dspf|file.json> [-o outdir] [-v]
 ```
 
 | Flag | Description |
@@ -101,6 +103,7 @@ dspfc <file.dspf> [-o outdir] [-v]
 `dspfc` detects the format from the file content — no flags needed:
 - First non-blank line is `**FREE` → free-format syntax
 - Column 5 of the first non-blank line is `A` → fixed-format (DDS A-spec columns)
+- The file starts with `{` → a display file defined in JSON (see [JSON Source](docs/GUIDE.md#json-source))
 
 ```bash
 dspfc mainmenu.dspf              # **FREE header → free-format
