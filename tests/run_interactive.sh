@@ -562,6 +562,25 @@ else
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test29b: window positions count from its inside"
 fi
 
+# ── test31: %FKEY ───────────────────────────────────────────────────────
+run_interactive_test \
+    "test31a: %FKEY is 3 after F3, a declared key" \
+    "$TESTDIR/TEST31_FKEY.dspf" "$TESTDIR/TEST31_FKEY.rpgle" \
+    '\x1bOR' \
+    "$EXPECTED/TEST31_FKEY_f3.out"
+
+run_interactive_test \
+    "test31b: %FKEY is 12 after F12, an undeclared key" \
+    "$TESTDIR/TEST31_FKEY.dspf" "$TESTDIR/TEST31_FKEY.rpgle" \
+    '\x1b[24~' \
+    "$EXPECTED/TEST31_FKEY_f12.out"
+
+run_interactive_test \
+    "test31c: %FKEY is 0 after Enter" \
+    "$TESTDIR/TEST31_FKEY.dspf" "$TESTDIR/TEST31_FKEY.rpgle" \
+    '\r' \
+    "$EXPECTED/TEST31_FKEY_enter.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

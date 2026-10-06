@@ -1,0 +1,14 @@
+**FREE
+
+// test31 — %FKEY: which function key ended the screen, declared or not.
+// See tests/run_interactive.sh for the runtime behavioral check.
+
+RECORD FKEYTEST
+  SCREEN SIZE(24 80)
+  TITLE 'FKEY Test'
+
+  LITERAL  ROW(1)  COL(2)   'Press a function key or Enter:'
+  FIELD DUMMY   CHAR(1)   INPUT   ROW(1)  COL(34)
+
+  KEY F3   INDICATOR(03)
+END-RECORD

@@ -266,6 +266,11 @@ static void dspf__applyFields(const DspfJVal& rec,
 // =============================================================================
 
 static bool g_dspf_indicators[100] = {};
+// %FKEY: the function key that ended the last EXFMT or READ, 1-24 for
+// F1-F24, or 0 when it was ended by Enter or a page key.
+static int g_dspf_last_fkey = 0;
+inline int dspf_fkey() { return g_dspf_last_fkey; }
+
 
 // g_dspfSource is the descriptor exactly as parsed. g_dspfDescriptor, which
 // everything else reads, is that source resolved against the indicators
@@ -1182,6 +1187,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
 
         if (ch >= KEY_F(1) && ch <= KEY_F(24)) {
             int fnum = ch - KEY_F(0);
+            g_dspf_last_fkey = fnum;
             std::string key = "F" + std::to_string(fnum);
             for (auto& f : ef) vals[f.name] = f.val;
             dspf__computeChangeBlanks(rec, ef);
@@ -1578,6 +1584,7 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
 
         if (ch >= KEY_F(1) && ch <= KEY_F(24)) {
             int fnum = ch - KEY_F(0);
+            g_dspf_last_fkey = fnum;
             std::string key = "F" + std::to_string(fnum);
             commitCombined();
             ctlVals["SFLRCDNBR"] = std::to_string(cursor);
@@ -1750,6 +1757,7 @@ inline void dspf_init(const char* descriptor_path) {
 }
 
 inline int dspf_exfmt(const char* recname, void* recbuf) {
+    g_dspf_last_fkey = 0;
     const DspfJVal* rec = dspf__findRec(recname);
     if (!rec) return 0;
     if (dspf__hasRecKw(*rec, "ALARM")) beep();
