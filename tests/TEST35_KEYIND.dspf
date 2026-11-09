@@ -1,0 +1,6 @@
+     A* TEST35: WHICH INDICATORS AN INPUT OPERATION TOUCHES.  CA03 NAMES
+     A* ITS INDICATOR; CA12 NAMES NONE, SO IT SETS NONE.
+     A          R KEYS                      CA03(03)
+     A                                      CA12
+     A                                  1  2'F3=Exit  F12=Cancel'
+     A            DUMMY          1A  I  3  2

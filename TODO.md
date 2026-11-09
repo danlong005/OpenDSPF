@@ -295,6 +295,18 @@ off; its attribute parameters are still unbuilt.
       lines *following* its `R` line, so at push time it does not yet know
       what it has spoken for.  Tests 25 (descriptor), 25a/25b (interactive).
 
+**Fixed 2026-11-09 (test 35): which indicators an input operation
+changes.** Three things disagreed with IBM i and with each other. A bare
+`CA12` in DDS defaulted to `CA12(12)`, while free-format `KEY F12` and JSON
+gave no indicator; IBM's response indicator is optional and, absent, nothing
+is set — the program uses `%FKEY` (IBM: the INFDS). And OpenRPG's generated
+EXFMT and READ cleared every indicator 01-24, whatever the program used it
+for; IBM sets off only the format's function-key response indicators. Now
+the runtime turns off the declared keys' indicators other than the one
+pressed (`dspf__keyIndicatorsOff`) and nothing else, and READ applies the
+runtime's results too, which it never did — CHANGE, BLANKS and ERRMSG
+response indicators were lost on a READ.
+
 **Fixed 2026-11-08 (test 31b/31d):** a function key the record does not
 declare, at record or file level, is refused as on IBM i — the screen stays
 up, the message line says "Function key not allowed." (CPF5204), and the

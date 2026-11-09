@@ -1408,6 +1408,20 @@ static void dspf__clearErrmsgResponses(const DspfJVal& rec) {
     g_dspf_errmsg_resp.clear();
 }
 
+// The function-key response indicators, as IBM i sets them on an input
+// operation: every key the record format declares (its own and the file's,
+// which dspfc merges in) has its indicator turned off, except the key that
+// was pressed, whose indicator the caller turns on. Indicators no key names
+// are left alone — the program may be using them for anything. `pressed` is
+// that key's indicator, or 0 for Enter or a key that names none.
+static void dspf__keyIndicatorsOff(const DspfJVal& rec, int pressed) {
+    const DspfJVal& keys = rec["keys"];
+    for (size_t i = 0; i < keys.size(); i++) {
+        int ind = keys[i]["indicator"].num();
+        if (ind >= 1 && ind <= 99 && ind != pressed) g_dspf_out_clear_indicators.push_back(ind);
+    }
+}
+
 static void dspf__computeChangeBlanks(const DspfJVal& rec, const std::vector<DspfEditField>& ef) {
     g_dspf_out_set_indicators.clear();
     g_dspf_out_clear_indicators.clear();
@@ -1452,10 +1466,11 @@ static void dspf__computeChangeBlanks(const DspfJVal& rec, const std::vector<Dsp
     }
 }
 
-// Overlays the indicators computed by dspf__computeChangeBlanks onto the
-// caller's indicator array — called once per EXFMT, right after the
-// existing single-exit-indicator handling so CHANGE/BLANKS indicators
-// (which can land anywhere in 1-99) aren't wiped out by it.
+// Overlays the indicators the last input operation decided onto the
+// caller's indicator array — CHANGE/BLANKS, ERRMSG response indicators,
+// and the declared keys' indicators going off (dspf__keyIndicatorsOff).
+// Called once per EXFMT or READ, after the caller has turned on the
+// indicator of the key that was pressed.
 inline void dspf_apply_out_indicators(bool* inds, int count) {
     int n = (count < 100) ? count : 100;
     for (int ind : g_dspf_out_set_indicators)   if (ind >= 0 && ind < n) inds[ind] = true;
@@ -1529,6 +1544,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
                 g_dspf_last_fkey = fnum;
                 for (auto& f : ef) vals[f.name] = f.val;
                 dspf__computeChangeBlanks(rec, ef);
+                dspf__keyIndicatorsOff(rec, keys[i]["indicator"].num());
                 return keys[i]["indicator"].num();
             }
             beep();
@@ -1549,6 +1565,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
                 if (keys[i]["key"].str() == key) {
                     for (auto& f : ef) vals[f.name] = f.val;
                     dspf__computeChangeBlanks(rec, ef);
+                    dspf__keyIndicatorsOff(rec, keys[i]["indicator"].num());
                     return keys[i]["indicator"].num();
                 }
             }
@@ -1570,6 +1587,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
             }
             for (auto& f : ef) vals[f.name] = f.val;
             dspf__computeChangeBlanks(rec, ef);
+            dspf__keyIndicatorsOff(rec, 0);
             return 0;
         }
 
@@ -1911,11 +1929,13 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
     };
 
     // What every exit does: the CHANGE/BLANKS lists do not apply to a
-    // subfile control record, and the ERRMSG response indicators go off.
-    auto finishInput = [&]() {
+    // subfile control record; the ERRMSG response indicators and the keys'
+    // indicators other than the one pressed go off.
+    auto finishInput = [&](int pressed) {
         g_dspf_out_set_indicators.clear();
         g_dspf_out_clear_indicators.clear();
         dspf__clearErrmsgResponses(ctl);
+        dspf__keyIndicatorsOff(ctl, pressed);
         g_dspf_err_fields.clear();
         g_dspf_shown_vals[dspf__upper(ctl["name"].str())] = ctlVals;
     };
@@ -1947,7 +1967,7 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
                 commitCombined();
                 ctlVals["SFLRCDNBR"] = std::to_string(cursor);
                 dspf__applyFields(ctl, ctlVals, ctlBuf);
-                finishInput();
+                finishInput(keys[i]["indicator"].num());
                 return keys[i]["indicator"].num();
             }
             beep();
@@ -1972,7 +1992,7 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
             commitCombined();
             ctlVals["SFLRCDNBR"] = std::to_string(cursor);
             dspf__applyFields(ctl, ctlVals, ctlBuf);
-            finishInput();
+            finishInput(0);
             return 0;
         }
 

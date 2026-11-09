@@ -4,11 +4,12 @@
      A*  DDS, where a record-level keyword overrides the file-level one of
      A*  the same name.
      A*
-     A*  CA12's indicator is deliberately 45, not 12.  The runtime exits on
-     A*  ANY function key and falls back to returning the key's own number as
-     A*  the indicator, so a file-level key whose indicator equals its key
-     A*  number cannot be told apart from that fallback — an earlier version
-     A*  of this test used CA12(12) and passed with the merge disabled.
+     A*  CA12's indicator is deliberately 45, not 12.  The runtime used to
+     A*  exit on ANY function key, returning the key's own number as the
+     A*  indicator, so a key whose indicator equals its number could not be
+     A*  told apart from that fallback — an earlier version of this test used
+     A*  CA12(12) and passed with the merge disabled.  An undeclared key is
+     A*  now refused (2026-11-08); 45 still keeps the two readings apart.
      A                                      CF03(03) CA12(45)
      A                                      ROLLUP(22)
      A          R INHERITS

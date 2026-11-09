@@ -686,6 +686,17 @@ check_raw "test34b: DSPATR(ND) shows neither value; others show" \
     "$(echo "$scr34" | grep -qF HELLO && ! echo "$scr34" | grep -qF TOPSECRT && ! echo "$scr34" | grep -qF SECRET1 && echo 1)" \
     "HELLO missing, or the password visible"
 
+# ── test35: which indicators an input operation touches ─────────────────
+# A pressed key's indicator goes on and the record's other key indicators
+# off; indicators no key names are left alone, and a bare CA12 names none.
+# Pass 1 is EXFMT with F12; pass 2 is WRITE + READ with Enter. See
+# TEST35_KEYIND.rpgle.
+run_interactive_test \
+    "test35: only declared key indicators change on input" \
+    "$TESTDIR/TEST35_KEYIND.dspf" "$TESTDIR/TEST35_KEYIND.rpgle" \
+    '\x1b[24~\r' \
+    "$EXPECTED/TEST35_KEYIND.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

@@ -92,7 +92,12 @@ static bool parseCFCA(const std::string& kw, std::string& keyName, int& indicato
     int keyNum = parseNum(kw.substr(2, p - 2));
     if (keyNum < 1 || keyNum > 24) return false;
     keyName = "F" + std::to_string(keyNum);
-    indicator = keyNum; // default: indicator == key number
+    // CAnn[(response-indicator)]: the indicator is optional, and with none
+    // the key sets no indicator at all (IBM's CAnn/CFnn descriptions) — the
+    // program learns which key it was from %FKEY. Defaulting it to the key
+    // number, as this did, turned *INnn on where IBM i leaves it alone, and
+    // disagreed with free-format KEY Fnn and JSON, which never did.
+    indicator = 0;
     if (p < kw.size() && kw[p] == '(') {
         size_t q = p + 1;
         while (q < kw.size() && kw[q] == ' ') q++;

@@ -376,6 +376,14 @@ run_diag_test "test33g: EDTCDE with USER (CPD7651)" \
     "$TESTDIR/test33g_err_user_edtcde.dspf" 1 \
     "EDTCDE is not allowed with USER"
 
+# ── A key with no response indicator ─────────────────────────────────────────
+# A bare CA12 names no indicator, as on IBM i, and is the same as free-format
+# KEY F12. The DDS reader used to make it CA12(12).
+run_test "test35: bare CA12 sets no indicator" \
+    "$TESTDIR/TEST35_KEYIND.dspf"       "$EXPECTED/TEST35_KEYIND.dspfd"
+run_fixed_parity_test "test35b: bare CA12 == free-format KEY F12" \
+    "$TESTDIR/test35b_key_no_ind.dspf"  "$TESTDIR/TEST35_KEYIND.dspf"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

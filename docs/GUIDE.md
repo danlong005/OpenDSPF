@@ -206,7 +206,7 @@ KEY F12  INDICATOR(12)
 KEY ENTER
 ```
 
-When a function key is pressed, the indicator specified in `INDICATOR(nn)` is set on return. If no `INDICATOR` clause is present, the indicator is inferred from the key name (`F3` → indicator 3, `F12` → indicator 12, etc.).
+When a function key is pressed, the indicator specified in `INDICATOR(nn)` is set on return, and the indicators of the record's other keys are set off. If no `INDICATOR` clause is present, the key sets no indicator at all — as with a bare `CA12` in DDS, and as on IBM i — and the program learns which key ended the screen from `%FKEY`. No other indicator is changed by EXFMT or READ.
 
 ### Complete Example
 
@@ -319,7 +319,7 @@ Function keys are declared with `CF` (Command Function) or `CA` (Command Attenti
      A                                        CF12(12)
 ```
 
-The number inside the parentheses is the response indicator that gets set when the key is pressed. If omitted, the indicator defaults to the key number.
+The number inside the parentheses is the response indicator that gets set when the key is pressed. It is optional: a bare `CA12` sets no indicator, as on IBM i, and the program uses `%FKEY` to see that F12 ended the screen. (Before 2026-11-08 a bare key defaulted to its own number, `CA12` acting as `CA12(12)`; free-format `KEY F12` and JSON never did.)
 
 ```dspf
      A                                        CF03(03 'Exit')
@@ -489,7 +489,7 @@ KEY F12  INDICATOR(12)
 KEY ENTER
 ```
 
-On return from EXFMT, the RPG program checks `*IN03`, `*IN06`, etc. to determine which key was pressed.
+On return from EXFMT, the RPG program checks `*IN03`, `*IN06`, etc. to determine which key was pressed. Only the indicators named by the record's keys (its own and the file's) are changed: the pressed key's goes on and the others off. An indicator no key names keeps whatever value the program gave it.
 
 A function key the record does not declare — at record or file level — is
 refused, as on IBM i: the screen stays up, the message line says "Function key
