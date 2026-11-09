@@ -1422,6 +1422,27 @@ static void dspf__keyIndicatorsOff(const DspfJVal& rec, int pressed) {
     }
 }
 
+// What a CAnn (command attention) key returns, as IBM i does it: no input
+// data is sent from the display and nothing is validated, so the record's
+// CHANGE/BLANKS indicators and the program's fields stay as they were. The
+// keys' indicators and the ERRMSG response indicators still change. Set by
+// the input loops, read by dspf_exfmt to leave the record buffer alone.
+static bool g_dspf_attention = false;
+
+static bool dspf__declaresKey(const DspfJVal& rec, const std::string& key) {
+    const DspfJVal& keys = rec["keys"];
+    for (size_t i = 0; i < keys.size(); i++)
+        if (keys[i]["key"].str() == key) return true;
+    return false;
+}
+
+static void dspf__attentionIndicators(const DspfJVal& rec, int pressed) {
+    g_dspf_out_set_indicators.clear();
+    g_dspf_out_clear_indicators.clear();
+    dspf__clearErrmsgResponses(rec);
+    dspf__keyIndicatorsOff(rec, pressed);
+}
+
 static void dspf__computeChangeBlanks(const DspfJVal& rec, const std::vector<DspfEditField>& ef) {
     g_dspf_out_set_indicators.clear();
     g_dspf_out_clear_indicators.clear();
@@ -1525,6 +1546,20 @@ static int dspf__inputLoop(const DspfJVal& rec,
         wattroff(win, COLOR_PAIR(pair) | ext);
     };
 
+    // Validity checking, done for Enter and the CF keys (not the CA keys):
+    // the first field in error gets the message and the cursor.
+    auto validateAll = [&]() {
+        for (size_t i = 0; i < ef.size(); i++) {
+            std::string msg = dspf__validateField(fields[ef[i].recIdx], ef[i].val);
+            if (msg.empty()) continue;
+            beep();
+            dspf__showMessage(rec, msg);
+            cur = (int)i;
+            return false;
+        }
+        return true;
+    };
+
     while (true) {
         if (!ef.empty()) {
             int cx = ef[cur].col + (int)ef[cur].val.size();
@@ -1541,14 +1576,26 @@ static int dspf__inputLoop(const DspfJVal& rec,
             const DspfJVal& keys = rec["keys"];
             for (size_t i = 0; i < keys.size(); i++) {
                 if (keys[i]["key"].str() != key) continue;
-                g_dspf_last_fkey = fnum;
+                int ind = keys[i]["indicator"].num();
+                // What is on the screen stays there either way; only a CF
+                // key checks it and hands it to the program.
                 for (auto& f : ef) vals[f.name] = f.val;
+                if (keys[i]["attention"].b) {
+                    g_dspf_last_fkey = fnum;
+                    g_dspf_attention = true;
+                    dspf__attentionIndicators(rec, ind);
+                    return ind;
+                }
+                if (!validateAll()) break;
+                g_dspf_last_fkey = fnum;
                 dspf__computeChangeBlanks(rec, ef);
-                dspf__keyIndicatorsOff(rec, keys[i]["indicator"].num());
-                return keys[i]["indicator"].num();
+                dspf__keyIndicatorsOff(rec, ind);
+                return ind;
             }
-            beep();
-            dspf__showMessage(rec, DSPF_MSG_FKEY_NOT_ALLOWED);
+            if (!dspf__declaresKey(rec, key)) {
+                beep();
+                dspf__showMessage(rec, DSPF_MSG_FKEY_NOT_ALLOWED);
+            }
             continue;
         }
 
@@ -1573,18 +1620,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
         }
 
         if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
-            int badIdx = -1;
-            std::string errMsg;
-            for (size_t i = 0; i < ef.size(); i++) {
-                std::string msg = dspf__validateField(fields[ef[i].recIdx], ef[i].val);
-                if (!msg.empty()) { badIdx = (int)i; errMsg = msg; break; }
-            }
-            if (badIdx >= 0) {
-                beep();
-                dspf__showMessage(rec, errMsg);
-                cur = badIdx;
-                continue;
-            }
+            if (!validateAll()) continue;
             for (auto& f : ef) vals[f.name] = f.val;
             dspf__computeChangeBlanks(rec, ef);
             dspf__keyIndicatorsOff(rec, 0);
@@ -1940,6 +1976,21 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
         g_dspf_shown_vals[dspf__upper(ctl["name"].str())] = ctlVals;
     };
 
+    // Validity checking for Enter and the CF keys: the first field in error
+    // gets the message and the cursor.
+    auto validateAll = [&]() {
+        for (size_t i = 0; i < combined.size(); i++) {
+            std::string msg = dspf__validateField(fieldDefFor(combined[i]), combined[i].val);
+            if (msg.empty()) continue;
+            beep();
+            dspf__showMessage(ctl, msg);
+            cur = (int)i;
+            if (combined[cur].rowIdx != -1) { cursor = combined[cur].rowIdx + 1; render(); }
+            return false;
+        }
+        return true;
+    };
+
     while (true) {
         if (!combined.empty()) {
             const DspfSflEditField& e = combined[cur];
@@ -1963,32 +2014,33 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
             const DspfJVal& keys = ctl["keys"];
             for (size_t i = 0; i < keys.size(); i++) {
                 if (keys[i]["key"].str() != key) continue;
+                int ind = keys[i]["indicator"].num();
+                if (keys[i]["attention"].b) {
+                    // CAnn: nothing typed on this page reaches the subfile
+                    // or the control record's fields, and nothing is
+                    // checked. The screen keeps showing it.
+                    g_dspf_last_fkey = fnum;
+                    for (auto& e : combined) if (e.rowIdx == -1) ctlVals[e.name] = e.val;
+                    finishInput(ind);
+                    return ind;
+                }
+                if (!validateAll()) break;
                 g_dspf_last_fkey = fnum;
                 commitCombined();
                 ctlVals["SFLRCDNBR"] = std::to_string(cursor);
                 dspf__applyFields(ctl, ctlVals, ctlBuf);
-                finishInput(keys[i]["indicator"].num());
-                return keys[i]["indicator"].num();
+                finishInput(ind);
+                return ind;
             }
-            beep();
-            dspf__showMessage(ctl, DSPF_MSG_FKEY_NOT_ALLOWED);
+            if (!dspf__declaresKey(ctl, key)) {
+                beep();
+                dspf__showMessage(ctl, DSPF_MSG_FKEY_NOT_ALLOWED);
+            }
             continue;
         }
 
         if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
-            int badIdx = -1;
-            std::string errMsg;
-            for (size_t i = 0; i < combined.size(); i++) {
-                std::string msg = dspf__validateField(fieldDefFor(combined[i]), combined[i].val);
-                if (!msg.empty()) { badIdx = (int)i; errMsg = msg; break; }
-            }
-            if (badIdx >= 0) {
-                beep();
-                dspf__showMessage(ctl, errMsg);
-                cur = badIdx;
-                if (combined[cur].rowIdx != -1) { cursor = combined[cur].rowIdx + 1; render(); }
-                continue;
-            }
+            if (!validateAll()) continue;
             commitCombined();
             ctlVals["SFLRCDNBR"] = std::to_string(cursor);
             dspf__applyFields(ctl, ctlVals, ctlBuf);
@@ -2168,10 +2220,13 @@ inline int dspf_exfmt(const char* recname, void* recbuf) {
     dspf__renderScreen(*rec, vals, win, rowOff, colOff);
     g_dspf_keep_screen = false;
     if (errmsg) { beep(); dspf__showMessage(*rec, errMsgText); }
+    g_dspf_attention = false;
     int indicator = dspf__inputLoop(*rec, vals, win, rowOff, colOff);
     g_dspf_err_fields.clear();
     g_dspf_shown_vals[key] = vals;
-    dspf__applyFields(*rec, vals, recbuf);
+    // A CA key returns no input data: the program's fields keep their values.
+    if (!g_dspf_attention) dspf__applyFields(*rec, vals, recbuf);
+    g_dspf_attention = false;
 
     if (isWin) {
         delwin(win);

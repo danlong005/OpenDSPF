@@ -1,12 +1,12 @@
 **FREE
 
-// test35b — KEY F12 with no INDICATOR, the free-format twin of
-// TEST35_KEYIND.dspf's bare CA12: in both, the key names no indicator.
+// test35b — KEY CA03 INDICATOR(03) and a bare KEY CA12, the free-format twin
+// of TEST35_KEYIND.dspf: CA keys, and the second names no indicator.
 
 RECORD KEYS
   SCREEN SIZE(24 80)
   LITERAL  ROW(1)  COL(2)   'F3=Exit  F12=Cancel'
   FIELD DUMMY   CHAR(1)   INPUT   ROW(3)  COL(2)
-  KEY F3   INDICATOR(03)
-  KEY F12
+  KEY CA03 INDICATOR(03)
+  KEY CA12
 END-RECORD

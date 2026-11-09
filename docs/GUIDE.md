@@ -202,9 +202,11 @@ FIELD ORDNO   CHAR(10)   BOTH    ROW(3)  COL(17)  COND(*IN03)
 
 ```dspf
 KEY F3   INDICATOR(03)
-KEY F12  INDICATOR(12)
+KEY CA12 INDICATOR(12)
 KEY ENTER
 ```
+
+A key is named `Fnn`, `CFnn` or `CAnn`, as in DDS. `KEY F5` and `KEY CF05` are the same: a command function key, which checks the fields (VALUES, RANGE, COMP, CHECK) like Enter and returns what was typed. `KEY CA12` is a command attention key, the usual choice for Cancel and Exit: nothing is checked and no input data is returned, so the program's fields keep the values they had, and CHANGE and BLANKS indicators are left as they were. Only the key indicators (and ERRMSG response indicators) change. The screen keeps showing what was typed.
 
 When a function key is pressed, the indicator specified in `INDICATOR(nn)` is set on return, and the indicators of the record's other keys are set off. If no `INDICATOR` clause is present, the key sets no indicator at all — as with a bare `CA12` in DDS, and as on IBM i — and the program learns which key ended the screen from `%FKEY`. No other indicator is changed by EXFMT or READ.
 
@@ -310,8 +312,8 @@ Lines with no field name but with row and column numbers produce literals. The t
 
 Function keys are declared with `CF` (Command Function) or `CA` (Command Attention) keywords in the keyword area. They can appear on the record definition line or on keyword-only continuation lines.
 
-- **`CF`** — key returns all field values to the program (same as EXFMT)
-- **`CA`** — key signals attention only; field values are not returned
+- **`CF`** — the fields are checked (VALUES, RANGE, COMP, CHECK) and returned to the program, as with Enter
+- **`CA`** — nothing is checked and no input data is returned: the program's fields keep their values, CHANGE and BLANKS indicators are left as they were, and on a subfile control record the rows typed into on the shown page are not updated (READC does not see them). Only the key indicators and ERRMSG response indicators change, as IBM i does it (IBM's CAnn: "No input data is transmitted from the device"). Before 2026-11-09 a `CA` key returned data exactly as `CF` did, and no function key ran validity checks.
 
 ```dspf
      A          R MAINMENU
@@ -796,8 +798,10 @@ The descriptor is the full machine-readable representation of the display file.
 
 ```json
 { "key": "F3", "indicator": 3 }
-{ "key": "F12", "indicator": 12 }
+{ "key": "F12", "indicator": 12, "attention": true }
 ```
+
+`"attention": true` makes the key a `CAnn`: no data returned, nothing checked. Without it the key is a `CFnn`.
 
 ### C++ Buffer Header (`_dspf.h`)
 

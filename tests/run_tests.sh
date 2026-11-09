@@ -378,11 +378,19 @@ run_diag_test "test33g: EDTCDE with USER (CPD7651)" \
 
 # ── A key with no response indicator ─────────────────────────────────────────
 # A bare CA12 names no indicator, as on IBM i, and is the same as free-format
-# KEY F12. The DDS reader used to make it CA12(12).
+# KEY CA12 (KEY F12 is a CF key). The DDS reader used to make it CA12(12).
 run_test "test35: bare CA12 sets no indicator" \
     "$TESTDIR/TEST35_KEYIND.dspf"       "$EXPECTED/TEST35_KEYIND.dspfd"
-run_fixed_parity_test "test35b: bare CA12 == free-format KEY F12" \
+run_fixed_parity_test "test35b: CA03(03) CA12 == free-format KEY CA03/CA12" \
     "$TESTDIR/test35b_key_no_ind.dspf"  "$TESTDIR/TEST35_KEYIND.dspf"
+# CA and CF keys: JSON's "attention" and free-format KEY CFnn/Fnn match DDS.
+run_test "test36: CA12 and CF05 keys" \
+    "$TESTDIR/TEST36_CACF.dspf"         "$EXPECTED/TEST36_CACF.dspfd"
+run_fixed_parity_test "test36b: CA/CF keys (JSON == DDS)" \
+    "$TESTDIR/test36b_cacf.json"        "$TESTDIR/TEST36_CACF.dspf"
+# (Not a parity test: free format keeps CHANGE(*IN30) where DDS has CHANGE(30).)
+run_test "test36c: free-format KEY CA12 / KEY CF05" \
+    "$TESTDIR/test36c_cacf.dspf"        "$EXPECTED/test36c_cacf.dspfd"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""

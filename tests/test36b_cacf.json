@@ -1,0 +1,19 @@
+{
+  "records": [
+    {
+      "name": "ENTRY",
+      "keywords": ["CHANGE(30)"],
+      "literals": [
+        { "row": 1, "col": 2, "text": "F5=Refresh  F12=Cancel" }
+      ],
+      "fields": [
+        { "name": "QTY", "type": "S", "len": 3, "dec": 0, "io": "B", "row": 3, "col": 2,
+          "keywords": ["RANGE(1 100)"] }
+      ],
+      "keys": [
+        { "key": "F12", "indicator": 12, "attention": true },
+        { "key": "F5", "indicator": 5 }
+      ]
+    }
+  ]
+}

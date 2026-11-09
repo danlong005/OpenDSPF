@@ -22,6 +22,23 @@ int dspf_get_error_count() { return g_error_count; }
 // Helper: take ownership of malloc'd string
 static std::string take(char* s) { std::string r(s ? s : ""); free(s); return r; }
 
+// KEY CAnn / KEY CFnn: the DDS spelling of a function key, accepted so a key
+// can be made a command-attention key (no data returned, nothing validated).
+// Fills k.key with "Fnn" and k.attention; any other name is kept as written
+// (KEY F12 behaves as CF12).
+static void setKeyName(dspf::DspfKey& k, const std::string& name) {
+    k.key = name;
+    if (name.size() >= 3 && (name[0] == 'C' || name[0] == 'c') &&
+        (name[1] == 'A' || name[1] == 'a' || name[1] == 'F' || name[1] == 'f')) {
+        size_t p = 2;
+        while (p < name.size() && isdigit((unsigned char)name[p])) p++;
+        if (p == name.size()) {
+            k.key = "F" + std::to_string(atoi(name.c_str() + 2));
+            k.attention = (name[1] == 'A' || name[1] == 'a');
+        }
+    }
+}
+
 // Globals for accumulating the current field being parsed
 static dspf::DspfField  g_field;
 static std::vector<std::string> g_keywords;
@@ -354,14 +371,14 @@ key_clause
     : KW_KEY IDENTIFIER KW_INDICATOR LPAREN INTEGER RPAREN
       {
           dspf::DspfKey k;
-          k.key       = take($2);
+          setKeyName(k, take($2));
           k.indicator = $5;
           result->records.back().keys.push_back(std::move(k));
       }
     | KW_KEY IDENTIFIER
       {
           dspf::DspfKey k;
-          k.key       = take($2);
+          setKeyName(k, take($2));
           k.indicator = 0;
           result->records.back().keys.push_back(std::move(k));
       }

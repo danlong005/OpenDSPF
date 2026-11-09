@@ -138,7 +138,9 @@ std::string emitJSON(const DspfFile& file) {
         for (size_t i = 0; i < rec.keys.size(); i++) {
             const DspfKey& k = rec.keys[i];
             o << "        { \"key\": " << jsonStr(k.key)
-              << ", \"indicator\": " << k.indicator << " }";
+              << ", \"indicator\": " << k.indicator;
+            if (k.attention) o << ", \"attention\": true";
+            o << " }";
             if (i + 1 < rec.keys.size()) o << ",";
             o << "\n";
         }

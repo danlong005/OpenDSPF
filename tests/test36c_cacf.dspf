@@ -1,0 +1,13 @@
+**FREE
+
+// test36c — the free-format twin of TEST36_CACF.dspf: KEY CA12 is a command
+// attention key; KEY CF05 (or plain KEY F5) a command function key.
+
+RECORD ENTRY
+  SCREEN SIZE(24 80)
+  CHANGE(*IN30)
+  LITERAL  ROW(1)  COL(2)   'F5=Refresh  F12=Cancel'
+  FIELD QTY     ZONED(3:0)  BOTH  ROW(3)  COL(2)  RANGE(1 100)
+  KEY CA12 INDICATOR(12)
+  KEY CF05 INDICATOR(05)
+END-RECORD

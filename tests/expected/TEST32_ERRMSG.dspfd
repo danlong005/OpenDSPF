@@ -45,7 +45,7 @@
         }
       ],
       "keys": [
-        { "key": "F3", "indicator": 3 }
+        { "key": "F3", "indicator": 3, "attention": true }
       ]
     }
   ]

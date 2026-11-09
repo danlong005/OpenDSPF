@@ -83,7 +83,8 @@ static std::string upperKw(const std::string& s) {
 
 // Parse CFnn(ind) or CAnn(ind) — display file function key keyword.
 // Returns true and fills keyName ("F3", "F12", etc.) and indicator.
-static bool parseCFCA(const std::string& kw, std::string& keyName, int& indicator) {
+static bool parseCFCA(const std::string& kw, std::string& keyName, int& indicator,
+                      bool& attention) {
     if (kw.size() < 4) return false;
     if (kw[0] != 'C' || (kw[1] != 'F' && kw[1] != 'A')) return false;
     size_t p = 2;
@@ -92,6 +93,7 @@ static bool parseCFCA(const std::string& kw, std::string& keyName, int& indicato
     int keyNum = parseNum(kw.substr(2, p - 2));
     if (keyNum < 1 || keyNum > 24) return false;
     keyName = "F" + std::to_string(keyNum);
+    attention = kw[1] == 'A';
     // CAnn[(response-indicator)]: the indicator is optional, and with none
     // the key sets no indicator at all (IBM's CAnn/CFnn descriptions) — the
     // program learns which key it was from %FKEY. Defaulting it to the key
@@ -298,9 +300,9 @@ static void applyRecordKeyword(DspfRecord& rec, const std::string& kw,
     } else if (kw.rfind("WDWBORDER(", 0) == 0) {
         applyWdwBorderKw(rec, kw);
     } else {
-        std::string keyName; int ind;
-        if (parseCFCA(kw, keyName, ind) || parseRollKw(kw, keyName, ind)) {
-            DspfKey k; k.key = keyName; k.indicator = ind;
+        std::string keyName; int ind; bool attn = false;
+        if (parseCFCA(kw, keyName, ind, attn) || parseRollKw(kw, keyName, ind)) {
+            DspfKey k; k.key = keyName; k.indicator = ind; k.attention = attn;
             rec.keys.push_back(std::move(k));
             return;
         }
@@ -336,9 +338,9 @@ static void applyFileKeyword(DspfFile& file, std::vector<DspfKey>& fileKeys,
         file.indara = true;
         return;
     }
-    std::string keyName; int ind;
-    if (parseCFCA(kw, keyName, ind) || parseRollKw(kw, keyName, ind)) {
-        DspfKey k; k.key = keyName; k.indicator = ind;
+    std::string keyName; int ind; bool attn = false;
+    if (parseCFCA(kw, keyName, ind, attn) || parseRollKw(kw, keyName, ind)) {
+        DspfKey k; k.key = keyName; k.indicator = ind; k.attention = attn;
         fileKeys.push_back(std::move(k));
         return;
     }

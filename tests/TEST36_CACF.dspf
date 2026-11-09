@@ -1,0 +1,7 @@
+     A* TEST36: CA AND CF KEYS.  CA12 RETURNS NO DATA AND CHECKS NOTHING;
+     A* CF05 CHECKS THE FIELDS (RANGE) AND RETURNS THEM, AS ENTER DOES.
+     A          R ENTRY                     CA12(12)
+     A                                      CF05(05)
+     A                                      CHANGE(30)
+     A                                  1  2'F5=Refresh  F12=Cancel'
+     A            QTY            3S 0B  3  2RANGE(1 100)

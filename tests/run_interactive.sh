@@ -697,6 +697,16 @@ run_interactive_test \
     '\x1b[24~\r' \
     "$EXPECTED/TEST35_KEYIND.out"
 
+# ── test36: CA and CF keys ───────────────────────────────────────────────
+# F12 (CA12) after typing 7 returns no data: QTY keeps 42, CHANGE stays off.
+# F5 (CF05) on 500 is refused by RANGE(1 100); corrected to 8 it returns it.
+# See TEST36_CACF.rpgle.
+run_interactive_test \
+    "test36: CA returns no data, CF validates" \
+    "$TESTDIR/TEST36_CACF.dspf" "$TESTDIR/TEST36_CACF.rpgle" \
+    '7\x1b[24~500\x1b[15~\x7f\x7f\x7f8\x1b[15~' \
+    "$EXPECTED/TEST36_CACF.out"
+
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

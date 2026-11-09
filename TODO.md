@@ -307,6 +307,17 @@ pressed (`dspf__keyIndicatorsOff`) and nothing else, and READ applies the
 runtime's results too, which it never did — CHANGE, BLANKS and ERRMSG
 response indicators were lost on a READ.
 
+**Fixed 2026-11-09 (test 36):** `CAnn` and `CFnn` were the same key: the
+descriptor did not record which a key was, and every function key returned
+the typed data without validity checking. Now a key carries `"attention":
+true` for `CAnn` (DDS `CAnn`, free-format `KEY CAnn`, JSON), and as on IBM i
+a CA key returns no input data — the program's fields, CHANGE/BLANKS
+indicators and subfile rows on the shown page are untouched — and checks
+nothing, while a CF key runs VALUES/RANGE/COMP/CHECK as Enter does. Not
+emulated: IBM leaves the *input buffer* as it was, which an RPG program on
+IBM i sees as the fields of its last input operation; here the fields keep
+the program's current values.
+
 **Fixed 2026-11-08 (test 31b/31d):** a function key the record does not
 declare, at record or file level, is refused as on IBM i — the screen stays
 up, the message line says "Function key not allowed." (CPF5204), and the

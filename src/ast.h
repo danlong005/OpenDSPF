@@ -33,6 +33,10 @@ struct DspfLiteral {
 struct DspfKey {
     std::string key;   // "F3", "F12", "ENTER", "PAGEUP", "PAGEDOWN"
     int indicator = 0; // *INxx number (0 = no indicator assigned)
+    // CAnn (command attention): the key returns no input data and no field
+    // is validated, as on IBM i. false = CFnn (command function): the typed
+    // data is checked and returned. Page keys always return data.
+    bool attention = false;
 };
 
 struct DspfRecord {

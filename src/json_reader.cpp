@@ -346,13 +346,14 @@ private:
             need(*v, JVal::Arr, "\"keys\"");
             for (const auto& kv : v->arr) {
                 need(kv, JVal::Obj, "a key");
-                known(kv, "a key", {"key", "indicator"});
+                known(kv, "a key", {"key", "indicator", "attention"});
                 DspfKey k;
                 k.key = required(kv, "key", "a key");
                 if (auto* i = kv.get("indicator")) {
                     k.indicator = integer(*i, "indicator");
                     if (k.indicator > 99) fail(*i, "\"indicator\" must be 0 (none) or 1 to 99");
                 }
+                if (auto* a = kv.get("attention")) k.attention = boolean(*a, "attention");
                 rec.keys.push_back(k);
             }
         }
