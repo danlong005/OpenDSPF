@@ -1,0 +1,3 @@
+     A          R REC1
+     A            FLD            5A  B  2  2
+     A  61                                  ERRMSG('Bad' 61 'indicator text')

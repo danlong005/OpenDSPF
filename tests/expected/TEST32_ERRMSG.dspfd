@@ -1,0 +1,52 @@
+{
+  "name": "TEST32_ERRMSG",
+  "records": [
+    {
+      "name": "ORDER",
+      "type": "normal",
+      "title": "ORDER",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "Order entry", "keywords": [] },
+        { "row": 3, "col": 2, "text": "Note:", "keywords": [] },
+        { "row": 4, "col": 2, "text": "Qty:", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "NOTE",
+          "type": "A",
+          "len": 10,
+          "dec": 0,
+          "io": "B",
+          "row": 3,
+          "col": 10,
+          "keywords": []
+        },
+        {
+          "name": "QTY",
+          "type": "A",
+          "len": 5,
+          "dec": 0,
+          "io": "B",
+          "row": 4,
+          "col": 10,
+          "keywords": ["*IN61?ERRMSG('Qty must be numeric' 61)", "*IN62?ERRMSG('Quantity is too large for one order' 62)"]
+        },
+        {
+          "name": "CODE",
+          "type": "A",
+          "len": 4,
+          "dec": 0,
+          "io": "O",
+          "row": 5,
+          "col": 10,
+          "keywords": ["*IN63?ERRMSGID(CPF9898 QCPFMSG 63)"]
+        }
+      ],
+      "keys": [
+        { "key": "F3", "indicator": 3 }
+      ]
+    }
+  ]
+}

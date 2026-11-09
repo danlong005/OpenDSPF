@@ -92,6 +92,7 @@ COMMENT  "//"[^\n]*
 "*DSPATR"       { return KW_STAR_DSPATR; }
 
 N?\*IN[0-9]+    { yylval.sval = strdup(yytext); return INDICATOR_REF; }
+\*[A-Za-z]+     { yylval.sval = strdup(yytext); for (char* c = yylval.sval; *c; c++) *c = (char)toupper((unsigned char)*c); return STAR_NAME; }
 {INTEGER}       { yylval.ival = atoi(yytext); return INTEGER; }
 {STRING}        { yylval.sval = strip_quotes(yytext); return STRING; }
 {IDENT}         { yylval.sval = strdup(yytext); return IDENTIFIER; }

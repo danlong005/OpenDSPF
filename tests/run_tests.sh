@@ -334,6 +334,48 @@ else
     FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test30f: every descriptor round-trips"
 fi
 
+# ── ERRMSG / ERRMSGID ────────────────────────────────────────────────────────
+# Conditioned by their option indicators, as real DDS writes them, including
+# an ERRMSG continued across two lines. The refusals are CRTDSPF's, each
+# probed on PUB400 (2026-11-08); the message IDs are IBM's.
+run_test "test32: ERRMSG / ERRMSGID, conditioned" \
+    "$TESTDIR/TEST32_ERRMSG.dspf"       "$EXPECTED/TEST32_ERRMSG.dspfd"
+run_diag_test "test32a: ERRMSGID warns that it shows the ID" \
+    "$TESTDIR/TEST32_ERRMSG.dspf" 0 \
+    "the message identifier CPF9898 is displayed in place of its text"
+run_diag_test "test32b: ERRMSG on a hidden field (CPD7552)" \
+    "$TESTDIR/test32b_err_errmsg_hidden.dspf" 1 \
+    "ERRMSG on field KEYFLD is not allowed on a hidden field"
+run_diag_test "test32c: ERRMSG in a subfile record (CPD7562)" \
+    "$TESTDIR/test32c_err_errmsg_sfl.dspf" 1 \
+    "ERRMSG on field OPT is not allowed in a subfile record"
+run_diag_test "test32d: ERRMSG on a constant (CPD7552)" \
+    "$TESTDIR/test32d_err_errmsg_constant.dspf" 1 \
+    "ERRMSG on constant 'Heading'"
+run_diag_test "test32e: ERRMSG with a third parameter (CPD7516)" \
+    "$TESTDIR/test32e_err_errmsg_params.dspf" 1 \
+    "an optional response indicator, 01-99 (IBM: CPD7516)"
+
+# ── DATE / TIME / USER / SYSNAME constants ──────────────────────────────────
+run_test "test33: DATE/TIME/USER/SYSNAME constants" \
+    "$TESTDIR/TEST33_SYSVAL_fixed.dspf" "$EXPECTED/TEST33_SYSVAL_fixed.dspfd"
+run_fixed_parity_test "test33b: system values (fixed == free-format)" \
+    "$TESTDIR/TEST33_SYSVAL.dspf"       "$TESTDIR/TEST33_SYSVAL_fixed.dspf"
+run_fixed_parity_test "test33c: system values (JSON == DDS)" \
+    "$TESTDIR/test33c_json_sysval.json" "$TESTDIR/TEST33_SYSVAL_fixed.dspf"
+run_diag_test "test33d: DATE(*FOO) (CPD7494)" \
+    "$TESTDIR/test33d_err_date_parm.dspf" 1 \
+    "DATE takes *JOB or *SYS and *Y or *YY (IBM: CPD7494)"
+run_diag_test "test33e: DATE with quoted text (CPD7577)" \
+    "$TESTDIR/test33e_err_date_text.dspf" 1 \
+    "also has quoted text"
+run_diag_test "test33f: conditioned keyword on DATE (CPD7488)" \
+    "$TESTDIR/test33f_err_sysval_cond_kw.dspf" 1 \
+    "its EDTCDE cannot have an option indicator of its own"
+run_diag_test "test33g: EDTCDE with USER (CPD7651)" \
+    "$TESTDIR/test33g_err_user_edtcde.dspf" 1 \
+    "EDTCDE is not allowed with USER"
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

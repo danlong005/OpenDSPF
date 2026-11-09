@@ -1,0 +1,35 @@
+{
+  "name": "TEST33_SYSVAL_fixed",
+  "records": [
+    {
+      "name": "HEADER",
+      "type": "normal",
+      "title": "HEADER",
+      "screen": { "rows": 24, "cols": 80 },
+      "keywords": [],
+      "literals": [
+        { "row": 1, "col": 2, "text": "", "keywords": ["DATE", "EDTCDE(Y)"] },
+        { "row": 1, "col": 12, "text": "", "keywords": ["DATE(*SYS *YY)"] },
+        { "row": 1, "col": 22, "text": "", "keywords": ["TIME"] },
+        { "row": 1, "col": 32, "text": "", "keywords": ["USER", "DSPATR(HI)"] },
+        { "row": 1, "col": 44, "text": "", "keywords": ["SYSNAME"] },
+        { "row": 2, "col": 2, "text": "", "keywords": ["DATE(*JOB *YY)", "EDTCDE(Y)", "COND(*IN10)"] },
+        { "row": 3, "col": 2, "text": "Press Enter", "keywords": [] }
+      ],
+      "fields": [
+        {
+          "name": "DUMMY",
+          "type": "A",
+          "len": 1,
+          "dec": 0,
+          "io": "I",
+          "row": 3,
+          "col": 20,
+          "keywords": []
+        }
+      ],
+      "keys": [
+      ]
+    }
+  ]
+}

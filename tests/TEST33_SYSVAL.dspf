@@ -1,0 +1,18 @@
+**FREE
+
+// test33 — DATE, TIME, USER and SYSNAME constants: values the system
+// supplies when the record is displayed. TEST33_SYSVAL_fixed.dspf is the
+// same screen in DDS; test33b checks the two compile alike.
+
+RECORD HEADER
+  SCREEN SIZE(24 80)
+
+  LITERAL  ROW(1)  COL(2)   DATE EDTCDE(Y)
+  LITERAL  ROW(1)  COL(12)  DATE(*SYS *YY)
+  LITERAL  ROW(1)  COL(22)  TIME
+  LITERAL  ROW(1)  COL(32)  USER DSPATR(HI)
+  LITERAL  ROW(1)  COL(44)  SYSNAME
+  LITERAL  ROW(2)  COL(2)   DATE(*JOB *YY) EDTCDE(Y) COND(*IN10)
+  LITERAL  ROW(3)  COL(2)   'Press Enter'
+  FIELD DUMMY   CHAR(1)   INPUT   ROW(3)  COL(20)
+END-RECORD

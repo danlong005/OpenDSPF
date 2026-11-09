@@ -1,6 +1,6 @@
 **FREE
 
-// test31 — %FKEY: which function key ended the screen, declared or not.
+// test31 — %FKEY: which function key ended the screen.
 // See tests/run_interactive.sh for the runtime behavioral check.
 
 RECORD FKEYTEST

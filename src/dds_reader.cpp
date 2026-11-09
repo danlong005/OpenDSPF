@@ -581,21 +581,28 @@ DspfFile parseDDS(const std::string& filename, const std::string& basename) {
             lastDef = LastDef::FIELD;
         } else if (row > 0 && col > 0) {
             // Constant: the text appears in the functions area as a quoted
-            // string. DDS also allows DATE, TIME, USER, SYSNAME and MSGCON
-            // constants there; none are supported, so a positioned line that
-            // yields no quoted text is reported rather than dropped.
+            // string, or the constant is one the system supplies when the
+            // record is displayed — DATE, TIME, USER or SYSNAME — which stays
+            // in the keyword list for the runtime to fill in. Whether the
+            // rest of the line is legal with it is checked format-agnostically
+            // in main.cpp. MSGCON (text from a message file) is not supported,
+            // so a positioned line that yields neither is reported rather than
+            // dropped.
             std::string literalText;
             std::vector<std::string> litKws;
-            bool haveText = false;
+            bool haveText = false, systemValue = false;
             for (auto& kw : parseKeywords(funcs)) {
                 if (!kw.empty() && kw.front() == '\'') {
                     if (!haveText) { literalText = stripQuotes(kw); haveText = true; }
                 } else {
+                    std::string n = keywordName(kw);
+                    if (n == "DATE" || n == "TIME" || n == "USER" || n == "SYSNAME")
+                        systemValue = true;
                     litKws.push_back(kw);
                 }
             }
             if (!condKw.empty()) litKws.push_back(condKw);
-            if (haveText) {
+            if (haveText || systemValue) {
                 DspfLiteral lit;
                 lit.row      = row;
                 lit.col      = col;

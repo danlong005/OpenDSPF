@@ -1,0 +1,6 @@
+     A* TEST34: DSPATR(PC) TAKES THE CURSOR; DSPATR(ND) SHOWS NOTHING.
+     A          R LOGON
+     A                                  1  2'Sign on'
+     A            FIRST          5A  B  3 10
+     A            USERID         5A  B  4 10DSPATR(PC)
+     A            PASSWD         8A  B  5 10DSPATR(ND)

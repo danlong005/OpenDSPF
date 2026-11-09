@@ -2,6 +2,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include "ast.h"
 #include "codegen.h"
@@ -82,6 +83,59 @@ static bool validateSflSizes(const std::string& infile, const dspf::DspfFile& fi
 // at all). A warning, not an error — matches unrecognized-keyword
 // severity, and a developer should still be able to compile and iterate
 // with a temporarily-misplaced field.
+// A keyword as stored, minus the "*INnn?" / "N*INnn?" prefix the DDS reader
+// gives a keyword conditioned by its own option indicator.
+static std::string bareKeyword(const std::string& kw, bool* conditioned = nullptr) {
+    size_t q = kw.find('?');
+    size_t lp = kw.find('(');
+    bool c = q != std::string::npos && (lp == std::string::npos || q < lp);
+    if (conditioned) *conditioned = c;
+    return c ? kw.substr(q + 1) : kw;
+}
+
+static std::string keywordNameOf(const std::string& kw) {
+    std::string b = bareKeyword(kw);
+    return b.substr(0, b.find('('));
+}
+
+static std::string keywordParams(const std::string& kw) {
+    std::string b = bareKeyword(kw);
+    size_t lp = b.find('(');
+    if (lp == std::string::npos || b.back() != ')') return "";
+    return b.substr(lp + 1, b.size() - lp - 2);
+}
+
+// The value the system supplies for a constant, or "" for one with text.
+static std::string systemValueOf(const dspf::DspfLiteral& lit) {
+    for (const auto& k : lit.keywords) {
+        std::string n = keywordNameOf(k);
+        if (n == "DATE" || n == "TIME" || n == "USER" || n == "SYSNAME") return n;
+    }
+    return "";
+}
+
+// How many positions a constant takes on the screen. A DATE is six digits,
+// or eight with *YY, plus two separators under EDTCDE(Y); TIME is hh:mm:ss
+// under its default edit word; USER is 10 characters and SYSNAME 8 (IBM's
+// DATE, TIME, USER and SYSNAME keyword descriptions).
+static int literalWidth(const dspf::DspfLiteral& lit) {
+    std::string sv = systemValueOf(lit);
+    if (sv.empty()) return (int)lit.text.size();
+    if (sv == "USER") return 10;
+    if (sv == "SYSNAME") return 8;
+    int digits = 6;
+    bool edtY = false; int edtwrd = 0;
+    for (const auto& k : lit.keywords) {
+        std::string n = keywordNameOf(k), p = keywordParams(k);
+        if (n == "DATE" && p.find("*YY") != std::string::npos) digits = 8;
+        if (n == "EDTCDE" && (p == "Y" || p == "y")) edtY = true;
+        if (n == "EDTWRD" && p.size() >= 2) edtwrd = (int)p.size() - 2;
+    }
+    if (edtwrd) return edtwrd;
+    if (sv == "TIME") return 8;
+    return digits + (edtY ? 2 : 0);
+}
+
 // IBM i's rules for a WINDOW record and for COLOR values, checked when the
 // display file compiles, as CRTDSPF does (each probed on PUB400).
 //   - WINDOW(line pos lines positions) puts the border's top-left corner at
@@ -146,7 +200,130 @@ static bool validateWindowsAndColors(const std::string& infile, const dspf::Dspf
         for (const auto& f : rec.fields)
             if (f.io != 'H') inWindow("field " + f.name, f.row, f.col, f.len);
         for (const auto& l : rec.literals)
-            inWindow("literal '" + l.text.substr(0, 20) + "'", l.row, l.col, (int)l.text.size());
+            inWindow(l.text.empty() ? systemValueOf(l) + " constant"
+                                    : "literal '" + l.text.substr(0, 20) + "'",
+                     l.row, l.col, literalWidth(l));
+    }
+    return ok;
+}
+
+// ERRMSG / ERRMSGID, and constants the system fills in (DATE, TIME, USER,
+// SYSNAME), checked as CRTDSPF checks them. Each rule and message ID below
+// was probed with CRTDSPF on PUB400 (2026-11-08).
+static bool validateErrmsgAndSystemValues(const std::string& infile, const dspf::DspfFile& file) {
+    bool ok = true;
+    auto fail = [&](const std::string& rec, const std::string& msg) {
+        std::cerr << "dspfc: error: " << infile << ": record " << rec << ": " << msg << "\n";
+        ok = false;
+    };
+    for (const auto& rec : file.records) {
+        for (const auto& f : rec.fields) {
+            for (const auto& k : f.keywords) {
+                std::string n = keywordNameOf(k);
+                if (n != "ERRMSG" && n != "ERRMSGID") continue;
+                std::string what = n + " on field " + f.name;
+                if (rec.recType == dspf::RecType::SFL) {
+                    fail(rec.name, what + " is not allowed in a subfile record; IBM i "
+                         "displays a subfile's messages with SFLMSG (IBM: CPD7562)");
+                    continue;
+                }
+                if (f.io == 'H') {
+                    fail(rec.name, what + " is not allowed on a hidden field, which is "
+                         "never displayed (IBM: CPD7552)");
+                    continue;
+                }
+                std::string p = keywordParams(k);
+                if (n == "ERRMSG") {
+                    // 'message text' [response-indicator]
+                    size_t i = 0;
+                    bool good = !p.empty() && p[0] == '\'';
+                    if (good) {
+                        for (i = 1; i < p.size(); i++) {
+                            if (p[i] != '\'') continue;
+                            if (i + 1 < p.size() && p[i + 1] == '\'') { i++; continue; }
+                            break;
+                        }
+                        good = i < p.size();
+                        std::string rest = good ? p.substr(i + 1) : "";
+                        size_t a = rest.find_first_not_of(' ');
+                        rest = a == std::string::npos ? "" : rest.substr(a);
+                        while (!rest.empty() && rest.back() == ' ') rest.pop_back();
+                        if (!rest.empty()) {
+                            bool digits = rest.size() <= 2 &&
+                                rest.find_first_not_of("0123456789") == std::string::npos;
+                            good = digits && std::stoi(rest) >= 1;
+                        }
+                    }
+                    if (!good)
+                        fail(rec.name, what + ": ERRMSG takes the message text in quotes and "
+                             "an optional response indicator, 01-99 (IBM: CPD7516)");
+                } else {
+                    std::string msgid = p.substr(0, p.find(' '));
+                    std::cerr << "dspfc: warning: " << infile << ": record " << rec.name
+                              << ": " << what << ": there are no message files where this "
+                              << "program runs, so the message identifier " << msgid
+                              << " is displayed in place of its text\n";
+                }
+            }
+        }
+        for (const auto& lit : rec.literals) {
+            std::string label = lit.text.empty() ? "at line " + std::to_string(lit.row) +
+                                " position " + std::to_string(lit.col)
+                                : "'" + lit.text.substr(0, 20) + "'";
+            for (const auto& k : lit.keywords) {
+                std::string n = keywordNameOf(k);
+                if (n == "ERRMSG" || n == "ERRMSGID")
+                    fail(rec.name, n + " on constant " + label + ": an error message belongs "
+                         "to a field, not a constant (IBM: CPD7552)");
+            }
+            std::string sv = systemValueOf(lit);
+            if (sv.empty()) continue;
+            std::string what = sv + " constant " + label;
+            if (!lit.text.empty())
+                fail(rec.name, what + " also has quoted text; a constant is either text or "
+                     "a value the system supplies, not both (IBM: CPD7577)");
+            int systemValues = 0;
+            for (const auto& k : lit.keywords) {
+                bool conditioned = false;
+                std::string bare = bareKeyword(k, &conditioned);
+                std::string n = keywordNameOf(k), p = keywordParams(k);
+                if (n == "DATE" || n == "TIME" || n == "USER" || n == "SYSNAME") {
+                    if (++systemValues == 2)
+                        fail(rec.name, what + " also names " + n + "; a constant is one "
+                             "of DATE, TIME, USER or SYSNAME");
+                    if (n == "DATE") {
+                        int job = 0, year = 0; bool bad = false;
+                        std::string tok;
+                        std::istringstream in(p);
+                        while (in >> tok) {
+                            if (tok == "*JOB" || tok == "*SYS") job++;
+                            else if (tok == "*Y" || tok == "*YY") year++;
+                            else bad = true;
+                        }
+                        if (bad || job > 1 || year > 1)
+                            fail(rec.name, what + ": DATE(" + p + ") — DATE takes *JOB or *SYS "
+                                 "and *Y or *YY (IBM: CPD7494)");
+                    } else if (bare.find('(') != std::string::npos) {
+                        fail(rec.name, what + ": " + n + " takes no parameters (IBM: CPD7494)");
+                    }
+                    if (conditioned)
+                        fail(rec.name, what + ": " + n + " cannot be conditioned on its own; "
+                             "condition the constant (IBM: CPD7488)");
+                    continue;
+                }
+                if (n == "COND") continue;   // the whole constant's option indicator
+                bool allowed = n == "COLOR" || n == "DSPATR" || n == "TEXT" ||
+                               ((sv == "DATE" || sv == "TIME") && (n == "EDTCDE" || n == "EDTWRD"));
+                if (!allowed) {
+                    fail(rec.name, what + ": " + n + " is not allowed with " + sv + "; it takes " +
+                         ((sv == "DATE" || sv == "TIME") ? "EDTCDE, EDTWRD, " : "") +
+                         "COLOR, DSPATR and TEXT (IBM: CPD7651)");
+                } else if (conditioned) {
+                    fail(rec.name, what + ": its " + n + " cannot have an option indicator of "
+                         "its own; condition the constant instead (IBM: CPD7488)");
+                }
+            }
+        }
     }
     return ok;
 }
@@ -175,7 +352,8 @@ static void validateFieldBounds(const std::string& infile, const dspf::DspfFile&
         for (const auto& lit : rec.literals) {
             std::string label = "'" + lit.text.substr(0, 20)
                                  + (lit.text.size() > 20 ? "..." : "") + "'";
-            checkPos("literal", label, lit.row, lit.col, (int)lit.text.size());
+            if (lit.text.empty()) label = systemValueOf(lit);
+            checkPos("literal", label, lit.row, lit.col, literalWidth(lit));
         }
     }
 }
@@ -261,6 +439,7 @@ int main(int argc, char* argv[]) {
     }
     validateFieldBounds(infile, fileAst);
     if (!validateWindowsAndColors(infile, fileAst)) return 1;
+    if (!validateErrmsgAndSystemValues(infile, fileAst)) return 1;
 
     std::cout << "dspfc: " << fileAst.records.size() << " record format(s) found\n";
 

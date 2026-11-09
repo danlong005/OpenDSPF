@@ -1,0 +1,5 @@
+     A          R SFL1                      SFL
+     A            OPT            1A  B  5  2ERRMSG('Bad option')
+     A          R CTL1                      SFLCTL(SFL1)
+     A                                      SFLPAG(5) SFLSIZ(10)
+     A                                  1  2'List'

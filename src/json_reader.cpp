@@ -305,8 +305,16 @@ private:
                 DspfLiteral lit;
                 lit.row = requiredInt(l, "row", "a literal");
                 lit.col = requiredInt(l, "col", "a literal");
-                lit.text = required(l, "text", "a literal");
                 if (auto* k = l.get("keywords")) lit.keywords = strings(*k, "keywords");
+                // A constant the system supplies when the record is displayed
+                // (DATE, TIME, USER, SYSNAME) has no text of its own.
+                bool systemValue = false;
+                for (const auto& k : lit.keywords) {
+                    std::string n = k.substr(0, k.find('('));
+                    if (n == "DATE" || n == "TIME" || n == "USER" || n == "SYSNAME") systemValue = true;
+                }
+                if (systemValue && !l.get("text")) lit.text.clear();
+                else lit.text = required(l, "text", "a literal");
                 rec.literals.push_back(lit);
             }
         }

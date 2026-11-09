@@ -1,0 +1,19 @@
+{
+  "records": [
+    {
+      "name": "HEADER",
+      "literals": [
+        { "row": 1, "col": 2, "keywords": ["DATE", "EDTCDE(Y)"] },
+        { "row": 1, "col": 12, "keywords": ["DATE(*SYS *YY)"] },
+        { "row": 1, "col": 22, "keywords": ["TIME"] },
+        { "row": 1, "col": 32, "keywords": ["USER", "DSPATR(HI)"] },
+        { "row": 1, "col": 44, "keywords": ["SYSNAME"] },
+        { "row": 2, "col": 2, "keywords": ["DATE(*JOB *YY)", "EDTCDE(Y)", "COND(*IN10)"] },
+        { "row": 3, "col": 2, "text": "Press Enter" }
+      ],
+      "fields": [
+        { "name": "DUMMY", "len": 1, "io": "I", "row": 3, "col": 20 }
+      ]
+    }
+  ]
+}

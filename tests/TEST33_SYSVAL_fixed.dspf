@@ -1,0 +1,10 @@
+     A* TEST33: CONSTANTS THE SYSTEM SUPPLIES WHEN THE RECORD IS DISPLAYED.
+     A          R HEADER
+     A                                  1  2DATE EDTCDE(Y)
+     A                                  1 12DATE(*SYS *YY)
+     A                                  1 22TIME
+     A                                  1 32USER DSPATR(HI)
+     A                                  1 44SYSNAME
+     A  10                              2  2DATE(*JOB *YY) EDTCDE(Y)
+     A                                  3  2'Press Enter'
+     A            DUMMY          1A  I  3 20

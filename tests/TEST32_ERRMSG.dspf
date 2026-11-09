@@ -1,0 +1,13 @@
+     A* TEST32: ERRMSG AND ERRMSGID, CONDITIONED BY THEIR OPTION INDICATORS.
+     A* QTY IS THE SECOND FIELD SO THE CURSOR MOVING TO IT IS VISIBLE.
+     A          R ORDER                     CA03(03)
+     A                                  1  2'Order entry'
+     A                                  3  2'Note:'
+     A            NOTE          10A  B  3 10
+     A                                  4  2'Qty:'
+     A            QTY            5A  B  4 10
+     A  61                                  ERRMSG('Qty must be numeric' 61)
+     A  62                                  ERRMSG('Quantity is too large +
+     A                                      for one order' 62)
+     A            CODE           4A  O  5 10
+     A  63                                  ERRMSGID(CPF9898 QCPFMSG 63)

@@ -21,6 +21,7 @@
 #  include <curses.h>   // PDCurses drop-in
 #else
 #  include <ncurses.h>
+#  include <unistd.h>   // gethostname, for SYSNAME
 #endif
 
 #include <algorithm>
@@ -32,6 +33,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <fstream>
 #include <map>
 #include <set>
@@ -665,7 +667,7 @@ static bool dspf__isWindow(const DspfJVal& rec, int& winRow, int& winCol, int& w
 // Edit code / edit word formatting
 // =============================================================================
 
-static std::string dspf__applyEditCode(double val, int /*len*/, int dec, char code) {
+static std::string dspf__applyEditCode(double val, int len, int dec, char code) {
     char u = (char)toupper((unsigned char)code);
     bool negative = (val < 0.0);
     double absval = std::fabs(val);
@@ -691,10 +693,18 @@ static std::string dspf__applyEditCode(double val, int /*len*/, int dec, char co
         return z.empty() ? "0" : z;
     }
 
-    // Code Y: date edit — nnnnnnn → nn/nn/nn (strips leading zero from first pair)
+    // Code Y: date edit — nnnnnn → nn/nn/nn, and an 8-digit field (a date
+    // with a four-digit year) nnnnnnnn → nn/nn/nnnn. Strips the leading
+    // zero from the first pair.
     if (u == 'Y') {
         std::string digits;
         for (char c : intPart) if (isdigit((unsigned char)c)) digits += c;
+        if (len >= 8) {
+            while (digits.size() < 8) digits = "0" + digits;
+            std::string d = digits.substr(digits.size() - 8);
+            std::string mm = d.substr(0, 2); if (mm[0]=='0') mm = mm.substr(1);
+            return mm + "/" + d.substr(2, 2) + "/" + d.substr(4, 4);
+        }
         while (digits.size() < 6) digits = "0" + digits;
         // mm/dd/yy from rightmost 6 digits
         std::string d = digits.size() >= 6 ? digits.substr(digits.size() - 6) : digits;
@@ -881,6 +891,276 @@ static std::string dspf__formatField(const DspfJVal& field, const std::string& r
 }
 
 // =============================================================================
+// The message line
+// =============================================================================
+//
+// IBM i shows field-validation errors, ERRMSG text and "Function key not
+// allowed" on the display's message line, the last line of a 24x80 screen,
+// or in the error subfile when the file asks for one (ERRSFL). A terminal
+// taller than 24 lines has a line to spare below the record, which is used
+// instead so the record's own last line is not overwritten.
+static void dspf__showMessage(const DspfJVal& rec, const std::string& msg) {
+    if (dspf__hasRecKw(rec, "ERRSFL")) { dspf__errsflShow(rec, msg); return; }
+    attron(A_REVERSE);
+    mvprintw(LINES > 24 ? 24 : LINES - 1, 0, "%-*s", COLS, msg.c_str());
+    attroff(A_REVERSE);
+    refresh();
+}
+
+// CPF5204. A function key the record format does not enable (CAnn, CFnn or a
+// page key, at file or record level) is refused: the screen stays up and the
+// program is not told about it.
+static const char* const DSPF_MSG_FKEY_NOT_ALLOWED = "Function key not allowed.";
+
+// =============================================================================
+// DSPATR(ND): nondisplay
+// =============================================================================
+//
+// The field's positions appear blank, whatever it holds or the operator
+// types — the attribute passwords use.
+static std::string dspf__shownText(const DspfJVal& field, const std::string& val, int len) {
+    if (!dspf__hasDspatr(field, "ND")) return val;
+    return std::string((size_t)std::max(len, 0), ' ');
+}
+
+// =============================================================================
+// ERRMSG / ERRMSGID
+// =============================================================================
+//
+// Per IBM's description of the keywords (DDS for display files, "ERRMSG and
+// ERRMSGID"):
+//   - In effect on an output operation only when the record is already on
+//     the display. Then the screen is kept as it is: the program's new data
+//     is not sent, only its option indicators count.
+//   - One message is shown: the first field the program selected a message
+//     for, ERRMSG before ERRMSGID within a field.
+//   - Every input-capable field in error is shown in reverse image (unless
+//     it is also highlighted, or BLU, WHT or YLW, which with the default
+//     underline would make it nondisplay), and the cursor goes to the first
+//     of them in screen order. An output-only field in error changes neither.
+//   - A response indicator is turned off by the next input operation,
+//     unless a CAnn/CFnn key or CHANGE also names it; then that decides.
+//   - The keyboard then stays locked until the operator presses Reset. A
+//     terminal has no Reset key, so here the message simply stays up while
+//     the operator types.
+// ERRMSGID names a message in a message file, which does not exist where
+// this runs; its message identifier is shown in place of the text.
+
+static std::set<std::string> g_dspf_on_display;   // records now on the screen
+static std::map<std::string, std::map<std::string,std::string>> g_dspf_shown_vals;
+static std::set<std::string> g_dspf_err_fields;   // input fields shown in error
+static std::vector<int>      g_dspf_errmsg_resp;  // response indicators to turn off
+static bool                  g_dspf_keep_screen = false; // ERRMSG: render without clearing
+
+static std::string dspf__upper(std::string s) {
+    for (auto& c : s) c = (char)toupper((unsigned char)c);
+    return s;
+}
+
+// Parses "ERRMSG('text' 61)" / "ERRMSGID(MSG0001 MSGF 61)". Returns false if
+// `kw` is neither.
+static bool dspf__parseErrmsg(const std::string& kw, std::string& text, int& resp, bool& isId) {
+    resp = -1;
+    std::string inner;
+    if (kw.rfind("ERRMSG(", 0) == 0) { isId = false; inner = kw.substr(7); }
+    else if (kw.rfind("ERRMSGID(", 0) == 0) { isId = true; inner = kw.substr(9); }
+    else return false;
+    if (!inner.empty() && inner.back() == ')') inner.pop_back();
+    std::string rest;
+    if (!isId) {
+        text.clear();
+        size_t i = 1;
+        for (; i < inner.size(); i++) {
+            if (inner[i] == '\'') {
+                if (i + 1 < inner.size() && inner[i + 1] == '\'') { text += '\''; i++; continue; }
+                break;
+            }
+            text += inner[i];
+        }
+        rest = i < inner.size() ? inner.substr(i + 1) : "";
+    } else {
+        std::istringstream in(inner);
+        std::string msgf;
+        in >> text >> msgf;
+        std::getline(in, rest);
+    }
+    std::istringstream r(rest);
+    std::string tok;
+    if (r >> tok && !tok.empty() && isdigit((unsigned char)tok[0])) {
+        try { resp = std::stoi(tok); } catch (...) {}
+    }
+    return true;
+}
+
+static bool dspf__hasColor(const DspfJVal& field, const char* code) {
+    const DspfJVal& kw = field["keywords"];
+    for (size_t i = 0; i < kw.size(); i++)
+        if (kw[i].str() == std::string("COLOR(") + code + ")") return true;
+    return false;
+}
+
+// Works out which of the record's fields are in error for this output
+// operation. Returns true, with the message to show, when ERRMSG or
+// ERRMSGID is in effect; g_dspf_err_fields and g_dspf_errmsg_resp are set
+// either way.
+static bool dspf__errmsgPrepare(const DspfJVal& rec, std::string& msg) {
+    g_dspf_err_fields.clear();
+    g_dspf_errmsg_resp.clear();
+    if (!g_dspf_on_display.count(dspf__upper(rec["name"].str()))) return false;
+    bool any = false;
+    const DspfJVal& fields = rec["fields"];
+    for (size_t i = 0; i < fields.size(); i++) {
+        const DspfJVal& f = fields[i];
+        if (f["io"].str() == "H" || !dspf__condPass(f)) continue;
+        std::string first, firstId;
+        bool inError = false;
+        const DspfJVal& kw = f["keywords"];
+        for (size_t k = 0; k < kw.size(); k++) {
+            std::string text; int resp; bool isId;
+            if (!dspf__parseErrmsg(kw[k].str(), text, resp, isId)) continue;
+            inError = true;
+            if (resp > 0 && resp < 100) g_dspf_errmsg_resp.push_back(resp);
+            if (!isId && first.empty()) first = text.empty() ? " " : text;
+            if (isId && firstId.empty()) firstId = text;
+        }
+        if (!inError) continue;
+        if (!any) msg = !first.empty() ? first : firstId;
+        any = true;
+        std::string io = f["io"].str();
+        if (io == "I" || io == "B") g_dspf_err_fields.insert(f["name"].str());
+    }
+    return any;
+}
+
+// How an input-capable field is drawn. 5250 input fields are underlined;
+// one in error (ERRMSG) is reversed, except when that would combine with
+// highlighting into nondisplay.
+static attr_t dspf__inputAttrs(const DspfJVal& field) {
+    if (g_dspf_err_fields.count(field["name"].str()) &&
+        !(dspf__hasDspatr(field, "HI") || dspf__hasColor(field, "BLU") ||
+          dspf__hasColor(field, "WHT") || dspf__hasColor(field, "YLW")))
+        return A_REVERSE;
+    return A_UNDERLINE;
+}
+
+// The first field the cursor goes to: the first input field in error, else
+// the first field with DSPATR(PC) — both in screen order. A PC field the
+// operator cannot type into puts the cursor on the next input field after
+// it. `cand` holds, per editable field, its definition and screen position.
+// Returns -1 when neither applies.
+struct DspfCursorCand { const DspfJVal* def; int row, col; };
+static int dspf__initialCursor(const DspfJVal& rec, const std::vector<DspfCursorCand>& cand) {
+    auto before = [](int r1, int c1, int r2, int c2) { return r1 < r2 || (r1 == r2 && c1 < c2); };
+    int best = -1;
+    for (size_t i = 0; i < cand.size(); i++) {
+        if (!g_dspf_err_fields.count((*cand[i].def)["name"].str())) continue;
+        if (best < 0 || before(cand[i].row, cand[i].col, cand[best].row, cand[best].col)) best = (int)i;
+    }
+    if (best >= 0) return best;
+    int pcRow = 0, pcCol = 0; bool havePc = false;
+    const DspfJVal& fields = rec["fields"];
+    for (size_t i = 0; i < fields.size(); i++) {
+        const DspfJVal& f = fields[i];
+        if (f["io"].str() == "H" || !dspf__condPass(f) || !dspf__hasDspatr(f, "PC")) continue;
+        int r = f["row"].num(), c = f["col"].num();
+        if (!havePc || before(r, c, pcRow, pcCol)) { pcRow = r; pcCol = c; havePc = true; }
+    }
+    if (!havePc) return -1;
+    for (size_t i = 0; i < cand.size(); i++) {
+        int r = (*cand[i].def)["row"].num(), c = (*cand[i].def)["col"].num();
+        if (before(r, c, pcRow, pcCol)) continue;
+        if (best < 0 || before(r, c, (*cand[best].def)["row"].num(), (*cand[best].def)["col"].num()))
+            best = (int)i;
+    }
+    return best;
+}
+
+// =============================================================================
+// DATE, TIME, USER, SYSNAME constants
+// =============================================================================
+//
+// Values the system supplies when the record is displayed. DATE is the job
+// date in the job's date format, which here is *MDY — the format OpenRPG's
+// own job date (UDATE, the PSDS run date) uses — with the year in 2 digits,
+// or 4 with *YY; EDTCDE(Y) adds the separators. *SYS and *JOB are the same
+// date here. TIME is hhmmss, shown under its default edit word as hh:mm:ss.
+// USER is the user profile, as OpenRPG's *USER gives it: the login name,
+// upper case, at most 10 characters. SYSNAME is the host name up to its
+// first dot, upper case, at most 8.
+
+static std::string dspf__systemValue(const DspfJVal& lit) {
+    const DspfJVal& kw = lit["keywords"];
+    for (size_t i = 0; i < kw.size(); i++) {
+        const std::string& k = kw[i].str();
+        std::string n = k.substr(0, k.find('('));
+        if (n == "DATE" || n == "TIME" || n == "USER" || n == "SYSNAME") return k;
+    }
+    return "";
+}
+
+static std::string dspf__userProfile() {
+    const char* u = std::getenv("USER");
+    if (!u) u = std::getenv("USERNAME");
+    std::string s = dspf__upper(u ? u : "UNKNOWN");
+    if (s.size() > 10) s.resize(10);
+    return s;
+}
+
+static std::string dspf__systemName() {
+    std::string s;
+#ifdef _WIN32
+    const char* c = std::getenv("COMPUTERNAME");
+    if (c) s = c;
+#else
+    char buf[256] = {0};
+    if (gethostname(buf, sizeof buf - 1) == 0) s = buf;
+#endif
+    s = dspf__upper(s.substr(0, s.find('.')));
+    if (s.size() > 8) s.resize(8);
+    return s;
+}
+
+static bool dspf__hasEditing(const DspfJVal& lit) {
+    const DspfJVal& kw = lit["keywords"];
+    for (size_t i = 0; i < kw.size(); i++) {
+        const std::string& k = kw[i].str();
+        if (k.rfind("EDTCDE(", 0) == 0 || k.rfind("EDTWRD(", 0) == 0) return true;
+    }
+    return false;
+}
+
+// Runs a DATE or TIME value through the constant's EDTCDE/EDTWRD, as a
+// zoned field of `len` digits.
+static std::string dspf__editSystemNumber(const DspfJVal& lit, const std::string& digits) {
+    DspfJVal f; f.kind = DspfJVal::Obj;
+    DspfJVal t; t.kind = DspfJVal::Str; t.s = "S";
+    DspfJVal l; l.kind = DspfJVal::Int; l.i = (int)digits.size();
+    DspfJVal d; d.kind = DspfJVal::Int; d.i = 0;
+    f.obj["type"] = t; f.obj["len"] = l; f.obj["dec"] = d;
+    f.obj["keywords"] = lit["keywords"];
+    return dspf__formatField(f, digits);
+}
+
+static std::string dspf__systemValueText(const DspfJVal& lit, const std::string& kw) {
+    std::string n = kw.substr(0, kw.find('('));
+    if (n == "USER") return dspf__userProfile();
+    if (n == "SYSNAME") return dspf__systemName();
+    std::time_t now = std::time(nullptr);
+    std::tm tmv = *std::localtime(&now);
+    if (n == "TIME") {
+        std::string digits = dspf__sprintf("%02d%02d%02d", tmv.tm_hour, tmv.tm_min, tmv.tm_sec);
+        if (dspf__hasEditing(lit)) return dspf__editSystemNumber(lit, digits);
+        return digits.substr(0, 2) + ":" + digits.substr(2, 2) + ":" + digits.substr(4, 2);
+    }
+    bool fourDigitYear = kw.find("*YY") != std::string::npos;
+    std::string digits = fourDigitYear
+        ? dspf__sprintf("%02d%02d%04d", tmv.tm_mon + 1, tmv.tm_mday, tmv.tm_year + 1900)
+        : dspf__sprintf("%02d%02d%02d", tmv.tm_mon + 1, tmv.tm_mday, tmv.tm_year % 100);
+    if (dspf__hasEditing(lit)) return dspf__editSystemNumber(lit, digits);
+    return digits;
+}
+
+// =============================================================================
 // Window border rendering (WDWBORDER keyword)
 // =============================================================================
 
@@ -938,7 +1218,15 @@ static void dspf__renderScreen(const DspfJVal& rec,
                                 const std::map<std::string,std::string>& vals,
                                 WINDOW* win, int rowOff, int colOff) {
     int clrStart, clrEnd;
-    if (!dspf__hasRecKw(rec, "OVERLAY") && !dspf__hasRecKw(rec, "NOCLEAR")) {
+    // Which records are on the display, for ERRMSG: a full clear leaves only
+    // this one; anything else adds it to what is already there.
+    std::string recName = dspf__upper(rec["name"].str());
+    bool fullClear = !g_dspf_keep_screen && win == stdscr &&
+                     !dspf__hasRecKw(rec, "OVERLAY") && !dspf__hasRecKw(rec, "NOCLEAR") &&
+                     !dspf__parseClrl(rec, clrStart, clrEnd);
+    if (fullClear) g_dspf_on_display.clear();
+    g_dspf_on_display.insert(recName);
+    if (!g_dspf_keep_screen && !dspf__hasRecKw(rec, "OVERLAY") && !dspf__hasRecKw(rec, "NOCLEAR")) {
         if (dspf__parseClrl(rec, clrStart, clrEnd)) {
             // Partial clear: only the declared row range, not the whole screen.
             int maxRows = (win == stdscr) ? LINES : getmaxy(win);
@@ -965,8 +1253,12 @@ static void dspf__renderScreen(const DspfJVal& rec,
         int col = lits[i]["col"].num() - 1 - colOff;
         int pair   = dspf__colorPair(lits[i]);
         attr_t ext = dspf__fieldAttrs(lits[i]);
+        std::string text = lits[i]["text"].str();
+        std::string sysKw = dspf__systemValue(lits[i]);
+        if (!sysKw.empty()) text = dspf__systemValueText(lits[i], sysKw);
+        text = dspf__shownText(lits[i], text, (int)text.size());
         wattron(win, COLOR_PAIR(pair) | ext);
-        mvwprintw(win, row, col, "%s", lits[i]["text"].str().c_str());
+        mvwprintw(win, row, col, "%s", text.c_str());
         wattroff(win, COLOR_PAIR(pair) | ext);
     }
 
@@ -1019,6 +1311,7 @@ static void dspf__renderScreen(const DspfJVal& rec,
         if (it != vals.end()) val = it->second;
         val = dspf__formatField(fields[i], val);
         if ((int)val.size() > len) val.resize(len);
+        val = dspf__shownText(fields[i], val, len);
 
         int pair   = dspf__colorPair(fields[i]);
         attr_t ext = dspf__fieldAttrs(fields[i]);
@@ -1033,9 +1326,10 @@ static void dspf__renderScreen(const DspfJVal& rec,
             }
             wattroff(win, COLOR_PAIR(pair) | ext);
         } else {
-            wattron(win, COLOR_PAIR(pair) | ext | A_REVERSE);
+            attr_t in = dspf__inputAttrs(fields[i]);
+            wattron(win, COLOR_PAIR(pair) | ext | in);
             mvwprintw(win, row, col, "%-*s", len, val.c_str());
-            wattroff(win, COLOR_PAIR(pair) | ext | A_REVERSE);
+            wattroff(win, COLOR_PAIR(pair) | ext | in);
         }
     }
 
@@ -1091,6 +1385,29 @@ static int dspf__parseIndFromKw(const std::string& kw, const std::string& prefix
 static std::vector<int> g_dspf_out_set_indicators;
 static std::vector<int> g_dspf_out_clear_indicators;
 
+// ERRMSG/ERRMSGID response indicators are turned off by the input operation
+// that follows the message — unless a function key or CHANGE names the same
+// indicator, in which case that keyword's result stands.
+static void dspf__clearErrmsgResponses(const DspfJVal& rec) {
+    for (int ind : g_dspf_errmsg_resp) {
+        bool named = false;
+        const DspfJVal& keys = rec["keys"];
+        for (size_t i = 0; i < keys.size(); i++)
+            if (keys[i]["indicator"].num() == ind) named = true;
+        const DspfJVal& rk = rec["keywords"];
+        for (size_t i = 0; i < rk.size(); i++)
+            if (dspf__parseIndFromKw(rk[i].str(), "CHANGE(") == ind) named = true;
+        const DspfJVal& fields = rec["fields"];
+        for (size_t f = 0; f < fields.size(); f++) {
+            const DspfJVal& kw = fields[f]["keywords"];
+            for (size_t i = 0; i < kw.size(); i++)
+                if (dspf__parseIndFromKw(kw[i].str(), "CHANGE(") == ind) named = true;
+        }
+        if (!named) g_dspf_out_clear_indicators.push_back(ind);
+    }
+    g_dspf_errmsg_resp.clear();
+}
+
 static void dspf__computeChangeBlanks(const DspfJVal& rec, const std::vector<DspfEditField>& ef) {
     g_dspf_out_set_indicators.clear();
     g_dspf_out_clear_indicators.clear();
@@ -1109,6 +1426,8 @@ static void dspf__computeChangeBlanks(const DspfJVal& rec, const std::vector<Dsp
         if (anyTouched) g_dspf_out_set_indicators.push_back(ind);
         else g_dspf_out_clear_indicators.push_back(ind);
     }
+
+    dspf__clearErrmsgResponses(rec);
 
     const DspfJVal& fields = rec["fields"];
     for (const auto& f : ef) {
@@ -1174,6 +1493,22 @@ static int dspf__inputLoop(const DspfJVal& rec,
 
     const DspfJVal& fields = rec["fields"];
     int cur = 0;
+    {
+        std::vector<DspfCursorCand> cand;
+        for (const auto& f : ef) cand.push_back({&fields[f.recIdx], f.row, f.col});
+        int start = dspf__initialCursor(rec, cand);
+        if (start >= 0) cur = start;
+    }
+
+    // Redraws the field being typed into.
+    auto echo = [&](const DspfEditField& f) {
+        const DspfJVal& def = fields[f.recIdx];
+        int pair = dspf__colorPair(def);
+        attr_t ext = dspf__fieldAttrs(def) | dspf__inputAttrs(def);
+        wattron(win, COLOR_PAIR(pair) | ext);
+        mvwprintw(win, f.row, f.col, "%-*s", f.len, dspf__shownText(def, f.val, f.len).c_str());
+        wattroff(win, COLOR_PAIR(pair) | ext);
+    };
 
     while (true) {
         if (!ef.empty()) {
@@ -1187,16 +1522,18 @@ static int dspf__inputLoop(const DspfJVal& rec,
 
         if (ch >= KEY_F(1) && ch <= KEY_F(24)) {
             int fnum = ch - KEY_F(0);
-            g_dspf_last_fkey = fnum;
             std::string key = "F" + std::to_string(fnum);
-            for (auto& f : ef) vals[f.name] = f.val;
-            dspf__computeChangeBlanks(rec, ef);
             const DspfJVal& keys = rec["keys"];
             for (size_t i = 0; i < keys.size(); i++) {
-                if (keys[i]["key"].str() == key)
-                    return keys[i]["indicator"].num();
+                if (keys[i]["key"].str() != key) continue;
+                g_dspf_last_fkey = fnum;
+                for (auto& f : ef) vals[f.name] = f.val;
+                dspf__computeChangeBlanks(rec, ef);
+                return keys[i]["indicator"].num();
             }
-            return fnum;
+            beep();
+            dspf__showMessage(rec, DSPF_MSG_FKEY_NOT_ALLOWED);
+            continue;
         }
 
         // PAGEUP/PAGEDOWN as exit keys on a plain (non-subfile) record — the
@@ -1227,14 +1564,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
             }
             if (badIdx >= 0) {
                 beep();
-                if (dspf__hasRecKw(rec, "ERRSFL")) {
-                    dspf__errsflShow(rec, errMsg);
-                } else if (LINES > 24) {
-                    attron(A_REVERSE);
-                    mvprintw(24, 0, "%-*s", COLS, errMsg.c_str());
-                    attroff(A_REVERSE);
-                    refresh();
-                }
+                dspf__showMessage(rec, errMsg);
                 cur = badIdx;
                 continue;
             }
@@ -1260,11 +1590,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
             if (!f.val.empty()) {
                 f.val.pop_back();
                 f.touched = true;
-                int pair = dspf__colorPair(fields[f.recIdx]);
-                attr_t ext = dspf__fieldAttrs(fields[f.recIdx]);
-                wattron(win, COLOR_PAIR(pair) | ext | A_REVERSE);
-                mvwprintw(win, f.row, f.col, "%-*s", f.len, f.val.c_str());
-                wattroff(win, COLOR_PAIR(pair) | ext | A_REVERSE);
+                echo(f);
             }
             continue;
         }
@@ -1279,11 +1605,7 @@ static int dspf__inputLoop(const DspfJVal& rec,
             if (!f.touched) f.val.clear();
             f.val += (char)ch;
             f.touched = true;
-            int pair = dspf__colorPair(fields[f.recIdx]);
-            attr_t ext = dspf__fieldAttrs(fields[f.recIdx]);
-            wattron(win, COLOR_PAIR(pair) | ext | A_REVERSE);
-            mvwprintw(win, f.row, f.col, "%-*s", f.len, f.val.c_str());
-            wattroff(win, COLOR_PAIR(pair) | ext | A_REVERSE);
+            echo(f);
             if ((int)f.val.size() >= f.len && dspf__hasRecKw(fields[f.recIdx], "AUTO")) {
                 cur = (cur + 1) % (int)ef.size();
                 wrefresh(win);
@@ -1400,7 +1722,15 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
         if (minR < INT_MAX) sflBaseRow = minR - 1;
     }
 
+    // ERRMSG on a control-record field: the screen is kept, so the values on
+    // it stay and the program's new ones are not sent.
+    std::string errMsgText;
+    bool errmsg = dspf__errmsgPrepare(ctl, errMsgText);
     auto ctlVals = dspf__extractFields(ctl, ctlBuf);
+    if (errmsg) {
+        auto sv = g_dspf_shown_vals.find(dspf__upper(ctl["name"].str()));
+        if (sv != g_dspf_shown_vals.end()) ctlVals = sv->second;
+    }
 
     // Render everything (control record + subfile rows)
     auto render = [&]() {
@@ -1439,6 +1769,7 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
                 if (it != rows[i].fields.end()) val = it->second;
                 val = dspf__formatField(sf[fi], val);
                 if ((int)val.size() > len) val.resize(len);
+                val = dspf__shownText(sf[fi], val, len);
 
                 int pair   = dspf__colorPair(sf[fi]);
                 attr_t ext = dspf__fieldAttrs(sf[fi]);
@@ -1457,7 +1788,10 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
         refresh();
     };
 
+    g_dspf_keep_screen = errmsg;
     render();
+    g_dspf_keep_screen = false;
+    if (errmsg) { beep(); dspf__showMessage(ctl, errMsgText); }
 
     // ── Editable fields: the control record's own input-capable fields,
     // plus (appended after) each currently-visible row's input-capable
@@ -1553,16 +1887,37 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
         if (cur >= (int)combined.size()) cur = combined.empty() ? 0 : (int)combined.size() - 1;
     };
     focusRow(cursor - 1);
+    {
+        // An ERRMSG or DSPATR(PC) field of the control record takes the cursor.
+        std::vector<DspfCursorCand> cand;
+        for (int i = 0; i < ctlCount; i++)
+            cand.push_back({&fieldDefFor(combined[i]), combined[i].screenRow, combined[i].col});
+        int start = dspf__initialCursor(ctl, cand);
+        if (start >= 0) cur = start;
+    }
 
+    // A control-record field is drawn as an input field; a subfile row's
+    // field in reverse, as the selected row is.
     auto redrawFocused = [&]() {
         if (combined.empty()) return;
         const DspfSflEditField& e = combined[cur];
         const DspfJVal& fdef = fieldDefFor(e);
         int pair = dspf__colorPair(fdef);
-        attr_t ext = dspf__fieldAttrs(fdef);
-        attron(COLOR_PAIR(pair) | ext | A_REVERSE);
-        mvprintw(e.screenRow, e.col, "%-*s", e.len, e.val.c_str());
-        attroff(COLOR_PAIR(pair) | ext | A_REVERSE);
+        attr_t ext = dspf__fieldAttrs(fdef) |
+                     (e.rowIdx == -1 ? dspf__inputAttrs(fdef) : (attr_t)A_REVERSE);
+        attron(COLOR_PAIR(pair) | ext);
+        mvprintw(e.screenRow, e.col, "%-*s", e.len, dspf__shownText(fdef, e.val, e.len).c_str());
+        attroff(COLOR_PAIR(pair) | ext);
+    };
+
+    // What every exit does: the CHANGE/BLANKS lists do not apply to a
+    // subfile control record, and the ERRMSG response indicators go off.
+    auto finishInput = [&]() {
+        g_dspf_out_set_indicators.clear();
+        g_dspf_out_clear_indicators.clear();
+        dspf__clearErrmsgResponses(ctl);
+        g_dspf_err_fields.clear();
+        g_dspf_shown_vals[dspf__upper(ctl["name"].str())] = ctlVals;
     };
 
     while (true) {
@@ -1584,16 +1939,20 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
 
         if (ch >= KEY_F(1) && ch <= KEY_F(24)) {
             int fnum = ch - KEY_F(0);
-            g_dspf_last_fkey = fnum;
             std::string key = "F" + std::to_string(fnum);
-            commitCombined();
-            ctlVals["SFLRCDNBR"] = std::to_string(cursor);
-            dspf__applyFields(ctl, ctlVals, ctlBuf);
             const DspfJVal& keys = ctl["keys"];
             for (size_t i = 0; i < keys.size(); i++) {
-                if (keys[i]["key"].str() == key) return keys[i]["indicator"].num();
+                if (keys[i]["key"].str() != key) continue;
+                g_dspf_last_fkey = fnum;
+                commitCombined();
+                ctlVals["SFLRCDNBR"] = std::to_string(cursor);
+                dspf__applyFields(ctl, ctlVals, ctlBuf);
+                finishInput();
+                return keys[i]["indicator"].num();
             }
-            return fnum;
+            beep();
+            dspf__showMessage(ctl, DSPF_MSG_FKEY_NOT_ALLOWED);
+            continue;
         }
 
         if (ch == '\n' || ch == '\r' || ch == KEY_ENTER) {
@@ -1605,14 +1964,7 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
             }
             if (badIdx >= 0) {
                 beep();
-                if (dspf__hasRecKw(ctl, "ERRSFL")) {
-                    dspf__errsflShow(ctl, errMsg);
-                } else if (LINES > 24) {
-                    attron(A_REVERSE);
-                    mvprintw(24, 0, "%-*s", COLS, errMsg.c_str());
-                    attroff(A_REVERSE);
-                    refresh();
-                }
+                dspf__showMessage(ctl, errMsg);
                 cur = badIdx;
                 if (combined[cur].rowIdx != -1) { cursor = combined[cur].rowIdx + 1; render(); }
                 continue;
@@ -1620,6 +1972,7 @@ static int dspf__sflExfmt(const char* ctlName, const DspfJVal& ctl, void* ctlBuf
             commitCombined();
             ctlVals["SFLRCDNBR"] = std::to_string(cursor);
             dspf__applyFields(ctl, ctlVals, ctlBuf);
+            finishInput();
             return 0;
         }
 
@@ -1781,9 +2134,23 @@ inline int dspf_exfmt(const char* recname, void* recbuf) {
         colOff = -2;   // record position c -> window column c + 1
     }
 
+    std::string errMsgText;
+    bool errmsg = dspf__errmsgPrepare(*rec, errMsgText);
     auto vals = dspf__extractFields(*rec, recbuf);
+    std::string key = dspf__upper((*rec)["name"].str());
+    if (errmsg) {
+        // The record is on the display and stays as it is: what it shows now
+        // is kept, and the program's new data is not sent.
+        auto sv = g_dspf_shown_vals.find(key);
+        if (sv != g_dspf_shown_vals.end()) vals = sv->second;
+    }
+    g_dspf_keep_screen = errmsg;
     dspf__renderScreen(*rec, vals, win, rowOff, colOff);
+    g_dspf_keep_screen = false;
+    if (errmsg) { beep(); dspf__showMessage(*rec, errMsgText); }
     int indicator = dspf__inputLoop(*rec, vals, win, rowOff, colOff);
+    g_dspf_err_fields.clear();
+    g_dspf_shown_vals[key] = vals;
     dspf__applyFields(*rec, vals, recbuf);
 
     if (isWin) {
@@ -1823,8 +2190,22 @@ inline void dspf_write(const char* recname, const void* recbuf) {
     }
 
     // Normal record: render immediately (no input wait)
+    std::string errMsgText;
+    bool errmsg = dspf__errmsgPrepare(*rec, errMsgText);
     auto vals = dspf__extractFields(*rec, recbuf);
+    std::string key = dspf__upper((*rec)["name"].str());
+    if (errmsg) {
+        auto sv = g_dspf_shown_vals.find(key);
+        if (sv != g_dspf_shown_vals.end()) vals = sv->second;
+    }
+    g_dspf_keep_screen = errmsg;
     dspf__renderScreen(*rec, vals, stdscr, 0, 0);
+    g_dspf_keep_screen = false;
+    if (errmsg) { beep(); dspf__showMessage(*rec, errMsgText); }
+    g_dspf_shown_vals[key] = vals;
+    // The reverse image of fields in error lasts until the next operation;
+    // the response indicators stay pending for the READ that follows.
+    g_dspf_err_fields.clear();
 }
 
 inline int dspf_read(const char* recname, void* recbuf) {

@@ -69,10 +69,13 @@ FAILURES=""
 # failing, and on a mac without gtimeout there is no timeout to stop it.
 export TERM=xterm-256color
 
+# A program waiting for a key the script never sends would otherwise hang
+# the suite. macOS ships neither timeout nor gtimeout, but always has perl:
+# alarm survives exec, so the program is killed after 10 seconds.
 TIMEOUT_CMD="timeout 10"
 if ! command -v timeout >/dev/null 2>&1; then
     if command -v gtimeout >/dev/null 2>&1; then TIMEOUT_CMD="gtimeout 10"
-    else TIMEOUT_CMD=""; fi
+    else TIMEOUT_CMD="perl -e alarm(10);exec(@ARGV)"; fi
 fi
 
 mkdir -p "$TMPDIR" "$EXPECTED"
@@ -569,17 +572,119 @@ run_interactive_test \
     '\x1bOR' \
     "$EXPECTED/TEST31_FKEY_f3.out"
 
+# F12 is not declared, so it is refused as on IBM i (CPF5204): the screen
+# stays up with "Function key not allowed." and the program is not told.
+# Enter then ends the screen, so %FKEY is 0 and nothing reports F12.
 run_interactive_test \
-    "test31b: %FKEY is 12 after F12, an undeclared key" \
+    "test31b: undeclared F12 refused; Enter ends the screen" \
     "$TESTDIR/TEST31_FKEY.dspf" "$TESTDIR/TEST31_FKEY.rpgle" \
-    '\x1b[24~' \
+    '\x1b[24~\r' \
     "$EXPECTED/TEST31_FKEY_f12.out"
+
+printf "%-55s " "test31d: the refused key says so on the message line"
+if grep -qaF 'Function key not allowed.' "$TMPDIR/TEST31_FKEY.raw"; then
+    echo -e "${GREEN}PASS${NC}"
+    PASS=$((PASS + 1))
+else
+    echo -e "${RED}FAIL${NC} (no CPF5204 text on the screen)"
+    FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  test31d: the refused key says so on the message line"
+fi
 
 run_interactive_test \
     "test31c: %FKEY is 0 after Enter" \
     "$TESTDIR/TEST31_FKEY.dspf" "$TESTDIR/TEST31_FKEY.rpgle" \
     '\r' \
     "$EXPECTED/TEST31_FKEY_enter.out"
+
+# Asserts one condition on a raw capture, as a test of its own.
+check_raw() {
+    local label="$1" ok="$2" why="$3"
+    printf "%-55s " "$label"
+    if [ "$ok" = "1" ]; then
+        echo -e "${GREEN}PASS${NC}"; PASS=$((PASS + 1))
+    else
+        echo -e "${RED}FAIL${NC} ($why)"
+        FAIL=$((FAIL + 1)); FAILURES="$FAILURES\n  $label"
+    fi
+}
+
+# The screen as painted before the program's first DSPLY — so what the
+# program displays afterwards cannot satisfy a check on the screen.
+screen_part() {
+    perl -0777 -ne 'print /^(.*?)RESULT:/s ? $1 : $_' "$1"
+}
+
+# ── test32: ERRMSG ───────────────────────────────────────────────────────
+# Pass 1 shows ORDER with *IN61 already on: it is not on the display yet,
+# so ERRMSG is not in effect and the cursor starts on NOTE. Pass 2: the
+# message is shown, the screen is kept (the program's new NOTE and QTY are
+# not sent), the cursor is on QTY with no Tab keyed, and the input turns
+# *IN61 off. See TEST32_ERRMSG.rpgle.
+run_interactive_test \
+    "test32: ERRMSG keeps the screen, moves the cursor, resets 61" \
+    "$TESTDIR/TEST32_ERRMSG.dspf" "$TESTDIR/TEST32_ERRMSG.rpgle" \
+    'N1\tABC\r12\r' \
+    "$EXPECTED/TEST32_ERRMSG.out"
+
+raw32="$TMPDIR/TEST32_ERRMSG.raw"
+n32=$(grep -aoF 'Qty must be numeric' "$raw32" | wc -l | tr -d ' ')
+check_raw "test32b: the message shows once, on the second pass" \
+    "$([ "$n32" = 1 ] && echo 1)" "shown $n32 times"
+check_raw "test32c: the program's new data is not sent" \
+    "$(grep -aqF 'ZZZZZ' "$raw32" || grep -aqF 'CHANGED' "$raw32" || echo 1)" \
+    "ZZZZZ or CHANGED reached the screen"
+
+# The field in error is redrawn in reverse image (SGR 7). ABC only ever
+# reaches the terminal as one run on that redraw — pass 1 echoes it a key
+# at a time — so this is pass 2's paint of QTY.
+check_raw "test32d: the field in error is shown in reverse image" \
+    "$(perl -ne '$f = 1 if /\x1b\[[0-9;]*7m(\x1b\[[0-9;]*m)*ABC/; END { print $f ? 1 : 0 }' "$raw32")" \
+    "QTY not redrawn reversed"
+
+# ── test33: DATE / TIME / USER / SYSNAME ─────────────────────────────────
+# What each constant shows, against the same values from the shell: the job
+# date as *MDY, two-digit year with EDTCDE(Y) (month not zero-padded, as the
+# Y edit code shows it), four digits unedited with *YY, and four with
+# EDTCDE(Y) under *IN10; the time as hh:mm:ss; USER as OpenRPG's *USER; the
+# host name to its first dot. Run near midnight, the date can roll over.
+run_interactive_test \
+    "test33: a record with DATE/TIME/USER/SYSNAME displays" \
+    "$TESTDIR/TEST33_SYSVAL.dspf" "$TESTDIR/TEST33_SYSVAL.rpgle" \
+    '\r' \
+    "$EXPECTED/TEST33_SYSVAL.out"
+
+scr33=$(screen_part "$TMPDIR/TEST33_SYSVAL.raw" | perl -pe 's/\x1b\[[0-9;?]*[a-zA-Z]//g; s/\x1b[()][0-9A-Za-z]//g; s/\x1b[=><]//g; s/\x0f//g')
+d6=$(date +%m/%d/%y | sed 's/^0//')
+d8=$(date +%m%d%Y)
+d10=$(date +%m/%d/%Y | sed 's/^0//')
+u33=$(echo "${USER:-${USERNAME:-UNKNOWN}}" | tr '[:lower:]' '[:upper:]' | cut -c1-10)
+h33=$(hostname | cut -d. -f1 | tr '[:lower:]' '[:upper:]' | cut -c1-8)
+check_raw "test33b: DATE EDTCDE(Y) is $d6" \
+    "$(echo "$scr33" | grep -qF "$d6" && echo 1)" "not on the screen"
+check_raw "test33c: DATE(*SYS *YY) is $d8" \
+    "$(echo "$scr33" | grep -qF "$d8" && echo 1)" "not on the screen"
+check_raw "test33d: DATE(*JOB *YY) EDTCDE(Y) is $d10" \
+    "$(echo "$scr33" | grep -qF "$d10" && echo 1)" "not on the screen"
+check_raw "test33e: TIME is hh:mm:ss" \
+    "$(echo "$scr33" | grep -qE '[0-2][0-9]:[0-5][0-9]:[0-5][0-9]' && echo 1)" "not on the screen"
+check_raw "test33f: USER is $u33" \
+    "$(echo "$scr33" | grep -qF "$u33" && echo 1)" "not on the screen"
+check_raw "test33g: SYSNAME is $h33" \
+    "$(echo "$scr33" | grep -qF "$h33" && echo 1)" "not on the screen"
+
+# ── test34: DSPATR(PC) / DSPATR(ND) ──────────────────────────────────────
+# PC: XY, keyed with no Tab, lands in USERID, not FIRST. ND: PASSWD's value
+# and what is keyed into it never reach the screen, while FIRST's does.
+run_interactive_test \
+    "test34: DSPATR(PC) takes the cursor; ND input still arrives" \
+    "$TESTDIR/TEST34_DSPATR.dspf" "$TESTDIR/TEST34_DSPATR.rpgle" \
+    'XY\tSECRET1\r' \
+    "$EXPECTED/TEST34_DSPATR.out"
+
+scr34=$(screen_part "$TMPDIR/TEST34_DSPATR.raw")
+check_raw "test34b: DSPATR(ND) shows neither value; others show" \
+    "$(echo "$scr34" | grep -qF HELLO && ! echo "$scr34" | grep -qF TOPSECRT && ! echo "$scr34" | grep -qF SECRET1 && echo 1)" \
+    "HELLO missing, or the password visible"
 
 # ── Summary ─────────────────────────────────────────────────────────────
 echo ""

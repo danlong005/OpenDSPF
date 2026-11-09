@@ -273,15 +273,18 @@ remaining file-level work discoverable rather than folklore.
       attribute that then does nothing.**  The useful order is attributes
       first, defaulting second.
 
-**Found while reading this — the runtime implements four DSPATR attributes,
-not eight.** `dspf__fieldAttrs` maps `HI`/`BL`/`RI`/`UL` onto ncurses
-attributes and nothing else, so `DSPATR(CS)`, `(ND)`, `(PR)` and `(PC)` parse,
-reach the descriptor, and are then silently skipped at render time —
-`tests/sample.dspf`'s `DSPATR(CS)` and `DSPATR(PR)` already draw as plain text
-today.  Of the four, `ND` (nondisplay) and `PR` (protect) are worth the most:
-they change *behaviour*, not just appearance, and `PR` overlaps the
-record-level `PROTECT` keyword that is already implemented.  This is the
-prerequisite for a useful `CHGINPDFT`.
+**Found while reading this — the runtime implemented four DSPATR attributes,
+not eight.** `dspf__fieldAttrs` mapped `HI`/`BL`/`RI`/`UL` onto ncurses
+attributes and nothing else, so `DSPATR(CS)`, `(ND)`, `(PR)` and `(PC)` parsed,
+reached the descriptor, and were then silently skipped at render time.
+**Now (2026-11-08) seven of eight:** `PR` since 2026-09-22; `ND` (the field's
+positions are blank, whatever it holds or the operator keys) and `PC` (the
+cursor starts on the first such field in screen order) in the ERRMSG batch,
+test 34. `CS` remains accepted and inert: a terminal has no column separators.
+Input fields are now underlined, as on a 5250, rather than reversed — reverse
+image is what marks a field in error (ERRMSG), and it has to look different.
+So `CHGINPDFT`'s bare form (no default underline) now has something to turn
+off; its attribute parameters are still unbuilt.
 - [x] File-level `CAnn`/`CFnn` (and `ROLLUP`/`ROLLDOWN`, which reach the same
       `DspfKey` through the same two-function test — splitting them would have
       been an arbitrary boundary).  They apply to every record format in the
@@ -291,6 +294,12 @@ prerequisite for a useful `CHGINPDFT`.
       is read, not when each record is pushed: a record's own keys arrive on
       lines *following* its `R` line, so at push time it does not yet know
       what it has spoken for.  Tests 25 (descriptor), 25a/25b (interactive).
+
+**Fixed 2026-11-08 (test 31b/31d):** a function key the record does not
+declare, at record or file level, is refused as on IBM i — the screen stays
+up, the message line says "Function key not allowed." (CPF5204), and the
+program is not told. There is no keyboard lock to Reset out of. What follows
+is the finding as first written.
 
 **Found while testing this — not fixed, and not caused by it.** The runtime
 exits on *any* function key: `dspf__inputLoop` and `dspf__sflExfmt` both look
@@ -354,7 +363,8 @@ a `CUSMNT`-style customer-maintenance screen) through `dspfc`.  It "compiled"
 
 Two more silent drops became diagnostics rather than nothing:
 a positioned line yielding no quoted text (DDS's `DATE`/`TIME`/`USER`/
-`SYSNAME`/`MSGCON` constants — none supported) now warns instead of vanishing,
+`SYSNAME`/`MSGCON` constants — none supported then; all but `MSGCON` are now,
+see "Miscellaneous DDS keywords") now warns instead of vanishing,
 and an option indicator on a keyword line warns that it conditions those
 keywords individually, which this compiler models per entry, not per keyword.
 
@@ -445,6 +455,30 @@ character (`SFLRCDNBR` -> `SFLRCDNB`).  Tests 23 / 23b / 23c.
       message *display* without a real message file underneath).
 - [ ] `MSGCON` — message constant (looked up from message file).
       **Deferred**: same message-file prerequisite as `SFLMSG`/`SFLMSGID`.
+- [x] `ERRMSG('text' [ind])` / `ERRMSGID(msgid msgf [ind])` (2026-11-08,
+      test 32) — field-level, conditioned by option indicators, the standard
+      way a maintenance screen flags a bad field. Follows IBM's description of
+      the keywords: in effect only when the record is already on the display;
+      then the screen is kept (the program's new data is not sent), one
+      message is shown (the first field selected, ERRMSG before ERRMSGID),
+      input fields in error are reversed unless highlighted or BLU/WHT/YLW,
+      the cursor goes to the first in screen order, and the next input turns
+      the response indicator off unless a CAnn/CFnn or CHANGE names it.
+      Works on a subfile control record too. Two divergences: there is no
+      keyboard lock to Reset out of, and ERRMSGID shows its message
+      identifier, since there are no message files here (dspfc warns). The
+      `&msg-data` parameter is not read. Compile-time refusals are CRTDSPF's,
+      probed on PUB400: hidden field or constant (CPD7552), subfile record
+      (CPD7562), extra parameters (CPD7516).
+- [x] `DATE` / `TIME` / `USER` / `SYSNAME` constants (2026-11-08, test 33) —
+      values the system supplies when the record is displayed, in all three
+      source formats. DATE is *MDY (OpenRPG's own job date format), *Y or
+      *YY, separators under EDTCDE(Y) (which now handles an 8-digit date);
+      TIME is hh:mm:ss, its default edit word; USER is OpenRPG's *USER;
+      SYSNAME the host name to its first dot. `*JOB` and `*SYS` are the same
+      date here. Checked as CRTDSPF checks them: DATE parameters (CPD7494),
+      quoted text as well (CPD7577), a keyword with its own option indicator
+      (CPD7488), a keyword the value does not take (CPD7651).
 - [x] `DFTVAL('text')` — default field value. Implemented purely at
       OpenRPG codegen time: the flat RPG variable for an OUTPUT/BOTH
       field is initialized to `DFTVAL`'s value instead of blank/zero at

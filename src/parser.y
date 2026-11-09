@@ -5,6 +5,7 @@
 }
 
 %{
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -24,6 +25,7 @@ static std::string take(char* s) { std::string r(s ? s : ""); free(s); return r;
 // Globals for accumulating the current field being parsed
 static dspf::DspfField  g_field;
 static std::vector<std::string> g_keywords;
+static std::string g_lit_text;
 static dspf::RecType    g_recType;
 %}
 
@@ -43,11 +45,12 @@ static dspf::RecType    g_recType;
 %token KW_ERRSFL KW_SFLMSGRCD KW_CLRL KW_CHANGE KW_SFLNXTCHG KW_INDTXT
 %token KW_VALUES KW_RANGE KW_COMP
 %token KW_STAR_CHAR KW_STAR_COLOR KW_STAR_DSPATR
+%token <sval> STAR_NAME
 %token LPAREN RPAREN COLON
 %token <ival> INTEGER
 %token <sval> STRING IDENTIFIER INDICATOR_REF
 
-%type <sval> value_item value_list
+%type <sval> value_item value_list date_parms
 
 %%
 
@@ -113,17 +116,50 @@ title_clause
     ;
 
 literal_clause
-    : KW_LITERAL KW_ROW LPAREN INTEGER RPAREN KW_COL LPAREN INTEGER RPAREN STRING
-      { g_keywords.clear(); }
+    : KW_LITERAL KW_ROW LPAREN INTEGER RPAREN KW_COL LPAREN INTEGER RPAREN
+      { g_keywords.clear(); g_lit_text.clear(); }
+      literal_content
       opt_field_keywords
       {
           dspf::DspfLiteral lit;
           lit.row      = $4;
           lit.col      = $8;
-          lit.text     = take($10);
+          lit.text     = g_lit_text;
           lit.keywords = g_keywords;
           result->records.back().literals.push_back(std::move(lit));
       }
+    ;
+
+// A constant is quoted text, or one of the values the system supplies when
+// the record is displayed: DATE, TIME, USER, SYSNAME. Those are kept as the
+// constant's first keyword, which is the shape the DDS reader gives them.
+literal_content
+    : STRING
+      { g_lit_text = take($1); }
+    | KW_DATE
+      { g_keywords.push_back("DATE"); }
+    | KW_DATE LPAREN date_parms RPAREN
+      { g_keywords.push_back("DATE(" + take($3) + ")"); }
+    | KW_TIME
+      { g_keywords.push_back("TIME"); }
+    | IDENTIFIER
+      {
+          std::string k = take($1);
+          for (auto& c : k) c = (char)toupper((unsigned char)c);
+          if (k != "USER" && k != "SYSNAME") {
+              fprintf(stderr, "dspfc: error at line %d: LITERAL takes quoted text, "
+                      "DATE, TIME, USER or SYSNAME, not %s\n", yylineno, k.c_str());
+              g_error_count++;
+          }
+          g_keywords.push_back(k);
+      }
+    ;
+
+date_parms
+    : STAR_NAME
+      { $$ = $1; }
+    | date_parms STAR_NAME
+      { std::string s = take($1) + " " + take($2); $$ = strdup(s.c_str()); }
     ;
 
 field_clause
@@ -192,6 +228,17 @@ field_keyword
       // matches fixed-format's raw passthrough byte-for-byte — callers like
       // dspf__renderScreen's COLHDG handling look for a quoted substring.
       { std::string k = take($1); g_keywords.push_back(k + "('" + take($3) + "')"); }
+    | IDENTIFIER LPAREN STRING INTEGER RPAREN
+      // ERRMSG('text' 61): message text and its response indicator, in the
+      // shape the DDS reader passes the keyword through.
+      { std::string k = take($1); g_keywords.push_back(k + "('" + take($3) + "' " + std::to_string($4) + ")"); }
+    | IDENTIFIER LPAREN IDENTIFIER IDENTIFIER RPAREN
+      // ERRMSGID(msgid msgf)
+      { std::string k = take($1); std::string a = take($3); g_keywords.push_back(k + "(" + a + " " + take($4) + ")"); }
+    | IDENTIFIER LPAREN IDENTIFIER IDENTIFIER INTEGER RPAREN
+      // ERRMSGID(msgid msgf ind)
+      { std::string k = take($1); std::string a = take($3); std::string b = take($4);
+        g_keywords.push_back(k + "(" + a + " " + b + " " + std::to_string($5) + ")"); }
     | IDENTIFIER LPAREN INDICATOR_REF STRING RPAREN
       // e.g. BLANKS(*IN67 'text') — same quote-preserving shape as above,
       // for keywords taking an indicator plus an optional trailing comment.

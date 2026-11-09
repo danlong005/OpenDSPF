@@ -142,6 +142,30 @@ A literal may carry keywords after the string:
 LITERAL ROW(24) COL(2)  'F6=Save'  COND(*IN50)
 ```
 
+In place of the text, a literal can be a value the system supplies each time
+the record is displayed — DDS's `DATE`, `TIME`, `USER` and `SYSNAME`
+constants:
+
+```dspf
+LITERAL ROW(1) COL(2)   DATE EDTCDE(Y)      // 11/08/26
+LITERAL ROW(1) COL(12)  DATE(*SYS *YY)      // 11082026
+LITERAL ROW(1) COL(22)  TIME                // 14:05:09
+LITERAL ROW(1) COL(32)  USER                // the user profile
+LITERAL ROW(1) COL(44)  SYSNAME             // the host name
+```
+
+`DATE` is the job date in the job's date format, *MDY here (the format of
+OpenRPG's own job date), with a two-digit year, or four with `*YY`;
+`EDTCDE(Y)` adds the separators. `*JOB` and `*SYS` give the same date here.
+`TIME` is hhmmss, shown as hh:mm:ss unless the literal has its own `EDTCDE` or
+`EDTWRD`. `USER` is what OpenRPG's `*USER` gives — the login name, upper case,
+at most 10 characters — and `SYSNAME` the host name up to its first dot, upper
+case, at most 8. As on IBM i, `DATE` and `TIME` take `EDTCDE`, `EDTWRD`,
+`COLOR`, `DSPATR`, `TEXT` and a `COND`; `USER` and `SYSNAME` take all of those
+but the two edit keywords (CPD7651). In fixed-format DDS they go in the
+functions area of a constant, `     A                                  1  2DATE EDTCDE(Y)`;
+in JSON, a literal with no `"text"` and the keyword first in its `"keywords"`.
+
 ### FIELD
 
 ```dspf
@@ -426,7 +450,9 @@ Every record has a `"type"` field in the JSON descriptor:
 | Keyword | Description |
 |---------|-------------|
 | `COLOR(color)` | Display color, one of DDS's codes: `BLU`, `GRN`, `PNK`, `RED`, `TRQ`, `WHT`, `YLW`. Anything else, such as `GREEN`, is an error, as on IBM i (CPD7494) |
-| `DSPATR(attr)` | Display attribute: `HI` (bright), `BL` (blink), `UL` (underline), `RI` (reverse) |
+| `DSPATR(attr)` | Display attribute: `HI` (bright), `BL` (blink), `UL` (underline), `RI` (reverse); `ND` (nondisplay: the field's positions are blank, whatever it holds or the operator keys — for passwords); `PC` (position cursor: the cursor starts on the first such field in screen order, or on the next input field after it if it takes no input); `PR` (protect: shown, takes no input). `CS` (column separators) is accepted and has no effect on a terminal. Input fields are underlined, as on a 5250 |
+| `ERRMSG('text' [ind])` | Error message, normally conditioned by an option indicator. When it is in effect and the record is already on the display, the screen is kept as it is (the program's new data is not sent), the message is shown on the message line, input fields in error are shown in reverse image and the cursor goes to the first of them. The next input turns the response indicator `ind` off. Not allowed on a hidden field, a constant (CPD7552) or in a subfile record (CPD7562) |
+| `ERRMSGID(msgid msgf [ind])` | As `ERRMSG`, with the message in a message file. There are none where the program runs, so the message identifier is shown in place of its text, and `dspfc` warns |
 | `EDTCDE(code)` | Edit code for numeric formatting (see [Numeric Formatting](#numeric-formatting--edtcde-and-edtwrd)) |
 | `EDTWRD('mask')` | Edit word for numeric formatting |
 | `COND(*INnn)` | Show field only when indicator nn is on |
@@ -464,6 +490,10 @@ KEY ENTER
 ```
 
 On return from EXFMT, the RPG program checks `*IN03`, `*IN06`, etc. to determine which key was pressed.
+
+A function key the record does not declare — at record or file level — is
+refused, as on IBM i: the screen stays up, the message line says "Function key
+not allowed." (CPF5204), and the program is not told about it.
 
 ---
 
